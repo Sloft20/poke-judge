@@ -659,6 +659,13 @@ const GameLobby = ({ players, onUpdatePlayer, onStartGame }) => {
                     <Play size={28} fill="currentColor" />
                     Iniciar Partida
                 </button>
+                <button 
+                    onClick={() => setShowRanking(true)}
+                    className="w-full mt-4 py-3 bg-slate-800 hover:bg-slate-700 text-yellow-500 rounded-xl font-bold uppercase tracking-widest shadow-lg border border-slate-700 flex items-center justify-center gap-3 transition-all"
+                >
+                    <Trophy size={20} />
+                    Consultar Ranking Global
+                </button>
             </Card>
         </div>
     );
