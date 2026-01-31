@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-
 import { 
   Shield, Sword, RefreshCw, AlertTriangle, BookOpen, 
   History, User, CheckCircle, Ban, Skull, Clock,
@@ -9,10 +8,8 @@ import {
   Minus, Plus, Crosshair, Coins, Zap, Download, Trophy, BarChart2,
   Users, Play, Pause, Trash2, Edit2, Gift,
   // Novos ícones de energia importados do Lucide conforme solicitado
-  Flame, Droplets, Leaf, Eye, Dumbbell, Moon, Crown, Circle, Star, Bolt, Origami, Search
+  Flame, Droplets, Leaf, Eye, Dumbbell, Moon, Crown, Circle, Star, Bolt, Origami 
 } from 'lucide-react';
-import { supabase } from './supabaseClient';
-
 
 // --- 2. CONSTANTES E TIPOS ---
 
@@ -206,14 +203,14 @@ const DECKS = {
         attacks: [{ name: 'Petite Grudge', cost: ['Fire', 'Psychic'], damage: '10' }]
       },
       { 
-        id: 'xatu', name: 'Xatu', hp: 100, type: 'Psychic', stage: 1, evolvesFrom: 'Natu',
-        weakness: 'Darkness', resistance: 'Fighting', retreat: 1, imgColor: 'green',
-        attacks: [{ name: 'Clairvoyant Sense', cost: ['Ability'], damage: 'Ability' }, { name: 'Super Psy Bolt', cost: ['Psychic', 'Colorless', 'Colorless'], damage: '80' }]
+        id: 'dusclops', name: 'Dusclops', hp: 90, type: 'Psychic', stage: 1, evolvesFrom: 'Duskull',
+        weakness: 'Darkness', resistance: 'Fighting', retreat: 1, imgColor: 'purple',
+        attacks: [{ name: 'Explosão Maldita', cost: ['Ability'], damage: 'Ability' }, { name: 'Fogo Fátuo', cost: ['Psychic', 'Psychic'], damage: '50' }]
       },
       { 
-        id: 'natu', name: 'Natu', hp: 50, type: 'Psychic', stage: 0,
-        weakness: 'Darkness', resistance: 'Fighting', retreat: 1, imgColor: 'green',
-        attacks: [{ name: 'Peck', cost: ['Psychic'], damage: '10' }]
+        id: 'duskull', name: 'Duskull', hp: 60, type: 'Psychic', stage: 0,
+        weakness: 'Darkness', resistance: 'Fighting', retreat: 1, imgColor: 'purple',
+        attacks: [{ name: 'Vim te Buscar', cost: ['Psychic'], damage: '10' }]
       },
       { 
         id: 'tatsugiri', name: 'Tatsugiri', hp: 70, type: 'Dragon', stage: 0,
@@ -553,7 +550,7 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
 
 // --- 6. COMPONENTES DE TELA (LOBBY & RANKING) ---
 
-const GameLobby = ({ players, onUpdatePlayer, onStartGame, setShowRanking }) => {
+const GameLobby = ({ players, onUpdatePlayer, onStartGame }) => {
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
             <Card className="w-full max-w-4xl p-8 bg-white dark:bg-gray-800 shadow-xl rounded-2xl">
@@ -660,181 +657,64 @@ const GameLobby = ({ players, onUpdatePlayer, onStartGame, setShowRanking }) => 
                     <Play size={28} fill="currentColor" />
                     Iniciar Partida
                 </button>
-                <button 
-                    onClick={() => setShowRanking(true)}
-                    className="w-full mt-4 py-3 bg-slate-800 hover:bg-slate-700 text-yellow-500 rounded-xl font-bold uppercase tracking-widest shadow-lg border border-slate-700 flex items-center justify-center gap-3 transition-all"
-                >
-                    <Trophy size={20} />
-                    Consultar Ranking Global
-                </button>
             </Card>
         </div>
     );
 };
 
 const RankingModal = ({ onClose }) => {
-    const [stats, setStats] = useState({ deckStats: {}, playerStats: {} });
-    const [matches, setMatches] = useState([]); 
-    const [tab, setTab] = useState('decks'); // Pode ser 'decks', 'players' ou 'history'
-    const [loading, setLoading] = useState(true);
-    const [selectedLog, setSelectedLog] = useState(null); 
-    const [searchTerm, setSearchTerm] = useState(''); // Barra de pesquisa
+    const { deckStats, playerStats } = calculateStats();
+    const [tab, setTab] = useState('decks');
 
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            // Puxa as partidas do Supabase ordenadas por data
-            const { data, error } = await supabase
-                .from('matches')
-                .select('*')
-                .order('created_at', { ascending: false }); 
-
-            if (error || !data) {
-                console.error("Erro ao buscar dados:", error);
-                setLoading(false);
-                return;
-            }
-
-            setMatches(data); 
-
-            // Cálculos para o Ranking de Decks e Jogadores
-            const deckStats = {};
-            const playerStats = {};
-            data.forEach(match => {
-                [match.winner_deck, match.loser_deck].forEach(deck => {
-                    if(!deckStats[deck]) deckStats[deck] = { plays: 0, wins: 0, name: DECKS[deck]?.name || deck };
-                    deckStats[deck].plays++;
-                });
-                if(deckStats[match.winner_deck]) deckStats[match.winner_deck].wins++;
-
-                [match.winner_name, match.loser_name].forEach(player => {
-                    if(!playerStats[player]) playerStats[player] = { plays: 0, wins: 0 };
-                    playerStats[player].plays++;
-                });
-                if(playerStats[match.winner_name]) playerStats[match.winner_name].wins++;
-            });
-
-            setStats({ deckStats, playerStats });
-            setLoading(false);
-        };
-
-        fetchData();
-    }, []);
-
-    // Filtra o histórico baseado no que você digita na barra de pesquisa
-    const filteredMatches = matches.filter(m => 
-        m.winner_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.loser_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (DECKS[m.winner_deck]?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (DECKS[m.loser_deck]?.name || "").toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const sortedDecks = Object.values(stats.deckStats).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
-    const sortedPlayers = Object.entries(stats.playerStats).map(([name, stat]) => ({name, ...stat})).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
+    const sortedDecks = Object.values(deckStats).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
+    const sortedPlayers = Object.entries(playerStats).map(([name, stat]) => ({name, ...stat})).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
 
     return (
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in">
-          <Card className="w-full max-w-2xl h-[85vh] flex flex-col bg-slate-900 border-slate-700 shadow-2xl">
-              <div className="flex justify-between items-center mb-6 border-b border-slate-700 pb-4">
-                  <h2 className="text-xl font-bold flex items-center gap-3 text-white">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <Card className="w-full max-w-2xl h-[80vh] flex flex-col bg-white border-gray-200">
+              <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-4">
+                  <h2 className="text-xl font-bold flex items-center gap-3 text-gray-800">
                       <Trophy className="text-yellow-500" size={28}/> 
-                      <span className="uppercase tracking-wide">Centro de Resultados Global</span>
+                      <span className="uppercase tracking-wide">Ranking & Stats</span>
                   </h2>
-                  <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors"><X size={24}/></button>
+                  <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={24}/></button>
               </div>
               
-              {/* Abas de navegação incluindo HISTÓRICO */}
-              <div className="flex gap-2 mb-6 p-1 bg-slate-800 rounded-lg border border-slate-700">
-                  <button onClick={() => setTab('decks')} className={`flex-1 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${tab === 'decks' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>Meta Decks</button>
-                  <button onClick={() => setTab('players')} className={`flex-1 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${tab === 'players' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>Jogadores</button>
-                  <button onClick={() => setTab('history')} className={`flex-1 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${tab === 'history' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>Histórico</button>
+              <div className="flex gap-2 mb-6 p-1 bg-gray-100 rounded-lg">
+                  <button onClick={() => setTab('decks')} className={`flex-1 py-2 rounded-md text-sm font-bold uppercase transition-all ${tab === 'decks' ? 'bg-white text-blue-600 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>Decks Meta</button>
+                  <button onClick={() => setTab('players')} className={`flex-1 py-2 rounded-md text-sm font-bold uppercase transition-all ${tab === 'players' ? 'bg-white text-blue-600 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>Jogadores</button>
               </div>
 
-              {/* BARRA DE PESQUISA (Aparece apenas na aba Histórico) */}
-              {tab === 'history' && (
-                  <div className="mb-4 relative px-2">
-                      <input 
-                        type="text" 
-                        placeholder="Pesquisar jogador ou deck no histórico..." 
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-10 text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                      />
-                      <Search size={16} className="absolute left-5 top-2.5 text-slate-500" />
-                  </div>
-              )}
-
-              <div className="flex-1 overflow-y-auto custom-scrollbar px-2">
-                  {loading ? (
-                      <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-4">
-                          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
-                          <p className="font-mono text-xs">Sincronizando com a Nuvem...</p>
-                      </div>
-                  ) : tab === 'history' ? (
-                      /* CONTEÚDO DO HISTÓRICO */
-                      <div className="space-y-3">
-                          {filteredMatches.map((m, idx) => (
-                              <div key={idx} className="bg-slate-800/40 p-4 rounded-lg border border-slate-700 flex justify-between items-center group hover:border-blue-500/50 transition-all">
-                                  <div>
-                                      <div className="text-[9px] text-slate-500 mb-1 font-mono">{new Date(m.created_at).toLocaleString()}</div>
-                                      <div className="text-sm font-bold text-white">
-                                          <span className="text-green-400">{m.winner_name}</span> vs {m.loser_name}
-                                      </div>
-                                      <div className="text-[10px] text-slate-400 italic">{(DECKS[m.winner_deck]?.name || m.winner_deck)} vs {(DECKS[m.loser_deck]?.name || m.loser_deck)}</div>
-                                  </div>
-                                  <button 
-                                      onClick={() => setSelectedLog(m.game_logs)}
-                                      className="p-2 bg-blue-600/20 text-blue-400 rounded hover:bg-blue-600 hover:text-white transition-all text-[10px] uppercase font-bold"
-                                  >
-                                      Ver Log
-                                  </button>
-                              </div>
+              <div className="flex-1 overflow-y-auto custom-scrollbar">
+                  <table className="w-full text-sm text-left border-separate border-spacing-y-2">
+                      <thead className="text-gray-500 uppercase text-xs tracking-wider">
+                          <tr>
+                              <th className="px-4 py-2">{tab === 'decks' ? 'Arquétipo' : 'Nome'}</th>
+                              <th className="px-4 py-2 text-center">Partidas</th>
+                              <th className="px-4 py-2 text-center">Vitórias</th>
+                              <th className="px-4 py-2 text-center">Win Rate</th>
+                          </tr>
+                      </thead>
+                      <tbody className="text-gray-700">
+                          {(tab === 'decks' ? sortedDecks : sortedPlayers).map((item, idx) => (
+                              <tr key={idx} className="bg-gray-50 hover:bg-gray-100 transition-colors rounded-lg overflow-hidden">
+                                  <td className="px-4 py-3 font-bold border-l-4 border-blue-500 rounded-l-lg">{item.name}</td>
+                                  <td className="px-4 py-3 text-center font-mono">{item.plays}</td>
+                                  <td className="px-4 py-3 text-center font-mono text-green-600">{item.wins}</td>
+                                  <td className="px-4 py-3 text-center font-bold rounded-r-lg">
+                                      <span className={`px-2 py-1 rounded text-xs ${((item.wins / item.plays) * 100) >= 50 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                          {((item.wins / item.plays) * 100).toFixed(1)}%
+                                      </span>
+                                  </td>
+                              </tr>
                           ))}
-                      </div>
-                  ) : (
-                      /* TABELAS DE RANKING (DECKS/JOGADORES) */
-                      <table className="w-full text-sm text-left border-separate border-spacing-y-2">
-                          <thead className="text-slate-500 uppercase text-[10px] tracking-widest">
-                            <tr>
-                                <th className="px-4 py-2">{tab === 'decks' ? 'Arquétipo' : 'Nome'}</th>
-                                <th className="px-4 py-2 text-center">Partidas</th>
-                                <th className="px-4 py-2 text-center">Vitórias</th>
-                                <th className="px-4 py-2 text-center">Win Rate</th>
-                            </tr>
-                        </thead>
-                        <tbody className="text-slate-200">
-                            {(tab === 'decks' ? sortedDecks : sortedPlayers).map((item, idx) => (
-                                <tr key={idx} className="bg-slate-800/40 hover:bg-slate-800/80 transition-colors rounded-lg overflow-hidden border border-slate-700/50">
-                                    <td className="px-4 py-3 font-bold border-l-4 border-blue-500 rounded-l-lg">{item.name}</td>
-                                    <td className="px-4 py-3 text-center font-mono">{item.plays}</td>
-                                    <td className="px-4 py-3 text-center font-mono text-green-400">{item.wins}</td>
-                                    <td className="px-4 py-3 text-center font-bold rounded-r-lg">
-                                        <span className={`px-2 py-1 rounded text-[10px] ${((item.wins / item.plays) * 100) >= 50 ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
-                                            {((item.wins / item.plays) * 100).toFixed(1)}%
-                                        </span>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                      </table>
-                  )}
+                          {(tab === 'decks' ? sortedDecks : sortedPlayers).length === 0 && (
+                              <tr><td colSpan="4" className="text-center py-12 text-gray-400 italic">Nenhum dado registrado no sistema.</td></tr>
+                          )}
+                      </tbody>
+                  </table>
               </div>
           </Card>
-
-          {/* SUB-MODAL PARA VER O LOG DA PARTIDA SELECIONADA */}
-          {selectedLog && (
-              <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4 animate-in zoom-in duration-200">
-                  <Card className="w-full max-w-lg h-[70vh] flex flex-col bg-slate-900 border-slate-700 shadow-2xl">
-                      <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
-                          <h3 className="text-white font-bold flex items-center gap-2"><History size={16}/> Logs Detalhados</h3>
-                          <button onClick={() => setSelectedLog(null)} className="text-slate-400 hover:text-white"><X/></button>
-                      </div>
-                      <pre className="flex-1 overflow-y-auto text-[10px] font-mono text-slate-300 p-3 bg-slate-950 rounded whitespace-pre-wrap custom-scrollbar">
-                          {selectedLog}
-                      </pre>
-                  </Card>
-              </div>
-          )}
       </div>
     );
 };
@@ -850,32 +730,7 @@ export default function PokeJudgePro() {
     setupComplete: false,
     startTime: null
   });
-  const fetchGlobalStats = async () => {
-      const { data, error } = await supabase.from('matches').select('*');
-      if (error) {
-          console.error("Erro ao buscar ranking global:", error);
-          return calculateStats(); 
-      }
 
-      const deckStats = {};
-      const playerStats = {};
-
-      data.forEach(match => {
-          [match.winner_deck, match.loser_deck].forEach(deck => {
-              if(!deckStats[deck]) deckStats[deck] = { plays: 0, wins: 0, name: DECKS[deck]?.name || deck };
-              deckStats[deck].plays++;
-          });
-          if(deckStats[match.winner_deck]) deckStats[match.winner_deck].wins++;
-
-          [match.winner_name, match.loser_name].forEach(player => {
-              if(!playerStats[player]) playerStats[player] = { plays: 0, wins: 0 };
-              playerStats[player].plays++;
-          });
-          if(playerStats[match.winner_name]) playerStats[match.winner_name].wins++;
-      });
-
-      return { deckStats, playerStats };
-  };
   const [gameTimer, setGameTimer] = useState(0); 
   const [isTimerPaused, setIsTimerPaused] = useState(false);
   const [showPrizeModal, setShowPrizeModal] = useState(false);
@@ -993,49 +848,31 @@ export default function PokeJudgePro() {
       addLog(`Fase de Preparação Iniciada.`, 'INFO');
   };
 
-  const saveMatchResult = async (winnerIndex) => {
-    const winner = players[winnerIndex];
-    const loser = players[winnerIndex === 0 ? 1 : 0];
+  const saveMatchResult = (winnerIndex) => {
+      const winner = players[winnerIndex];
+      const loser = players[winnerIndex === 0 ? 1 : 0];
 
-    // Transforma o array de logs em um texto formatado, como no seu .txt
-    const fullLogText = logs.map(l => `[${l.time}] [${l.level}] ${l.text}`).join('\n');
+      const matchData = {
+          date: new Date().toISOString(),
+          winnerName: winner.name,
+          loserName: loser.name,
+          winnerDeck: winner.deckArchetype,
+          loserDeck: loser.deckArchetype
+      };
 
-    const matchData = {
-        winner_name: winner.name,
-        loser_name: loser.name,
-        winner_deck: winner.deckArchetype,
-        loser_deck: loser.deckArchetype,
-        match_type: "Standard",
-        game_logs: fullLogText // Envia o log completo para a nuvem
-    };
+      const existingHistory = JSON.parse(localStorage.getItem('pokejudge_history') || '[]');
+      const newHistory = [...existingHistory, matchData];
+      localStorage.setItem('pokejudge_history', JSON.stringify(newHistory));
+  };
 
-    // Salva no Supabase
-    const { error } = await supabase.from('matches').insert([matchData]);
-
-    if (error) {
-        console.error("Erro ao salvar no Supabase:", error);
-    } else {
-        console.log("Partida e Logs salvos na nuvem!");
-    }
-
-    // Backup local
-    const existingHistory = JSON.parse(localStorage.getItem('pokejudge_history') || '[]');
-    localStorage.setItem('pokejudge_history', JSON.stringify([...existingHistory, {
-        ...matchData,
-        date: new Date().toISOString()
-    }]));
-};
-
-  const declareWinner = async (winnerIndex) => {
-    const winnerName = players[winnerIndex].name;
-    setGameState(prev => ({ 
-        ...prev, 
-        phase: PHASES.GAME_OVER, 
-        winner: winnerName 
-    }));
-    
-    // Aguarda o salvamento antes de prosseguir
-    await saveMatchResult(winnerIndex);
+  const declareWinner = (winnerIndex) => {
+      const winnerName = players[winnerIndex].name;
+      setGameState(prev => ({ 
+          ...prev, 
+          phase: PHASES.GAME_OVER, 
+          winner: winnerName 
+      }));
+      saveMatchResult(winnerIndex);
   };
 
   const resetGame = () => {
