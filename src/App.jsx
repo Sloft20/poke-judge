@@ -135,20 +135,21 @@ const DECKS = {
           { name: 'Miracle Force', cost: ['Psychic', 'Psychic', 'Colorless'], damage: '190' }
         ]
       },
-      { 
-        id: 'munkidori', name: 'Munkidori', hp: 110, type: 'Psychic', stage: 0,
-        weakness: 'Darkness', resistance: 'Fighting', retreat: 1, imgColor: 'purple',
-        attacks: [
-          { name: 'Adrena-Brain', cost: ['Ability'], damage: 'Ability' }, 
-          { name: 'Mind Bend', cost: ['Psychic', 'Colorless'], damage: '60' }
-        ]
-      },
+      
       { 
         id: 'kirlia', name: 'Kirlia', hp: 80, type: 'Psychic', stage: 1, evolvesFrom: 'Ralts',
         weakness: 'Darkness', resistance: 'Fighting', retreat: 1, imgColor: 'purple',
         attacks: [
           { name: 'Refinement', cost: ['Ability'], damage: 'Ability' },
           { name: 'Slap', cost: ['Psychic'], damage: '30' }
+        ]
+      },
+      { 
+        id: 'munkidori', name: 'Munkidori', hp: 110, type: 'Psychic', stage: 0,
+        weakness: 'Darkness', resistance: 'Fighting', retreat: 1, imgColor: 'purple',
+        attacks: [
+          { name: 'Adrena-Brain', cost: ['Ability'], damage: 'Ability' }, 
+          { name: 'Mind Bend', cost: ['Psychic', 'Colorless'], damage: '60' }
         ]
       },
       { 
@@ -159,12 +160,25 @@ const DECKS = {
       { 
         id: 'drifloon', name: 'Drifloon', hp: 70, type: 'Psychic', stage: 0,
         weakness: 'Darkness', resistance: 'Fighting', retreat: 1, imgColor: 'purple',
-        attacks: [{ name: 'Balloon Blast', cost: ['Colorless', 'Colorless'], damage: '30x' }]
+        attacks: [{ name: 'Balloon Blast', cost: ['Psychic', 'Psychic'], damage: '30x' }, { name: 'Floaty', cost: ['Psychic'], damage: '10' }]
       },
       { 
-        id: 'cresselia', name: 'Cresselia', hp: 120, type: 'Psychic', stage: 0,
-        weakness: 'Darkness', resistance: 'Fighting', retreat: 1, imgColor: 'purple',
-        attacks: [{ name: 'Moonglow Reverse', cost: ['Psychic'], damage: 'Efeito' }, { name: 'Lunar Blast', cost: ['Psychic', 'Psychic', 'Colorless'], damage: '110' }]
+        id: 'yamask', name: 'Yamask', hp: 70, type: 'Psychic', stage: 0,
+        weakness: 'Darkness', resistance: 'Fighting', retreat: 2, imgColor: 'purple',
+        attacks: [{ name: 'Desejo Direcionado', cost: ['Psychic', 'Colorless'], damage: '20+' }]
+      },
+      { 
+        id: 'cofagrigus', name: 'Cofagrigus', hp: 120, type: 'Psychic', stage: 1, evolvesFrom: 'Yamask',
+        weakness: 'Darkness', resistance: 'Fighting', retreat: 2, imgColor: 'purple',
+        attacks: [
+          { name: 'Danogrigus Ampliado', cost: ['Psychic', 'Colorless'], damage: 'Ability' },
+          { name: 'Perplexo', cost: ['Psychic', 'Colorless', 'Colorless'], damage: '60' }
+        ]
+      },
+      { 
+        id: 'frilish', name: 'Frilish', hp: 80, type: 'Psychic', stage: 0,
+        weakness: 'Darkness', resistance: 'Fighting', retreat: 3, imgColor: 'purple',
+        attacks: [{ name: 'Trevas Oceânicas', cost: ['Psychic'], damage: '20' }]
       },
       { 
         id: 'fezandipiti2', name: 'Fezandipiti', hp: 120, type: 'Psychic', stage: 0,
@@ -173,7 +187,7 @@ const DECKS = {
       },
       { 
         id: 'mew_ex', name: 'Mew ex', hp: 180, type: 'Psychic', stage: 0,
-        weakness: 'Darkness', resistance: 'Fighting', retreat: 0, imgColor: 'pink',
+        weakness: 'Darkness', resistance: 'Fighting', retreat: 0, imgColor: 'purple',
         attacks: [{ name: 'Restart', cost: ['Ability'], damage: 'Ability' }, 
         { name: 'Genome Hacking', cost: ['Colorless', 'Colorless', 'Colorless'], damage: 'Copy' }
         ]
@@ -198,14 +212,7 @@ const DECKS = {
           { name: 'Phantom Dive', cost: ['Fire', 'Psychic'], damage: '200', effectType: 'distribute_damage', effectValue: 60 }
         ]
       },
-      { 
-        id: 'munkidori', name: 'Munkidori', hp: 110, type: 'Psychic', stage: 0,
-        weakness: 'Darkness', resistance: 'Fighting', retreat: 1, imgColor: 'purple',
-        attacks: [
-          { name: 'Adrena-Brain', cost: ['Ability'], damage: 'Ability' }, 
-          { name: 'Mind Bend', cost: ['Psychic', 'Colorless'], damage: '60' }
-        ]
-      },
+      
       { 
         id: 'drakloak', name: 'Drakloak', hp: 90, type: 'Dragon', stage: 1, evolvesFrom: 'Dreepy',
         weakness: null, resistance: null, retreat: 1, imgColor: 'indigo',
@@ -228,6 +235,14 @@ const DECKS = {
         id: 'duskull', name: 'Duskull', hp: 60, type: 'Psychic', stage: 0,
         weakness: 'Darkness', resistance: 'Fighting', retreat: 1, imgColor: 'purple',
         attacks: [{ name: 'Vim te Buscar', cost: ['Psychic'], damage: '10' }]
+      },
+      { 
+        id: 'munkidori', name: 'Munkidori', hp: 110, type: 'Psychic', stage: 0,
+        weakness: 'Darkness', resistance: 'Fighting', retreat: 1, imgColor: 'purple',
+        attacks: [
+          { name: 'Adrena-Brain', cost: ['Ability'], damage: 'Ability' }, 
+          { name: 'Mind Bend', cost: ['Psychic', 'Colorless'], damage: '60' }
+        ]
       },
       { 
         id: 'budew', name: 'Budew', hp: 30, type: 'Grass', stage: 0,
