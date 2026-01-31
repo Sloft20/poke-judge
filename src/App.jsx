@@ -670,6 +670,7 @@ const RankingModal = ({ onClose }) => {
     const [tab, setTab] = useState('decks');
     const [loading, setLoading] = useState(true);
     const [selectedLog, setSelectedLog] = useState(null); 
+    const [searchTerm, setSearchTerm] = useState(''); // Estado para a busca
 
     useEffect(() => {
         const fetchData = async () => {
@@ -710,14 +711,21 @@ const RankingModal = ({ onClose }) => {
         fetchData();
     }, []);
 
+    // Lógica de filtro para a aba de histórico
+    const filteredMatches = matches.filter(m => 
+        m.winner_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.loser_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (DECKS[m.winner_deck]?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (DECKS[m.loser_deck]?.name || "").toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     const sortedDecks = Object.values(stats.deckStats).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
     const sortedPlayers = Object.entries(stats.playerStats).map(([name, stat]) => ({name, ...stat})).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
 
     return (
       <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in">
-          {/* Fundo alterado para slate-900 (cor escura) conforme solicitado */}
           <Card className="w-full max-w-2xl h-[85vh] flex flex-col bg-slate-900 border-slate-700 shadow-2xl">
-              <div className="flex justify-between items-center mb-6 border-b border-slate-700 pb-4">
+              <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-4">
                   <h2 className="text-xl font-bold flex items-center gap-3 text-white">
                       <Trophy className="text-yellow-500" size={28}/> 
                       <span className="uppercase tracking-wide">Centro de Resultados</span>
@@ -725,49 +733,49 @@ const RankingModal = ({ onClose }) => {
                   <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors"><X size={24}/></button>
               </div>
               
-              <div className="flex gap-2 mb-6 p-1 bg-slate-800 rounded-lg border border-slate-700">
-                  <button onClick={() => setTab('decks')} className={`flex-1 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${tab === 'decks' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}>Meta Decks</button>
-                  <button onClick={() => setTab('players')} className={`flex-1 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${tab === 'players' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}>Jogadores</button>
-                  <button onClick={() => setTab('history')} className={`flex-1 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${tab === 'history' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}>Histórico</button>
+              <div className="flex gap-2 mb-4 p-1 bg-slate-800 rounded-lg border border-slate-700">
+                  <button onClick={() => setTab('decks')} className={`flex-1 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${tab === 'decks' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>Decks</button>
+                  <button onClick={() => setTab('players')} className={`flex-1 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${tab === 'players' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>Jogadores</button>
+                  <button onClick={() => setTab('history')} className={`flex-1 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${tab === 'history' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>Histórico</button>
               </div>
+
+              {/* Barra de busca aparece apenas na aba de histórico */}
+              {tab === 'history' && (
+                  <div className="mb-4 relative">
+                      <input 
+                        type="text" 
+                        placeholder="Buscar por jogador ou deck..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-10 text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                      <BarChart2 size={16} className="absolute left-3 top-2.5 text-slate-500" />
+                  </div>
+              )}
 
               <div className="flex-1 overflow-y-auto custom-scrollbar">
                   {loading ? (
-                      <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-4">
-                          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
-                          <p className="font-mono text-xs">Sincronizando com a Nuvem...</p>
-                      </div>
+                      <div className="flex flex-col items-center justify-center h-full text-slate-400"><div className="animate-spin mb-2">●</div>Sincronizando...</div>
                   ) : tab === 'history' ? (
                       <div className="space-y-3">
-                          {matches.map((m, idx) => (
-                              <div key={idx} className="bg-slate-800/40 p-4 rounded-lg border border-slate-700 flex justify-between items-center group">
+                          {filteredMatches.map((m, idx) => (
+                              <div key={idx} className="bg-slate-800/40 p-4 rounded-lg border border-slate-700 flex justify-between items-center hover:border-blue-500/50 transition-colors">
                                   <div>
-                                      <div className="text-xs text-slate-500 mb-1">{new Date(m.created_at).toLocaleDateString()}</div>
+                                      <div className="text-[9px] text-slate-500 mb-1 font-mono">{new Date(m.created_at).toLocaleString()}</div>
                                       <div className="text-sm font-bold text-white">
-                                          <span className="text-green-400">{m.winner_name}</span> vs {m.loser_name}
+                                          <span className="text-green-400">{m.winner_name}</span> <span className="text-[10px] text-slate-500 font-normal mx-1">VENCEU</span> {m.loser_name}
                                       </div>
                                       <div className="text-[10px] text-slate-400 italic">{(DECKS[m.winner_deck]?.name || m.winner_deck)} vs {(DECKS[m.loser_deck]?.name || m.loser_deck)}</div>
                                   </div>
-                                  <button 
-                                      onClick={() => setSelectedLog(m.game_logs)}
-                                      className="p-2 bg-blue-600/20 text-blue-400 rounded hover:bg-blue-600 hover:text-white transition-all text-[10px] uppercase font-bold"
-                                  >
-                                      Ver Log
-                                  </button>
+                                  <button onClick={() => setSelectedLog(m.game_logs)} className="p-2 bg-blue-600/20 text-blue-400 rounded hover:bg-blue-600 hover:text-white transition-all text-[10px] uppercase font-bold">Ver Log</button>
                               </div>
                           ))}
+                          {filteredMatches.length === 0 && <p className="text-center text-slate-500 text-xs mt-10">Nenhuma partida encontrada.</p>}
                       </div>
                   ) : (
-                    <table className="w-full text-sm text-left border-separate border-spacing-y-2">
-                        <thead className="text-slate-500 uppercase text-[10px] tracking-widest">
-                            <tr>
-                                <th className="px-4 py-2">{tab === 'decks' ? 'Arquétipo' : 'Nome'}</th>
-                                <th className="px-4 py-2 text-center">Partidas</th>
-                                <th className="px-4 py-2 text-center">Vitórias</th>
-                                <th className="px-4 py-2 text-center">Win Rate</th>
-                            </tr>
-                        </thead>
-                        <tbody className="text-slate-200">
+                      /* ... Restante do código das tabelas Decks/Jogadores ... */
+                      <table className="w-full text-sm text-left border-separate border-spacing-y-2">
+                          <tbody className="text-slate-200">
                             {(tab === 'decks' ? sortedDecks : sortedPlayers).map((item, idx) => (
                                 <tr key={idx} className="bg-slate-800/40 hover:bg-slate-800/80 transition-colors rounded-lg overflow-hidden border border-slate-700/50">
                                     <td className="px-4 py-3 font-bold border-l-4 border-blue-500 rounded-l-lg">{item.name}</td>
@@ -781,21 +789,21 @@ const RankingModal = ({ onClose }) => {
                                 </tr>
                             ))}
                         </tbody>
-                    </table>
+                      </table>
                   )}
               </div>
           </Card>
 
-          {/* SUB-MODAL PARA EXIBIR O LOG SALVO NA NUVEM */}
+          {/* Modal de Log (já integrado anteriormente) */}
           {selectedLog && (
-              <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4 animate-in zoom-in duration-200">
+              <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4 animate-in zoom-in">
                   <Card className="w-full max-w-lg h-[70vh] flex flex-col bg-slate-900 border-slate-700 shadow-2xl">
                       <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
-                          <h3 className="text-white font-bold flex items-center gap-2"><History size={16}/> Detalhes da Partida</h3>
+                          <h3 className="text-white font-bold flex items-center gap-2"><History size={16}/> Detalhes do Log</h3>
                           <button onClick={() => setSelectedLog(null)} className="text-slate-400 hover:text-white"><X/></button>
                       </div>
                       <pre className="flex-1 overflow-y-auto text-[10px] font-mono text-slate-300 p-3 bg-slate-950 rounded whitespace-pre-wrap custom-scrollbar">
-                          {selectedLog}
+                          {selectedLog || "Nenhum log registrado para esta partida."}
                       </pre>
                   </Card>
               </div>
