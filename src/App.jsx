@@ -167,14 +167,16 @@ const DECKS = {
         attacks: [{ name: 'Moonglow Reverse', cost: ['Psychic'], damage: 'Efeito' }, { name: 'Lunar Blast', cost: ['Psychic', 'Psychic', 'Colorless'], damage: '110' }]
       },
       { 
-        id: 'lumineon_v', name: 'Lumineon V', hp: 170, type: 'Water', stage: 0,
-        weakness: 'Lightning', resistance: null, retreat: 1, imgColor: 'blue',
-        attacks: [{ name: 'Luminous Sign', cost: ['Ability'], damage: 'Ability' }, { name: 'Aqua Return', cost: ['Water', 'Colorless', 'Colorless'], damage: '120' }]
+        id: 'fezandipiti2', name: 'Fezandipiti', hp: 120, type: 'Psychic', stage: 0,
+        weakness: 'Metal', resistance: null, retreat: 1, imgColor: 'purple',
+        attacks: [{ name: 'Adrena-Feromônio', cost: ['Ability'], damage: 'Ability' }, { name: 'Pluma de Energia', cost: ['Psychic'], damage: '30', effect: 'Este ataque causa 30 pontos de dano para cada Energia ligada a este Pokémon.' }]
       },
       { 
         id: 'mew_ex', name: 'Mew ex', hp: 180, type: 'Psychic', stage: 0,
         weakness: 'Darkness', resistance: 'Fighting', retreat: 0, imgColor: 'pink',
-        attacks: [{ name: 'Restart', cost: ['Ability'], damage: 'Ability' }, { name: 'Genome Hacking', cost: ['Colorless', 'Colorless', 'Colorless'], damage: 'Copy' }]
+        attacks: [{ name: 'Restart', cost: ['Ability'], damage: 'Ability' }, 
+        { name: 'Genome Hacking', cost: ['Colorless', 'Colorless', 'Colorless'], damage: 'Copy' }
+        ]
       },
       { 
         id: 'rad_greninja', name: 'Radiant Greninja', hp: 130, type: 'Water', stage: 0,
@@ -519,6 +521,11 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
                                   })}
                           </div>
                           <span className="text-[7px] text-gray-600 font-bold leading-none truncate w-full">{atk.name}</span>
+                          {atk.effect && (
+                                <p className="text-[7px] leading-[1.1] text-gray-600 mt-0.5 italic break-words">
+                                    {atk.effect}
+                                </p>
+                           )}
                       </div>
                   ))}
               </div>
