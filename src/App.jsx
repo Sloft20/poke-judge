@@ -921,28 +921,34 @@ export default function PokeJudgePro() {
     const winner = players[winnerIndex];
     const loser = players[winnerIndex === 0 ? 1 : 0];
 
+    // Transforma o array de logs em um texto formatado, como no seu .txt
+    const fullLogText = logs.map(l => `[${l.time}] [${l.level}] ${l.text}`).join('\n');
+
     const matchData = {
-      winner_name: winner.name,
-      loser_name: loser.name,
-      winner_deck: winner.deckArchetype,
-      loser_deck: loser.deckArchetype,
-      match_type: "Standard"
+        winner_name: winner.name,
+        loser_name: loser.name,
+        winner_deck: winner.deckArchetype,
+        loser_deck: loser.deckArchetype,
+        match_type: "Standard",
+        game_logs: fullLogText // Envia o log completo para a nuvem
     };
 
-    // 1. Salva no Supabase
+    // Salva no Supabase
     const { error } = await supabase.from('matches').insert([matchData]);
 
     if (error) {
-      console.error("Erro ao salvar no Supabase:", error);
+        console.error("Erro ao salvar no Supabase:", error);
+    } else {
+        console.log("Partida e Logs salvos na nuvem!");
     }
 
-    // 2. Mantém o backup local
+    // Backup local
     const existingHistory = JSON.parse(localStorage.getItem('pokejudge_history') || '[]');
     localStorage.setItem('pokejudge_history', JSON.stringify([...existingHistory, {
-      ...matchData,
-      date: new Date().toISOString()
+        ...matchData,
+        date: new Date().toISOString()
     }]));
-  };
+};
 
   const declareWinner = async (winnerIndex) => {
     const winnerName = players[winnerIndex].name;
