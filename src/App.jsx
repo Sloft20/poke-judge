@@ -213,9 +213,9 @@ const DECKS = {
         attacks: [{ name: 'Vim te Buscar', cost: ['Psychic'], damage: '10' }]
       },
       { 
-        id: 'tatsugiri', name: 'Tatsugiri', hp: 70, type: 'Dragon', stage: 0,
-        weakness: null, resistance: null, retreat: 1, imgColor: 'orange',
-        attacks: [{ name: 'Attract Customers', cost: ['Ability'], damage: 'Ability' }, { name: 'Surf', cost: ['Fire', 'Water'], damage: '50' }]
+        id: 'budew', name: 'Budew', hp: 30, type: 'Grass', stage: 0,
+        weakness: 'Fire', resistance: null, retreat: 0, imgColor: 'green',
+        attacks: [{ name: 'Comichão de Pólen', cost: [null], damage: '10' }]
       },
       { 
         id: 'fezandipiti', name: 'Fezandipiti ex', hp: 210, type: 'Darkness', stage: 0,
