@@ -83,6 +83,21 @@ const DECKS = {
         attacks: [{ name: 'Ember', cost: ['Fire'], damage: '30' }] 
       },
       { 
+        id: 'charmander2', name: 'Charmander', hp: 80, type: 'Fire', stage: 0,
+        weakness: 'Water', resistance: null, retreat: 1, imgColor: 'orange',
+        attacks: [{ name: 'Live Carbon', cost: ['Fire'], damage: '20' }] 
+      },
+      { 
+        id: 'reshiram', name: 'Reshiram', hp: 120, type: 'Fire', stage: 0,
+        weakness: 'Water', resistance: null, retreat: 2, imgColor: 'red',
+        attacks: [{ name: 'Flare', cost: ['Fire'], damage: '20' }, { name: 'Inferno Wings', cost: ['Fire', 'Fire', 'Fire', 'Fire'], damage: '240' }]
+      },
+      { 
+        id: 'cottonee', name: 'Cottonee', hp: 60, type: 'Grass', stage: 0,
+        weakness: 'Fire', resistance: null, retreat: 1, imgColor: 'green',
+        attacks: [{ name: 'Coleta', cost: [null], damage: '0' }]
+      },
+      { 
         id: 'pidgeot_ex', name: 'Pidgeot ex', hp: 280, type: 'Colorless', stage: 2, evolvesFrom: 'Pidgeotto',
         weakness: 'Lightning', resistance: 'Fighting', retreat: 0, imgColor: 'gray',
         attacks: [
