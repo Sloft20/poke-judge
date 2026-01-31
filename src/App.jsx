@@ -666,13 +666,18 @@ const GameLobby = ({ players, onUpdatePlayer, onStartGame }) => {
 
 const RankingModal = ({ onClose }) => {
     const [stats, setStats] = useState({ deckStats: {}, playerStats: {} });
+    const [matches, setMatches] = useState([]); 
     const [tab, setTab] = useState('decks');
     const [loading, setLoading] = useState(true);
+    const [selectedLog, setSelectedLog] = useState(null); 
 
     useEffect(() => {
-        const fetchGlobalStats = async () => {
+        const fetchData = async () => {
             setLoading(true);
-            const { data, error } = await supabase.from('matches').select('*');
+            const { data, error } = await supabase
+                .from('matches')
+                .select('*')
+                .order('created_at', { ascending: false }); 
 
             if (error || !data) {
                 console.error("Erro ao buscar dados:", error);
@@ -680,18 +685,17 @@ const RankingModal = ({ onClose }) => {
                 return;
             }
 
+            setMatches(data); 
+
             const deckStats = {};
             const playerStats = {};
-
             data.forEach(match => {
-                // Decks
                 [match.winner_deck, match.loser_deck].forEach(deck => {
                     if(!deckStats[deck]) deckStats[deck] = { plays: 0, wins: 0, name: DECKS[deck]?.name || deck };
                     deckStats[deck].plays++;
                 });
                 if(deckStats[match.winner_deck]) deckStats[match.winner_deck].wins++;
 
-                // Players
                 [match.winner_name, match.loser_name].forEach(player => {
                     if(!playerStats[player]) playerStats[player] = { plays: 0, wins: 0 };
                     playerStats[player].plays++;
@@ -703,33 +707,55 @@ const RankingModal = ({ onClose }) => {
             setLoading(false);
         };
 
-        fetchGlobalStats();
+        fetchData();
     }, []);
 
     const sortedDecks = Object.values(stats.deckStats).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
     const sortedPlayers = Object.entries(stats.playerStats).map(([name, stat]) => ({name, ...stat})).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
 
     return (
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <Card className="w-full max-w-2xl h-[80vh] flex flex-col bg-slate-900 border-slate-700 shadow-2xl">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in">
+          {/* Fundo alterado para slate-900 (cor escura) conforme solicitado */}
+          <Card className="w-full max-w-2xl h-[85vh] flex flex-col bg-slate-900 border-slate-700 shadow-2xl">
               <div className="flex justify-between items-center mb-6 border-b border-slate-700 pb-4">
                   <h2 className="text-xl font-bold flex items-center gap-3 text-white">
                       <Trophy className="text-yellow-500" size={28}/> 
-                      <span className="uppercase tracking-wide">Ranking Global</span>
+                      <span className="uppercase tracking-wide">Centro de Resultados</span>
                   </h2>
                   <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors"><X size={24}/></button>
               </div>
               
               <div className="flex gap-2 mb-6 p-1 bg-slate-800 rounded-lg border border-slate-700">
-                  <button onClick={() => setTab('decks')} className={`flex-1 py-2 rounded-md text-sm font-bold uppercase transition-all ${tab === 'decks' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}>Meta Decks</button>
-                  <button onClick={() => setTab('players')} className={`flex-1 py-2 rounded-md text-sm font-bold uppercase transition-all ${tab === 'players' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}>Jogadores</button>
+                  <button onClick={() => setTab('decks')} className={`flex-1 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${tab === 'decks' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}>Meta Decks</button>
+                  <button onClick={() => setTab('players')} className={`flex-1 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${tab === 'players' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}>Jogadores</button>
+                  <button onClick={() => setTab('history')} className={`flex-1 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${tab === 'history' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}>Histórico</button>
               </div>
 
               <div className="flex-1 overflow-y-auto custom-scrollbar">
                   {loading ? (
                       <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-4">
                           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
-                          <p className="font-mono text-sm">Sincronizando com a Nuvem...</p>
+                          <p className="font-mono text-xs">Sincronizando com a Nuvem...</p>
+                      </div>
+                  ) : tab === 'history' ? (
+                      <div className="space-y-3">
+                          {matches.map((m, idx) => (
+                              <div key={idx} className="bg-slate-800/40 p-4 rounded-lg border border-slate-700 flex justify-between items-center group">
+                                  <div>
+                                      <div className="text-xs text-slate-500 mb-1">{new Date(m.created_at).toLocaleDateString()}</div>
+                                      <div className="text-sm font-bold text-white">
+                                          <span className="text-green-400">{m.winner_name}</span> vs {m.loser_name}
+                                      </div>
+                                      <div className="text-[10px] text-slate-400 italic">{(DECKS[m.winner_deck]?.name || m.winner_deck)} vs {(DECKS[m.loser_deck]?.name || m.loser_deck)}</div>
+                                  </div>
+                                  <button 
+                                      onClick={() => setSelectedLog(m.game_logs)}
+                                      className="p-2 bg-blue-600/20 text-blue-400 rounded hover:bg-blue-600 hover:text-white transition-all text-[10px] uppercase font-bold"
+                                  >
+                                      Ver Log
+                                  </button>
+                              </div>
+                          ))}
                       </div>
                   ) : (
                     <table className="w-full text-sm text-left border-separate border-spacing-y-2">
@@ -759,6 +785,21 @@ const RankingModal = ({ onClose }) => {
                   )}
               </div>
           </Card>
+
+          {/* SUB-MODAL PARA EXIBIR O LOG SALVO NA NUVEM */}
+          {selectedLog && (
+              <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4 animate-in zoom-in duration-200">
+                  <Card className="w-full max-w-lg h-[70vh] flex flex-col bg-slate-900 border-slate-700 shadow-2xl">
+                      <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
+                          <h3 className="text-white font-bold flex items-center gap-2"><History size={16}/> Detalhes da Partida</h3>
+                          <button onClick={() => setSelectedLog(null)} className="text-slate-400 hover:text-white"><X/></button>
+                      </div>
+                      <pre className="flex-1 overflow-y-auto text-[10px] font-mono text-slate-300 p-3 bg-slate-950 rounded whitespace-pre-wrap custom-scrollbar">
+                          {selectedLog}
+                      </pre>
+                  </Card>
+              </div>
+          )}
       </div>
     );
 };
