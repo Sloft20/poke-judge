@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+
 import { 
   Shield, Sword, RefreshCw, AlertTriangle, BookOpen, 
   History, User, CheckCircle, Ban, Skull, Clock,
@@ -10,6 +11,7 @@ import {
   // Novos ícones de energia importados do Lucide conforme solicitado
   Flame, Droplets, Leaf, Eye, Dumbbell, Moon, Crown, Circle, Star, Bolt, Origami 
 } from 'lucide-react';
+import { supabase } from './supabaseClient';
 
 // --- 2. CONSTANTES E TIPOS ---
 
@@ -663,56 +665,98 @@ const GameLobby = ({ players, onUpdatePlayer, onStartGame }) => {
 };
 
 const RankingModal = ({ onClose }) => {
-    const { deckStats, playerStats } = calculateStats();
+    const [stats, setStats] = useState({ deckStats: {}, playerStats: {} });
     const [tab, setTab] = useState('decks');
+    const [loading, setLoading] = useState(true);
 
-    const sortedDecks = Object.values(deckStats).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
-    const sortedPlayers = Object.entries(playerStats).map(([name, stat]) => ({name, ...stat})).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
+    useEffect(() => {
+        const fetchGlobalStats = async () => {
+            setLoading(true);
+            const { data, error } = await supabase.from('matches').select('*');
+
+            if (error || !data) {
+                console.error("Erro ao buscar dados:", error);
+                setLoading(false);
+                return;
+            }
+
+            const deckStats = {};
+            const playerStats = {};
+
+            data.forEach(match => {
+                // Decks
+                [match.winner_deck, match.loser_deck].forEach(deck => {
+                    if(!deckStats[deck]) deckStats[deck] = { plays: 0, wins: 0, name: DECKS[deck]?.name || deck };
+                    deckStats[deck].plays++;
+                });
+                if(deckStats[match.winner_deck]) deckStats[match.winner_deck].wins++;
+
+                // Players
+                [match.winner_name, match.loser_name].forEach(player => {
+                    if(!playerStats[player]) playerStats[player] = { plays: 0, wins: 0 };
+                    playerStats[player].plays++;
+                });
+                if(playerStats[match.winner_name]) playerStats[match.winner_name].wins++;
+            });
+
+            setStats({ deckStats, playerStats });
+            setLoading(false);
+        };
+
+        fetchGlobalStats();
+    }, []);
+
+    const sortedDecks = Object.values(stats.deckStats).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
+    const sortedPlayers = Object.entries(stats.playerStats).map(([name, stat]) => ({name, ...stat})).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
 
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <Card className="w-full max-w-2xl h-[80vh] flex flex-col bg-white border-gray-200">
-              <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-4">
-                  <h2 className="text-xl font-bold flex items-center gap-3 text-gray-800">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <Card className="w-full max-w-2xl h-[80vh] flex flex-col bg-slate-900 border-slate-700 shadow-2xl">
+              <div className="flex justify-between items-center mb-6 border-b border-slate-700 pb-4">
+                  <h2 className="text-xl font-bold flex items-center gap-3 text-white">
                       <Trophy className="text-yellow-500" size={28}/> 
-                      <span className="uppercase tracking-wide">Ranking & Stats</span>
+                      <span className="uppercase tracking-wide">Ranking Global</span>
                   </h2>
-                  <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={24}/></button>
+                  <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors"><X size={24}/></button>
               </div>
               
-              <div className="flex gap-2 mb-6 p-1 bg-gray-100 rounded-lg">
-                  <button onClick={() => setTab('decks')} className={`flex-1 py-2 rounded-md text-sm font-bold uppercase transition-all ${tab === 'decks' ? 'bg-white text-blue-600 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>Decks Meta</button>
-                  <button onClick={() => setTab('players')} className={`flex-1 py-2 rounded-md text-sm font-bold uppercase transition-all ${tab === 'players' ? 'bg-white text-blue-600 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>Jogadores</button>
+              <div className="flex gap-2 mb-6 p-1 bg-slate-800 rounded-lg border border-slate-700">
+                  <button onClick={() => setTab('decks')} className={`flex-1 py-2 rounded-md text-sm font-bold uppercase transition-all ${tab === 'decks' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}>Meta Decks</button>
+                  <button onClick={() => setTab('players')} className={`flex-1 py-2 rounded-md text-sm font-bold uppercase transition-all ${tab === 'players' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}>Jogadores</button>
               </div>
 
               <div className="flex-1 overflow-y-auto custom-scrollbar">
-                  <table className="w-full text-sm text-left border-separate border-spacing-y-2">
-                      <thead className="text-gray-500 uppercase text-xs tracking-wider">
-                          <tr>
-                              <th className="px-4 py-2">{tab === 'decks' ? 'Arquétipo' : 'Nome'}</th>
-                              <th className="px-4 py-2 text-center">Partidas</th>
-                              <th className="px-4 py-2 text-center">Vitórias</th>
-                              <th className="px-4 py-2 text-center">Win Rate</th>
-                          </tr>
-                      </thead>
-                      <tbody className="text-gray-700">
-                          {(tab === 'decks' ? sortedDecks : sortedPlayers).map((item, idx) => (
-                              <tr key={idx} className="bg-gray-50 hover:bg-gray-100 transition-colors rounded-lg overflow-hidden">
-                                  <td className="px-4 py-3 font-bold border-l-4 border-blue-500 rounded-l-lg">{item.name}</td>
-                                  <td className="px-4 py-3 text-center font-mono">{item.plays}</td>
-                                  <td className="px-4 py-3 text-center font-mono text-green-600">{item.wins}</td>
-                                  <td className="px-4 py-3 text-center font-bold rounded-r-lg">
-                                      <span className={`px-2 py-1 rounded text-xs ${((item.wins / item.plays) * 100) >= 50 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                          {((item.wins / item.plays) * 100).toFixed(1)}%
-                                      </span>
-                                  </td>
-                              </tr>
-                          ))}
-                          {(tab === 'decks' ? sortedDecks : sortedPlayers).length === 0 && (
-                              <tr><td colSpan="4" className="text-center py-12 text-gray-400 italic">Nenhum dado registrado no sistema.</td></tr>
-                          )}
-                      </tbody>
-                  </table>
+                  {loading ? (
+                      <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-4">
+                          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+                          <p className="font-mono text-sm">Sincronizando com a Nuvem...</p>
+                      </div>
+                  ) : (
+                    <table className="w-full text-sm text-left border-separate border-spacing-y-2">
+                        <thead className="text-slate-500 uppercase text-[10px] tracking-widest">
+                            <tr>
+                                <th className="px-4 py-2">{tab === 'decks' ? 'Arquétipo' : 'Nome'}</th>
+                                <th className="px-4 py-2 text-center">Partidas</th>
+                                <th className="px-4 py-2 text-center">Vitórias</th>
+                                <th className="px-4 py-2 text-center">Win Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody className="text-slate-200">
+                            {(tab === 'decks' ? sortedDecks : sortedPlayers).map((item, idx) => (
+                                <tr key={idx} className="bg-slate-800/40 hover:bg-slate-800/80 transition-colors rounded-lg overflow-hidden border border-slate-700/50">
+                                    <td className="px-4 py-3 font-bold border-l-4 border-blue-500 rounded-l-lg">{item.name}</td>
+                                    <td className="px-4 py-3 text-center font-mono">{item.plays}</td>
+                                    <td className="px-4 py-3 text-center font-mono text-green-400">{item.wins}</td>
+                                    <td className="px-4 py-3 text-center font-bold rounded-r-lg">
+                                        <span className={`px-2 py-1 rounded text-[10px] ${((item.wins / item.plays) * 100) >= 50 ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
+                                            {((item.wins / item.plays) * 100).toFixed(1)}%
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                  )}
               </div>
           </Card>
       </div>
@@ -730,7 +774,32 @@ export default function PokeJudgePro() {
     setupComplete: false,
     startTime: null
   });
+  const fetchGlobalStats = async () => {
+      const { data, error } = await supabase.from('matches').select('*');
+      if (error) {
+          console.error("Erro ao buscar ranking global:", error);
+          return calculateStats(); 
+      }
 
+      const deckStats = {};
+      const playerStats = {};
+
+      data.forEach(match => {
+          [match.winner_deck, match.loser_deck].forEach(deck => {
+              if(!deckStats[deck]) deckStats[deck] = { plays: 0, wins: 0, name: DECKS[deck]?.name || deck };
+              deckStats[deck].plays++;
+          });
+          if(deckStats[match.winner_deck]) deckStats[match.winner_deck].wins++;
+
+          [match.winner_name, match.loser_name].forEach(player => {
+              if(!playerStats[player]) playerStats[player] = { plays: 0, wins: 0 };
+              playerStats[player].plays++;
+          });
+          if(playerStats[match.winner_name]) playerStats[match.winner_name].wins++;
+      });
+
+      return { deckStats, playerStats };
+  };
   const [gameTimer, setGameTimer] = useState(0); 
   const [isTimerPaused, setIsTimerPaused] = useState(false);
   const [showPrizeModal, setShowPrizeModal] = useState(false);
@@ -848,31 +917,43 @@ export default function PokeJudgePro() {
       addLog(`Fase de Preparação Iniciada.`, 'INFO');
   };
 
-  const saveMatchResult = (winnerIndex) => {
-      const winner = players[winnerIndex];
-      const loser = players[winnerIndex === 0 ? 1 : 0];
+  const saveMatchResult = async (winnerIndex) => {
+    const winner = players[winnerIndex];
+    const loser = players[winnerIndex === 0 ? 1 : 0];
 
-      const matchData = {
-          date: new Date().toISOString(),
-          winnerName: winner.name,
-          loserName: loser.name,
-          winnerDeck: winner.deckArchetype,
-          loserDeck: loser.deckArchetype
-      };
+    const matchData = {
+      winner_name: winner.name,
+      loser_name: loser.name,
+      winner_deck: winner.deckArchetype,
+      loser_deck: loser.deckArchetype,
+      match_type: "Standard"
+    };
 
-      const existingHistory = JSON.parse(localStorage.getItem('pokejudge_history') || '[]');
-      const newHistory = [...existingHistory, matchData];
-      localStorage.setItem('pokejudge_history', JSON.stringify(newHistory));
+    // 1. Salva no Supabase
+    const { error } = await supabase.from('matches').insert([matchData]);
+
+    if (error) {
+      console.error("Erro ao salvar no Supabase:", error);
+    }
+
+    // 2. Mantém o backup local
+    const existingHistory = JSON.parse(localStorage.getItem('pokejudge_history') || '[]');
+    localStorage.setItem('pokejudge_history', JSON.stringify([...existingHistory, {
+      ...matchData,
+      date: new Date().toISOString()
+    }]));
   };
 
-  const declareWinner = (winnerIndex) => {
-      const winnerName = players[winnerIndex].name;
-      setGameState(prev => ({ 
-          ...prev, 
-          phase: PHASES.GAME_OVER, 
-          winner: winnerName 
-      }));
-      saveMatchResult(winnerIndex);
+  const declareWinner = async (winnerIndex) => {
+    const winnerName = players[winnerIndex].name;
+    setGameState(prev => ({ 
+        ...prev, 
+        phase: PHASES.GAME_OVER, 
+        winner: winnerName 
+    }));
+    
+    // Aguarda o salvamento antes de prosseguir
+    await saveMatchResult(winnerIndex);
   };
 
   const resetGame = () => {
