@@ -247,7 +247,7 @@ const DECKS = {
       { 
         id: 'budew', name: 'Budew', hp: 30, type: 'Grass', stage: 0,
         weakness: 'Fire', resistance: null, retreat: 0, imgColor: 'green',
-        attacks: [{ name: 'Comichão de Pólen', cost: [null], damage: '10' }]
+        attacks: [{ name: 'Comichão de Pólen', cost: [], damage: '10' }]
       },
       { 
         id: 'fezandipiti', name: 'Fezandipiti ex', hp: 210, type: 'Darkness', stage: 0,
@@ -702,56 +702,101 @@ const GameLobby = ({ players, onUpdatePlayer, onStartGame }) => {
 const RankingModal = ({ onClose }) => {
     const { deckStats, playerStats } = calculateStats();
     const [tab, setTab] = useState('decks');
+    const [selectedMatchLogs, setSelectedMatchLogs] = useState(null);
+    const [matches, setMatches] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchHistory = async () => {
+            setLoading(true);
+            const { data } = await supabase
+                .from('matches')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(10);
+            if (data) setMatches(data);
+            setLoading(false);
+        };
+        fetchHistory();
+    }, []);
 
     const sortedDecks = Object.values(deckStats).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
     const sortedPlayers = Object.entries(playerStats).map(([name, stat]) => ({name, ...stat})).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
 
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <Card className="w-full max-w-2xl h-[80vh] flex flex-col bg-white border-gray-200">
-              <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-4">
-                  <h2 className="text-xl font-bold flex items-center gap-3 text-gray-800">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
+          {/* Fundo Branco e Estilo Light conforme a primeira foto */}
+          <Card className="w-full max-w-2xl h-[85vh] flex flex-col bg-white border-gray-100 shadow-2xl">
+              <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4 px-4 pt-4">
+                  <h2 className="text-xl font-bold flex items-center gap-3 text-gray-800 uppercase tracking-tight">
                       <Trophy className="text-yellow-500" size={28}/> 
-                      <span className="uppercase tracking-wide">Ranking & Stats</span>
+                      Ranking & Stats
                   </h2>
-                  <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={24}/></button>
+                  <button onClick={onClose} className="text-gray-400 hover:text-red-500 transition-colors"><X size={24}/></button>
               </div>
               
-              <div className="flex gap-2 mb-6 p-1 bg-gray-100 rounded-lg">
-                  <button onClick={() => setTab('decks')} className={`flex-1 py-2 rounded-md text-sm font-bold uppercase transition-all ${tab === 'decks' ? 'bg-white text-blue-600 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>Decks Meta</button>
-                  <button onClick={() => setTab('players')} className={`flex-1 py-2 rounded-md text-sm font-bold uppercase transition-all ${tab === 'players' ? 'bg-white text-blue-600 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>Jogadores</button>
+              {/* Abas com fundo cinza claro */}
+              <div className="flex gap-2 mb-6 p-1 bg-gray-100 mx-4 rounded-lg border border-gray-200">
+                  <button onClick={() => setTab('decks')} className={`flex-1 py-2 rounded-md text-xs font-bold uppercase transition-all ${tab === 'decks' ? 'bg-white text-blue-600 shadow-sm border border-gray-200' : 'text-gray-500'}`}>Decks Meta</button>
+                  <button onClick={() => setTab('players')} className={`flex-1 py-2 rounded-md text-xs font-bold uppercase transition-all ${tab === 'players' ? 'bg-white text-blue-600 shadow-sm border border-gray-200' : 'text-gray-500'}`}>Jogadores</button>
+                  <button onClick={() => setTab('history')} className={`flex-1 py-2 rounded-md text-xs font-bold uppercase transition-all ${tab === 'history' ? 'bg-white text-blue-600 shadow-sm border border-gray-200' : 'text-gray-500'}`}>Histórico</button>
               </div>
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar">
-                  <table className="w-full text-sm text-left border-separate border-spacing-y-2">
-                      <thead className="text-gray-500 uppercase text-xs tracking-wider">
-                          <tr>
-                              <th className="px-4 py-2">{tab === 'decks' ? 'Arquétipo' : 'Nome'}</th>
-                              <th className="px-4 py-2 text-center">Partidas</th>
-                              <th className="px-4 py-2 text-center">Vitórias</th>
-                              <th className="px-4 py-2 text-center">Win Rate</th>
-                          </tr>
-                      </thead>
-                      <tbody className="text-gray-700">
-                          {(tab === 'decks' ? sortedDecks : sortedPlayers).map((item, idx) => (
-                              <tr key={idx} className="bg-gray-50 hover:bg-gray-100 transition-colors rounded-lg overflow-hidden">
-                                  <td className="px-4 py-3 font-bold border-l-4 border-blue-500 rounded-l-lg">{item.name}</td>
-                                  <td className="px-4 py-3 text-center font-mono">{item.plays}</td>
-                                  <td className="px-4 py-3 text-center font-mono text-green-600">{item.wins}</td>
-                                  <td className="px-4 py-3 text-center font-bold rounded-r-lg">
-                                      <span className={`px-2 py-1 rounded text-xs ${((item.wins / item.plays) * 100) >= 50 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                          {((item.wins / item.plays) * 100).toFixed(1)}%
-                                      </span>
-                                  </td>
-                              </tr>
+              <div className="flex-1 overflow-y-auto custom-scrollbar px-4 pb-4">
+                  {tab === 'history' ? (
+                      <div className="space-y-2">
+                          {loading ? (
+                              <p className="text-center py-10 text-gray-400 animate-pulse">Carregando histórico do Supabase...</p>
+                          ) : matches.map((m, idx) => (
+                              <div key={idx} className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex justify-between items-center hover:bg-gray-100 transition-all">
+                                  <div>
+                                      <div className="text-[10px] text-gray-400 font-mono mb-1">{new Date(m.created_at).toLocaleString()}</div>
+                                      <div className="text-sm font-bold text-gray-800"><span className="text-green-600">{m.winner_name}</span> vs {m.loser_name}</div>
+                                      <div className="text-[10px] italic text-gray-500">{(DECKS[m.winner_deck]?.name || m.winner_deck)} vs {(DECKS[m.loser_deck]?.name || m.loser_deck)}</div>
+                                  </div>
+                                  <button onClick={() => setSelectedMatchLogs(m.game_logs)} className="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all text-[10px] uppercase font-bold border border-blue-100">Ver Log</button>
+                              </div>
                           ))}
-                          {(tab === 'decks' ? sortedDecks : sortedPlayers).length === 0 && (
-                              <tr><td colSpan="4" className="text-center py-12 text-gray-400 italic">Nenhum dado registrado no sistema.</td></tr>
-                          )}
-                      </tbody>
-                  </table>
+                      </div>
+                  ) : (
+                      <table className="w-full text-sm text-left border-separate border-spacing-y-2">
+                          <tbody className="text-gray-700">
+                              {(tab === 'decks' ? sortedDecks : sortedPlayers).map((item, idx) => (
+                                  <tr key={idx} className="bg-gray-50 hover:bg-gray-100 transition-colors rounded-xl overflow-hidden border border-gray-200">
+                                      <td className="px-4 py-3 font-bold border-l-4 border-blue-500 rounded-l-xl">{item.name}</td>
+                                      <td className="px-4 py-3 text-center text-xs text-gray-500">{item.plays} partidas</td>
+                                      <td className="px-4 py-3 text-center font-bold rounded-r-xl">
+                                          <span className={`px-2 py-1 rounded-md text-[10px] ${((item.wins / item.plays) * 100) >= 50 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                              {((item.wins / item.plays) * 100).toFixed(1)}% WR
+                                          </span>
+                                      </td>
+                                  </tr>
+                              ))}
+                          </tbody>
+                      </table>
+                  )}
               </div>
           </Card>
+
+          {/* Sub-modal de Replay com Estilo Light Moderno */}
+          {selectedMatchLogs && (
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4 animate-in zoom-in duration-200">
+                  <Card className="w-full max-w-lg h-[75vh] flex flex-col bg-white border-gray-200 shadow-2xl rounded-2xl">
+                      <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-2 p-4">
+                          <h3 className="text-gray-800 font-bold flex items-center gap-2">
+                              <History size={18} className="text-blue-500"/> Logs da Partida
+                          </h3>
+                          <button onClick={() => setSelectedMatchLogs(null)} className="text-gray-400 hover:text-red-500"><X/></button>
+                      </div>
+                      <div className="flex-1 overflow-y-auto p-4 m-4 bg-gray-50 rounded-xl font-mono text-[11px] text-gray-700 leading-relaxed custom-scrollbar whitespace-pre-wrap border border-gray-200">
+                          {selectedMatchLogs || "Nenhum log registrado para esta partida antiga."}
+                      </div>
+                      <div className="p-4 pt-0">
+                          <Button variant="primary" className="w-full py-3" onClick={() => setSelectedMatchLogs(null)}>Voltar ao Ranking</Button>
+                      </div>
+                  </Card>
+              </div>
+          )}
       </div>
     );
 };
@@ -772,6 +817,7 @@ export default function PokeJudgePro() {
   const [isTimerPaused, setIsTimerPaused] = useState(false);
   const [showPrizeModal, setShowPrizeModal] = useState(false);
   const [prizeAlert, setPrizeAlert] = useState(null); // Estado para o overlay de prêmio
+  const [retreatModal, setRetreatModal] = useState(null);
 
   const INITIAL_PLAYERS = [
     {
@@ -885,22 +931,33 @@ export default function PokeJudgePro() {
       addLog(`Fase de Preparação Iniciada.`, 'INFO');
   };
 
-  const saveMatchResult = (winnerIndex) => {
-      const winner = players[winnerIndex];
-      const loser = players[winnerIndex === 0 ? 1 : 0];
+  const saveMatchResult = async (winnerIndex) => {
+    const winner = players[winnerIndex];
+    const loser = players[winnerIndex === 0 ? 1 : 0];
 
-      const matchData = {
-          date: new Date().toISOString(),
-          winnerName: winner.name,
-          loserName: loser.name,
-          winnerDeck: winner.deckArchetype,
-          loserDeck: loser.deckArchetype
-      };
+    // Converte o array de logs em uma string formatada para leitura
+    const fullLogText = logs.map(l => `[${l.time}] ${l.text}`).join('\n');
 
-      const existingHistory = JSON.parse(localStorage.getItem('pokejudge_history') || '[]');
-      const newHistory = [...existingHistory, matchData];
-      localStorage.setItem('pokejudge_history', JSON.stringify(newHistory));
-  };
+    const matchData = {
+        winner_name: winner.name,
+        loser_name: loser.name,
+        winner_deck: winner.deckArchetype,
+        loser_deck: loser.deckArchetype,
+        game_logs: fullLogText, // Aqui enviamos o histórico completo para o Supabase
+        created_at: new Date().toISOString()
+    };
+
+    try {
+        const { data, error } = await supabase
+            .from('matches')
+            .insert([matchData]);
+
+        if (error) throw error;
+        console.log("Partida e logs salvos no Supabase com sucesso!");
+    } catch (error) {
+        console.error("Erro ao salvar no Supabase:", error.message);
+    }
+};
 
   const declareWinner = (winnerIndex) => {
       const winnerName = players[winnerIndex].name;
@@ -991,29 +1048,53 @@ export default function PokeJudgePro() {
   // --- LÓGICA DE CARTAS E TABULEIRO --- (Mantida)
   // ... (placePokemon, requestEvolution, promoteFromBench, etc... - Igual anterior) ...
   const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.currentPlayerIndex, evolveTargetIndex = null) => {
-      const player = players[pIndex];
-      const cardData = { ...(card || { name: 'Desconhecido', type: 'Colorless', hp: '???', imgColor: 'gray', retreat: 1, isGeneric: true, stage: 0 }), turnPlayed: gameState.turnCount, attachedEnergy: [], attachedTool: null, damage: 0, abilitiesUsedThisTurn: [] };
-      if (destination === 'ACTIVE') {
-          if (player.activePokemon) { addLog(`Erro: Já existe um Pokémon Ativo.`, 'WARN', pIndex); return; }
-          updatePlayer(pIndex, { activePokemon: cardData, activeCondition: CONDITIONS.NONE, handCount: Math.max(0, player.handCount - 1) });
-          addLog(`Colocou ${cardData.name} como Ativo.`, 'INFO', pIndex);
-      } else if (destination === 'BENCH') {
-          if (player.benchCount >= 5) { addLog(`Erro: Banco cheio.`, 'CRIT', pIndex); return; }
-          updatePlayer(pIndex, { benchPokemon: [...player.benchPokemon, cardData], benchCount: player.benchCount + 1, handCount: Math.max(0, player.handCount - 1) });
-          addLog(`Colocou ${cardData.name} no Banco.`, 'INFO', pIndex);
-      } else if (destination === 'EVOLVE_ACTIVE') {
-         const oldEnergies = player.activePokemon.attachedEnergy || []; const oldTool = player.activePokemon.attachedTool; const oldDamage = player.activePokemon.damage || 0;
-         const newActive = { ...cardData, attachedEnergy: oldEnergies, attachedTool: oldTool, damage: oldDamage };
-         updatePlayer(pIndex, { activePokemon: newActive, activeCondition: CONDITIONS.NONE, handCount: Math.max(0, player.handCount - 1) });
-         addLog(`EVOLUIU o Ativo para ${cardData.name}!`, 'INFO', pIndex);
-      } else if (destination === 'EVOLVE_BENCH') {
-         const newBench = [...player.benchPokemon]; const oldEnergies = newBench[evolveTargetIndex].attachedEnergy || []; const oldTool = newBench[evolveTargetIndex].attachedTool; const oldDamage = newBench[evolveTargetIndex].damage || 0;
-         newBench[evolveTargetIndex] = { ...cardData, attachedEnergy: oldEnergies, attachedTool: oldTool, damage: oldDamage };
-         updatePlayer(pIndex, { benchPokemon: newBench, handCount: Math.max(0, player.handCount - 1) });
-         addLog(`EVOLUIU Pokémon do Banco para ${cardData.name}.`, 'INFO', pIndex);
-      }
-      setShowDeckModal(null); 
-  };
+    const player = players[pIndex];
+    const cardData = { 
+        ...(card || { name: 'Desconhecido', type: 'Colorless', hp: '???', imgColor: 'gray', retreat: 1, isGeneric: true, stage: 0 }), 
+        turnPlayed: gameState.turnCount, 
+        attachedEnergy: [], 
+        attachedTool: null, 
+        damage: 0, 
+        abilitiesUsedThisTurn: [] 
+    };
+
+    if (destination === 'ACTIVE') {
+        if (player.activePokemon) { addLog(`Erro: Já existe um Pokémon Ativo.`, 'WARN', pIndex); return; }
+        updatePlayer(pIndex, { activePokemon: cardData, activeCondition: CONDITIONS.NONE, handCount: Math.max(0, player.handCount - 1) });
+        addLog(`BAIXOU: ${cardData.name} como Ativo.`, 'INFO', pIndex);
+    } 
+    else if (destination === 'BENCH') {
+        if (player.benchCount >= 5) { addLog(`Erro: Banco cheio.`, 'CRIT', pIndex); return; }
+        updatePlayer(pIndex, { benchPokemon: [...player.benchPokemon, cardData], benchCount: player.benchCount + 1, handCount: Math.max(0, player.handCount - 1) });
+        addLog(`BAIXOU: ${cardData.name} no Banco.`, 'INFO', pIndex);
+    } 
+    else if (destination === 'EVOLVE_ACTIVE') {
+        const oldName = player.activePokemon.name; // Nome anterior
+        const oldEnergies = player.activePokemon.attachedEnergy || []; 
+        const oldTool = player.activePokemon.attachedTool; 
+        const oldDamage = player.activePokemon.damage || 0;
+        
+        const newActive = { ...cardData, attachedEnergy: oldEnergies, attachedTool: oldTool, damage: oldDamage };
+        updatePlayer(pIndex, { activePokemon: newActive, activeCondition: CONDITIONS.NONE, handCount: Math.max(0, player.handCount - 1) });
+        
+        // Log específico com nomes
+        addLog(`EVOLUIU: ${oldName} para ${cardData.name} (Ativo).`, 'SUCCESS', pIndex);
+    } 
+    else if (destination === 'EVOLVE_BENCH') {
+        const newBench = [...player.benchPokemon];
+        const oldName = newBench[evolveTargetIndex].name; // Nome anterior
+        const oldEnergies = newBench[evolveTargetIndex].attachedEnergy || []; 
+        const oldTool = newBench[evolveTargetIndex].attachedTool; 
+        const oldDamage = newBench[evolveTargetIndex].damage || 0;
+        
+        newBench[evolveTargetIndex] = { ...cardData, attachedEnergy: oldEnergies, attachedTool: oldTool, damage: oldDamage };
+        updatePlayer(pIndex, { benchPokemon: newBench, handCount: Math.max(0, player.handCount - 1) });
+        
+        // Log específico com nomes
+        addLog(`EVOLUIU: ${oldName} para ${cardData.name} (Banco).`, 'SUCCESS', pIndex);
+    }
+    setShowDeckModal(null); 
+};
   const requestEvolution = (pIndex, location, index = null) => {
       const p = players[pIndex]; const targetPokemon = location === 'ACTIVE' ? p.activePokemon : p.benchPokemon[index];
       if (gameState.turnCount === 1 && pIndex === 0) { addLog(`REGRA: J1 não pode evoluir no T1.`, 'CRIT', pIndex); return; }
@@ -1033,6 +1114,7 @@ export default function PokeJudgePro() {
       else { const newBench = [...p.benchPokemon]; newBench[index] = { ...newBench[index], attachedTool: tool }; updatePlayer(pIndex, { benchPokemon: newBench, handCount: Math.max(0, p.handCount - 1) }); addLog(`Ligou Ferramenta ao Banco.`, 'INFO', pIndex); }
       setShowToolModal(null);
   };
+  
   const requestEnergyAttachment = (pIndex, location, index = null) => { 
       // Agora verifica se a energia ilimitada está ativa ANTES de bloquear
       if (players[pIndex].energyAttachedThisTurn && !players[pIndex].allowUnlimitedEnergy) { 
@@ -1047,7 +1129,7 @@ export default function PokeJudgePro() {
     let eKey = 'Colorless'; Object.entries(ENERGY_TYPES).forEach(([key, val]) => { if(val.name === energyType.name) eKey = key; });
     if (location === 'ACTIVE') { updatePlayer(pIndex, { activePokemon: { ...p.activePokemon, attachedEnergy: [...(p.activePokemon.attachedEnergy || []), eKey] }, energyAttachedThisTurn: true, handCount: Math.max(0, p.handCount - 1) }); addLog(`Ligou Energia ao Ativo.`, 'INFO', pIndex); } 
     else { const newBench = [...p.benchPokemon]; newBench[index] = { ...newBench[index], attachedEnergy: [...(newBench[index].attachedEnergy || []), eKey] }; updatePlayer(pIndex, { benchPokemon: newBench, energyAttachedThisTurn: true, handCount: Math.max(0, p.handCount - 1) }); addLog(`Ligou Energia ao Banco.`, 'INFO', pIndex); }
-    setShowEnergyModal(null);
+    
   };
   const handleRemoveEnergy = (energyIndex) => {
      // Remove energy logic inside selectedCardAction context
@@ -1074,27 +1156,54 @@ export default function PokeJudgePro() {
   };
 
   const handleManualDamage = (amount) => {
-     const { pIndex, location, index, card } = selectedCardAction;
-     const currentDmg = card.damage || 0;
-     const newDmg = Math.max(0, currentDmg + amount);
-     
-     // Update global state
-     const updatedCard = { ...card, damage: newDmg };
+    const { pIndex, location, index, card } = selectedCardAction;
+    const currentDmg = card.damage || 0;
+    const newDmg = Math.max(0, currentDmg + amount);
+    
+    // Calcula HP Máximo considerando Ferramentas
+    let maxHP = card.hp;
+    if (card.attachedTool?.type === 'hp' && card.attachedTool.condition(card)) {
+        maxHP += card.attachedTool.value;
+    }
 
-     if (location === 'ACTIVE') {
-         updatePlayer(pIndex, { activePokemon: updatedCard });
-     } else {
-         const newBench = [...players[pIndex].benchPokemon];
-         newBench[index] = updatedCard;
-         updatePlayer(pIndex, { benchPokemon: newBench });
-     }
+    const updatedCard = { ...card, damage: newDmg };
+    const isKnockout = newDmg >= maxHP;
 
-     // Log
-     addLog(`Ajuste Manual de Dano: ${amount > 0 ? '+' : ''}${amount} em ${card.name}`, 'WARN', pIndex);
-     
-     // Update local state to keep modal open and fresh
-     setSelectedCardAction(prev => ({ ...prev, card: updatedCard }));
-  };
+    if (location === 'ACTIVE') {
+        if (isKnockout) {
+            updatePlayer(pIndex, { activePokemon: null, activeCondition: CONDITIONS.NONE });
+            addLog(`AJUSTE MANUAL: ${card.name} (Ativo) atingiu 0 HP e foi removido.`, 'CRIT', pIndex);
+            reportKnockout(pIndex); // Dispara prêmios e checa derrota
+            setSelectedCardAction(null); // Fecha o modal pois o pokemon sumiu
+        } else {
+            updatePlayer(pIndex, { activePokemon: updatedCard });
+            setSelectedCardAction(prev => ({ ...prev, card: updatedCard }));
+        }
+    } else {
+        if (isKnockout) {
+            const newBench = players[pIndex].benchPokemon.filter((_, i) => i !== index);
+            updatePlayer(pIndex, { 
+                benchPokemon: newBench, 
+                benchCount: newBench.length 
+            });
+            addLog(`AJUSTE MANUAL: ${card.name} (Banco) atingiu 0 HP e foi removido.`, 'CRIT', pIndex);
+            
+            // Define prêmios (ex/V valem 2)
+            const prizeCount = (card.name.includes('ex') || card.name.includes(' V')) ? 2 : 1;
+            const attackerIndex = pIndex === 0 ? 1 : 0;
+            setPrizeAlert({ player: players[attackerIndex].name, count: prizeCount });
+            
+            setSelectedCardAction(null);
+        } else {
+            const newBench = [...players[pIndex].benchPokemon];
+            newBench[index] = updatedCard;
+            updatePlayer(pIndex, { benchPokemon: newBench });
+            setSelectedCardAction(prev => ({ ...prev, card: updatedCard }));
+        }
+    }
+
+    addLog(`Ajuste Manual de Dano: ${amount > 0 ? '+' : ''}${amount} em ${card.name}`, 'WARN', pIndex);
+};
 
   // ... (useAbility, playItem, playSupporter, retreat, openAttackModal, confirmAttack, finalizeAttack, endTurn, performCheckup, takePrize, reportKnockout, applyCondition, handleExistingCardClick - Mantidos) ...
   const useAbility = (abilityName, pIndex, location, index) => { 
@@ -1127,15 +1236,40 @@ export default function PokeJudgePro() {
   const playItem = () => { updatePlayer(gameState.currentPlayerIndex, { handCount: Math.max(0, currentPlayer.handCount - 1) }); addLog(`Jogou Carta de Item.`, 'INFO', gameState.currentPlayerIndex); };
   const playSupporter = () => { if (currentPlayer.supporterPlayedThisTurn) { addLog(`Tentativa ILEGAL: Já usou Apoiador!`, 'CRIT', gameState.currentPlayerIndex); return; } if (gameState.turnCount === 1 && gameState.currentPlayerIndex === 0) { addLog(`Tentativa ILEGAL: J1 não usa Apoiador no T1.`, 'CRIT', gameState.currentPlayerIndex); return; } updatePlayer(gameState.currentPlayerIndex, { supporterPlayedThisTurn: true, handCount: Math.max(0, currentPlayer.handCount - 1) }); addLog(`Jogou Apoiador.`, 'INFO', gameState.currentPlayerIndex); };
   const retreat = () => {
-    if (currentPlayer.retreatedThisTurn) { addLog(`Já recuou neste turno!`, 'CRIT', gameState.currentPlayerIndex); return; }
-    if ([CONDITIONS.ASLEEP, CONDITIONS.PARALYZED].includes(currentPlayer.activeCondition)) { addLog(`AÇÃO INVÁLIDA: Condição Especial impede recuo.`, 'CRIT', gameState.currentPlayerIndex); return; }
-    if (currentPlayer.benchCount === 0) { addLog(`IMPOSSÍVEL RECUAR: Banco vazio.`, 'CRIT', gameState.currentPlayerIndex); return; }
-    let retreatCost = currentPlayer.activePokemon.retreat; if (currentPlayer.activePokemon.attachedTool && currentPlayer.activePokemon.attachedTool.type === 'retreat') retreatCost = Math.max(0, retreatCost + currentPlayer.activePokemon.attachedTool.value);
-    const attachedEnergies = currentPlayer.activePokemon.attachedEnergy || []; if (attachedEnergies.length < retreatCost) { addLog(`Energia insuficiente para recuar (Custo: ${retreatCost}).`, 'CRIT', gameState.currentPlayerIndex); return; }
-    const remainingEnergies = [...attachedEnergies]; remainingEnergies.splice(0, retreatCost); const oldActive = { ...currentPlayer.activePokemon, attachedEnergy: remainingEnergies };
-    updatePlayer(gameState.currentPlayerIndex, { retreatedThisTurn: true, activeCondition: CONDITIONS.NONE, isPoisoned: false, isBurned: false, activePokemon: null, benchPokemon: [...currentPlayer.benchPokemon, oldActive], benchCount: currentPlayer.benchCount + 1 });
-    addLog(`Recuou o Ativo (Pagou ${retreatCost}). Selecione novo Ativo.`, 'WARN', gameState.currentPlayerIndex);
-  };
+    if (currentPlayer.retreatedThisTurn) { 
+        addLog(`Já recuou neste turno!`, 'CRIT', gameState.currentPlayerIndex); 
+        return; 
+    }
+    if ([CONDITIONS.ASLEEP, CONDITIONS.PARALYZED].includes(currentPlayer.activeCondition)) { 
+        addLog(`AÇÃO INVÁLIDA: Condição Especial impede recuo.`, 'CRIT', gameState.currentPlayerIndex); 
+        return; 
+    }
+    if (currentPlayer.benchCount === 0) { 
+        addLog(`IMPOSSÍVEL RECUAR: Banco vazio.`, 'CRIT', gameState.currentPlayerIndex); 
+        return; 
+    }
+
+    let retreatCost = currentPlayer.activePokemon.retreat;
+    if (currentPlayer.activePokemon.attachedTool?.type === 'retreat') {
+        retreatCost = Math.max(0, retreatCost + currentPlayer.activePokemon.attachedTool.value);
+    }
+
+    const attachedEnergies = currentPlayer.activePokemon.attachedEnergy || [];
+    if (attachedEnergies.length < retreatCost) { 
+        addLog(`Energia insuficiente (Custo: ${retreatCost}).`, 'CRIT', gameState.currentPlayerIndex); 
+        return; 
+    }
+
+    if (retreatCost === 0) {
+        confirmRetreat([]); // Recuo grátis
+    } else {
+        setRetreatModal({ 
+            cost: retreatCost, 
+            selectedIndices: [], 
+            availableEnergies: attachedEnergies 
+        });
+    }
+};
   const openAttackModal = () => { if (gameState.turnCount === 1 && gameState.currentPlayerIndex === 0) { addLog(`Tentativa ILEGAL: J1 não ataca no T1.`, 'CRIT', gameState.currentPlayerIndex); return; } if ([CONDITIONS.ASLEEP, CONDITIONS.PARALYZED].includes(currentPlayer.activeCondition)) { addLog(`AÇÃO BLOQUEADA: Condição Especial.`, 'CRIT', gameState.currentPlayerIndex); return; } if (!currentPlayer.activePokemon) { addLog(`ERRO: Sem Ativo.`, 'CRIT', gameState.currentPlayerIndex); return; } 
     // Check Confusion
     if (currentPlayer.activeCondition === CONDITIONS.CONFUSED) {
@@ -1151,56 +1285,161 @@ export default function PokeJudgePro() {
     }
     setShowAttackModal(true); 
   };
+  const confirmRetreat = (selectedIndices) => {
+    const attachedEnergies = [...currentPlayer.activePokemon.attachedEnergy];
+    const attackerName = currentPlayer.activePokemon.name;
+    
+    // Identifica os nomes das energias que serão descartadas para o log
+    const discardedNames = selectedIndices.map(idx => {
+        const type = attachedEnergies[idx];
+        return ENERGY_TYPES[type]?.name || type;
+    });
+
+    // Remove as energias selecionadas
+    selectedIndices.sort((a, b) => b - a).forEach(idx => attachedEnergies.splice(idx, 1));
+
+    const oldActive = { ...currentPlayer.activePokemon, attachedEnergy: attachedEnergies };
+    
+    updatePlayer(gameState.currentPlayerIndex, { 
+        retreatedThisTurn: true, 
+        activeCondition: CONDITIONS.NONE, 
+        isPoisoned: false, 
+        isBurned: false, 
+        activePokemon: null, 
+        benchPokemon: [...currentPlayer.benchPokemon, oldActive], 
+        benchCount: currentPlayer.benchCount + 1 
+    });
+
+    // Log ultra detalhado
+    const energyList = discardedNames.length > 0 ? ` (Descartou: ${discardedNames.join(', ')})` : ' (Custo Zero)';
+    addLog(`RECUOU: ${attackerName} foi para o banco.${energyList}. Selecione novo Ativo.`, 'WARN', gameState.currentPlayerIndex);
+    
+    setRetreatModal(null);
+};
   const applyDamageToOpponentActive = (damageAmount) => { const opIndex = gameState.currentPlayerIndex === 0 ? 1 : 0; const opPlayer = players[opIndex]; if (!opPlayer.activePokemon) { addLog(`Ataque falhou: Oponente sem Ativo!`, 'CRIT'); return false; } const currentDmg = opPlayer.activePokemon.damage || 0; const newDmg = currentDmg + damageAmount; const newActive = { ...opPlayer.activePokemon, damage: newDmg }; updatePlayer(opIndex, { activePokemon: newActive }); addLog(`Causou ${damageAmount} de dano!`, 'WARN', gameState.currentPlayerIndex); let maxHP = newActive.hp; if (newActive.attachedTool && newActive.attachedTool.type === 'hp' && newActive.attachedTool.condition(newActive)) { maxHP += newActive.attachedTool.value; } const willKnockout = (maxHP - newDmg) <= 0; if (willKnockout) { setTimeout(() => { addLog(`NOCAUTE! ${newActive.name} perdeu todo o HP!`, 'CRIT', opIndex); reportKnockout(opIndex); }, 1000); } return willKnockout; };
-  const confirmAttack = (attack) => { setGameState(prev => ({ ...prev, phase: PHASES.ATTACK })); let baseDamage = parseInt(attack.damage) || 0; const opIndex = gameState.currentPlayerIndex === 0 ? 1 : 0; const opActive = players[opIndex].activePokemon; const myActive = currentPlayer.activePokemon; if (opActive && baseDamage > 0) { const { multiplier, modifier } = calculateDamageModifiers(myActive.type, opActive.weakness, opActive.resistance); if (multiplier === 2) addLog("Aplicando Fraqueza (x2)!", 'WARN', gameState.currentPlayerIndex); if (modifier === -30) addLog("Aplicando Resistência (-30)!", 'INFO', opIndex); baseDamage = (baseDamage * multiplier) + modifier; } if (baseDamage > 0 || attack.damage.includes('x') || attack.damage.includes('+')) { setDamageConfirmation({ attackName: attack.name, baseDamage: Math.max(0, baseDamage), actualDamage: Math.max(0, baseDamage), attackRef: attack }); setShowAttackModal(false); } else { addLog(`Ataque realizado: ${attack.name}.`, 'WARN', gameState.currentPlayerIndex); setShowAttackModal(false); if (attack.effectType === 'distribute_damage') { const opIndex = gameState.currentPlayerIndex === 0 ? 1 : 0; if (players[opIndex].benchPokemon.length > 0) { setDistributionModal({ total: attack.effectValue || 0, allocated: Array(players[opIndex].benchPokemon.length).fill(0), opponentIndex: opIndex }); return; } } setTimeout(() => { endTurn(); }, 1500); } };
-  const finalizeAttack = () => { const finalDamage = damageConfirmation.actualDamage; const attack = damageConfirmation.attackRef; let isKo = false; if (finalDamage > 0) { isKo = applyDamageToOpponentActive(finalDamage); } else { addLog(`Ataque realizado sem dano (0).`, 'WARN', gameState.currentPlayerIndex); } if (attack && attack.effectType === 'distribute_damage') { const opIndex = gameState.currentPlayerIndex === 0 ? 1 : 0; const opBenchCount = players[opIndex].benchPokemon.length; if (opBenchCount > 0) { setDistributionModal({ total: attack.effectValue || 0, allocated: Array(opBenchCount).fill(0), opponentIndex: opIndex }); setDamageConfirmation(null); return; } } setDamageConfirmation(null); if (!isKo) { setTimeout(() => { endTurn(); }, 1500); } };
+  const confirmAttack = (attack) => { 
+    setGameState(prev => ({ ...prev, phase: PHASES.ATTACK })); 
+    let baseDamage = parseInt(attack.damage) || 0; 
+    const opIndex = gameState.currentPlayerIndex === 0 ? 1 : 0; 
+    const opActive = players[opIndex].activePokemon; 
+    const myActive = currentPlayer.activePokemon; 
+
+    // Log detalhado do início do ataque
+    addLog(`DECLAROU ATAQUE: ${myActive.name} usou ${attack.name}.`, 'WARN', gameState.currentPlayerIndex);
+
+    if (opActive && baseDamage > 0) { 
+        const { multiplier, modifier } = calculateDamageModifiers(myActive.type, opActive.weakness, opActive.resistance); 
+        if (multiplier === 2) addLog(`Fraqueza Detectada! Dano x2 contra ${opActive.name}.`, 'WARN', gameState.currentPlayerIndex); 
+        if (modifier === -30) addLog(`Resistência Detectada! Dano -30 de ${opActive.name}.`, 'INFO', opIndex); 
+        baseDamage = (baseDamage * multiplier) + modifier; 
+    } 
+
+    if (baseDamage > 0 || attack.damage.includes('x') || attack.damage.includes('+') || attack.cost.length === 0) { 
+        setDamageConfirmation({ 
+            attackName: attack.name, 
+            attackerName: myActive.name, // Guardamos o nome do atacante para o log final
+            baseDamage: Math.max(0, baseDamage), 
+            actualDamage: Math.max(0, baseDamage), 
+            attackRef: attack 
+        }); 
+        setShowAttackModal(false); 
+    } else { 
+        // Para ataques de efeito sem dano (como busca ou status)
+        setShowAttackModal(false); 
+        if (attack.effectType === 'distribute_damage') { 
+            const opIndex = gameState.currentPlayerIndex === 0 ? 1 : 0; 
+            if (players[opIndex].benchPokemon.length > 0) { 
+                setDistributionModal({ total: attack.effectValue || 0, allocated: Array(players[opIndex].benchPokemon.length).fill(0), opponentIndex: opIndex }); 
+                return; 
+            } 
+        } 
+        setTimeout(() => { endTurn(); }, 1500); 
+    } 
+};
+  const finalizeAttack = () => { 
+    const finalDamage = damageConfirmation.actualDamage; 
+    const attack = damageConfirmation.attackRef; 
+    const attackerName = damageConfirmation.attackerName; // Recuperado do estado
+    const opActiveName = opponentPlayer.activePokemon?.name || "Oponente";
+    
+    let isKo = false; 
+    if (finalDamage > 0) { 
+        isKo = applyDamageToOpponentActive(finalDamage);
+        // Log específico com nomes
+        addLog(`${attackerName} causou ${finalDamage} de dano em ${opActiveName} com ${attack.name}.`, 'SUCCESS', gameState.currentPlayerIndex);
+    } else { 
+        addLog(`${attackerName} realizou ${attack.name} (0 dano/efeito).`, 'INFO', gameState.currentPlayerIndex); 
+    } 
+
+    if (attack && attack.effectType === 'distribute_damage') { 
+        const opIndex = gameState.currentPlayerIndex === 0 ? 1 : 0; 
+        const opBenchCount = players[opIndex].benchPokemon.length; 
+        if (opBenchCount > 0) { 
+            setDistributionModal({ total: attack.effectValue || 0, allocated: Array(opBenchCount).fill(0), opponentIndex: opIndex }); 
+            setDamageConfirmation(null); 
+            return; 
+        } 
+    } 
+    
+    setDamageConfirmation(null); 
+    if (!isKo) { 
+        setTimeout(() => { endTurn(); }, 1500); 
+    } 
+};
   const handleDistributionChange = (idx, delta) => { const currentAllocated = distributionModal.allocated[idx]; const currentTotalAllocated = distributionModal.allocated.reduce((a, b) => a + b, 0); if (delta > 0) { if (currentTotalAllocated + 10 <= distributionModal.total) { const newAllocated = [...distributionModal.allocated]; newAllocated[idx] += 10; setDistributionModal(prev => ({ ...prev, allocated: newAllocated })); } } else { if (currentAllocated > 0) { const newAllocated = [...distributionModal.allocated]; newAllocated[idx] -= 10; setDistributionModal(prev => ({ ...prev, allocated: newAllocated })); } } };
   
   // FIX: Atualizar BenchCount ao remover pokemons e checar Game Over
   const confirmDistribution = () => { 
-      const { opponentIndex, allocated } = distributionModal; 
-      const opPlayer = players[opponentIndex]; 
-      const newBench = [...opPlayer.benchPokemon]; 
-      
-      allocated.forEach((dmg, idx) => { 
-          if (dmg > 0) { 
-              const currentDmg = newBench[idx].damage || 0; 
-              newBench[idx] = { ...newBench[idx], damage: currentDmg + dmg }; 
-              let maxHP = newBench[idx].hp; 
-              if (newBench[idx].attachedTool && newBench[idx].attachedTool.type === 'hp' && newBench[idx].attachedTool.condition(newBench[idx])) { maxHP += newBench[idx].attachedTool.value; } 
-              if (maxHP - newBench[idx].damage <= 0) { 
-                  addLog(`NOCAUTE NO BANCO! ${newBench[idx].name} desmaiou!`, 'CRIT', opponentIndex); 
-                  // Here we just mark/log, actual removal happens in filter below
-              } 
-          } 
-      }); 
-      
-      const survivors = newBench.filter(p => { 
-          let maxHP = p.hp; 
-          if (p.attachedTool && p.attachedTool.type === 'hp' && p.attachedTool.condition(p)) maxHP += p.attachedTool.value; 
-          return (maxHP - (p.damage || 0)) > 0; 
-      }); 
-      
-      const prizesToTake = newBench.length - survivors.length; 
-      
-      // FIX: Atualizar benchCount explicitamente para manter sinc
-      updatePlayer(opponentIndex, { benchPokemon: survivors, benchCount: survivors.length }); 
-      
-      // Check Win Condition: No Active AND No Bench
-      if (!players[opponentIndex].activePokemon && survivors.length === 0) {
-          declareWinner(gameState.currentPlayerIndex);
-          return;
-      }
+    const { opponentIndex, allocated } = distributionModal; 
+    const opPlayer = players[opponentIndex]; 
+    const newBench = [...opPlayer.benchPokemon]; 
+    let prizesToTake = 0;
 
-      if (prizesToTake > 0) {
-          // Trigger Prize Alert
-           setPrizeAlert({ player: players[gameState.currentPlayerIndex].name, count: prizesToTake });
-           addLog(`Pegue ${prizesToTake} prêmios.`, 'PRIZE'); 
-      }
-      
-      setDistributionModal(null); 
-      setTimeout(() => { endTurn(); }, 1000); 
-  };
+    allocated.forEach((dmg, idx) => { 
+        if (dmg > 0) { 
+            const currentDmg = newBench[idx].damage || 0; 
+            newBench[idx] = { ...newBench[idx], damage: currentDmg + dmg }; 
+            
+            let maxHP = newBench[idx].hp; 
+            if (newBench[idx].attachedTool?.type === 'hp' && newBench[idx].attachedTool.condition(newBench[idx])) { 
+                maxHP += newBench[idx].attachedTool.value; 
+            } 
+
+            if (maxHP - newBench[idx].damage <= 0) { 
+                addLog(`NOCAUTE NO BANCO! ${newBench[idx].name} foi removido do jogo.`, 'CRIT', opponentIndex); 
+                // Define quantos prêmios vale (ex/V valem 2)
+                prizesToTake += (newBench[idx].name.includes('ex') || newBench[idx].name.includes(' V')) ? 2 : 1;
+            } 
+        } 
+    }); 
+
+    // Filtra apenas os que sobreviveram (HP > 0)
+    const survivors = newBench.filter(p => { 
+        let maxHP = p.hp; 
+        if (p.attachedTool?.type === 'hp' && p.attachedTool.condition(p)) maxHP += p.attachedTool.value; 
+        return (maxHP - (p.damage || 0)) > 0; 
+    }); 
+
+    // Atualiza o banco do oponente e a contagem
+    updatePlayer(opponentIndex, { 
+        benchPokemon: survivors, 
+        benchCount: survivors.length 
+    }); 
+
+    // Se houver nocaute, avisa para pegar os prêmios
+    if (prizesToTake > 0) {
+        setPrizeAlert({ player: players[gameState.currentPlayerIndex].name, count: prizesToTake });
+        addLog(`REGRA: Pegue ${prizesToTake} prêmios pelo nocaute no banco.`, 'PRIZE', gameState.currentPlayerIndex); 
+    }
+
+    // Verifica se o oponente ficou sem Pokémon no jogo inteiro
+    if (!opPlayer.activePokemon && survivors.length === 0) {
+        declareWinner(gameState.currentPlayerIndex);
+    }
+    
+    setDistributionModal(null); 
+    setTimeout(() => { endTurn(); }, 1500); 
+};
   
   // FIX: Adicionando verificação de Game Over antes de avançar turno
   const endTurn = () => { 
@@ -1355,6 +1594,17 @@ export default function PokeJudgePro() {
                     <Button variant="ghost" className="border text-xs" onClick={() => addLog('Aviso: Jogo Lento (Slow Play).', 'WARN')}>Slow Play</Button>
                     <Button variant="ghost" className="border text-xs" onClick={() => addLog('Erro de Procedimento Menor.', 'WARN')}>Erro Menor</Button>
                     <Button variant="ghost" className="border text-xs" onClick={() => addLog('Game State Irreparável.', 'CRIT')}>Irreparável</Button>
+                    <Button 
+                        variant={currentPlayer.allowUnlimitedEnergy ? "success" : "ghost"} 
+                        className="border text-[10px]" 
+                        onClick={() => {
+                            updatePlayer(gameState.currentPlayerIndex, { allowUnlimitedEnergy: !currentPlayer.allowUnlimitedEnergy });
+                            addLog(`${currentPlayer.allowUnlimitedEnergy ? 'Restringiu' : 'LIBEROU'} uso de energia ilimitada.`, 'RULE', gameState.currentPlayerIndex);
+                        }}
+                    >
+                        {currentPlayer.allowUnlimitedEnergy ? "Energia: Ilimitada" : "Energia: 1 p/ Turno"}
+                    </Button>
+                    
                     <Button variant="secondary" className="text-xs" icon={Download} onClick={downloadLog}>Exportar .txt</Button>
                 </div>
             </Card>
@@ -1516,29 +1766,40 @@ export default function PokeJudgePro() {
       )}
 
       {showEnergyModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-             <Card className="w-full max-w-lg">
-                <div className="flex justify-between items-center mb-4"><h3 className="text-lg font-bold">Selecionar Tipo de Energia</h3><button onClick={() => setShowEnergyModal(null)}><X/></button></div>
-                <div className="grid grid-cols-3 gap-2">{Object.entries(ENERGY_TYPES).map(([key, val]) => (<button key={key} onClick={() => confirmAttachEnergy(val)} className={`${val.color} p-3 rounded-lg flex flex-col items-center gap-2 hover:opacity-90 transition-opacity`}><val.icon size={24} className={val.text === 'text-white' ? 'text-white' : 'text-black'} /><span className={`text-xs font-bold ${val.text}`}>{val.name}</span></button>))}</div>
-             </Card>
+  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+    <Card className="w-full max-w-lg">
+      <div className="flex justify-between items-center mb-4 border-b pb-2">
+        <div>
+          <h3 className="text-lg font-bold text-gray-800">Selecionar Energia</h3>
+          {/* Contador visual adicionado aqui */}
+          <p className="text-[10px] font-mono text-blue-600 font-bold uppercase">
+            Total no Pokémon: {
+              showEnergyModal.location === 'ACTIVE' 
+              ? players[showEnergyModal.pIndex].activePokemon?.attachedEnergy?.length || 0
+              : players[showEnergyModal.pIndex].benchPokemon[showEnergyModal.index]?.attachedEnergy?.length || 0
+            }
+          </p>
         </div>
-      )}
-
-      {showToolModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-             <Card className="w-full max-w-lg">
-                <div className="flex justify-between items-center mb-4"><h3 className="text-lg font-bold">Selecionar Ferramenta</h3><button onClick={() => setShowToolModal(null)}><X/></button></div>
-                <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-                    {TOOLS.map((tool) => (
-                        <button key={tool.id} onClick={() => confirmAttachTool(tool)} className="w-full p-3 bg-white border border-gray-200 rounded hover:bg-blue-50 flex justify-between items-center">
-                            <span className="font-bold text-sm">{tool.name}</span>
-                            <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600">{tool.effect}</span>
-                        </button>
-                    ))}
-                </div>
-             </Card>
-        </div>
-      )}
+        <button onClick={() => setShowEnergyModal(null)} className="text-gray-400 hover:text-red-500">
+          <X size={24}/>
+        </button>
+      </div>
+      
+      <div className="grid grid-cols-3 gap-2">
+        {Object.entries(ENERGY_TYPES).map(([key, val]) => (
+          <button 
+            key={key} 
+            onClick={() => confirmAttachEnergy(val)} 
+            className={`${val.color} p-3 rounded-lg flex flex-col items-center gap-2 hover:opacity-90 transition-opacity active:scale-95`}
+          >
+            <val.icon size={24} className={val.text === 'text-white' ? 'text-white' : 'text-black'} />
+            <span className={`text-xs font-bold ${val.text}`}>{val.name}</span>
+          </button>
+        ))}
+      </div>
+    </Card>
+  </div>
+)}
 
       {showAttackModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
@@ -1554,6 +1815,53 @@ export default function PokeJudgePro() {
              </Card>
         </div>
       )}
+      {retreatModal && (
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4">
+        <Card className="w-full max-w-sm border-2 border-blue-500">
+            <h3 className="font-bold text-lg mb-2 flex items-center gap-2 text-blue-700">
+                <RefreshCw size={20}/> Pagar Custo de Recuo
+            </h3>
+            <p className="text-xs text-gray-500 mb-4">
+                Selecione {retreatModal.cost} energia(s) para descartar:
+            </p>
+            
+            <div className="flex flex-wrap gap-2 mb-6">
+                {retreatModal.availableEnergies.map((type, idx) => {
+                    const isSelected = retreatModal.selectedIndices.includes(idx);
+                    const EIcon = ENERGY_TYPES[type]?.icon || Circle;
+                    return (
+                        <button
+                            key={idx}
+                            onClick={() => {
+                                const newIndices = isSelected 
+                                    ? retreatModal.selectedIndices.filter(i => i !== idx)
+                                    : [...retreatModal.selectedIndices, idx].slice(0, retreatModal.cost);
+                                setRetreatModal(prev => ({ ...prev, selectedIndices: newIndices }));
+                            }}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
+                                isSelected ? 'border-red-500 scale-110 shadow-lg' : 'border-transparent opacity-60'
+                            } ${ENERGY_TYPES[type]?.color}`}
+                        >
+                            <EIcon size={20} className="text-white" />
+                        </button>
+                    );
+                })}
+            </div>
+
+            <div className="flex gap-2">
+                <Button variant="secondary" className="flex-1" onClick={() => setRetreatModal(null)}>Cancelar</Button>
+                <Button 
+                    variant="primary" 
+                    className="flex-1" 
+                    disabled={retreatModal.selectedIndices.length !== retreatModal.cost}
+                    onClick={() => confirmRetreat(retreatModal.selectedIndices)}
+                >
+                    Recuar
+                </Button>
+            </div>
+        </Card>
+    </div>
+)}
 
       {showDeckModal && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
@@ -1569,5 +1877,6 @@ export default function PokeJudgePro() {
       </button></div><input type="text" placeholder="Buscar regra..." className="w-full p-2 border rounded mb-4 dark:bg-gray-700 dark:border-gray-600" value={searchRule} onChange={(e) => setSearchRule(e.target.value)} /><div className="flex-1 overflow-y-auto space-y-4">{RULES_DB.filter(r => r.title.toLowerCase().includes(searchRule.toLowerCase()) || r.text.toLowerCase().includes(searchRule.toLowerCase())).map(rule => (<div key={rule.id} className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-100 dark:border-blue-800"><h4 className="font-bold text-blue-800 dark:text-blue-300 mb-1">{rule.title}</h4><p className="text-sm text-black-700 dark:text-black-300">{rule.text}</p></div>))}</div></Card></div>)}
       {showRanking && <RankingModal onClose={() => setShowRanking(false)} />}
     </div>
+    
   );
 }
