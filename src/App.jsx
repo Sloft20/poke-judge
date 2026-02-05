@@ -1045,14 +1045,20 @@ export default function PokeJudgePro() {
     addLog(`Mulligan declarado. Embaralhando e comprando nova mão.`, 'WARN', pIndex);
   };
 
-  const handleCoinFlip = () => {
+ const handleCoinFlip = () => {
+    // 1. Toca o som de moeda (usando um link público de som curto)
+    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2004/2004-preview.mp3');
+    audio.volume = 0.5;
+    audio.play();
+
+    // 2. Lógica do sorteio
     const result = Math.random() < 0.5 ? 'CARA' : 'COROA';
     setCoinResult(result);
     
-    // Adiciona ao log para registro oficial
+    // 3. Registro oficial no log
     addLog(`Resultado da Moeda: ${result}`, 'SUCCESS');
 
-    // Remove o aviso da tela após 2 segundos
+    // 4. Remove o visual da tela após 2 segundos
     setTimeout(() => setCoinResult(null), 2000);
 };
 
