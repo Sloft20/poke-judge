@@ -1577,7 +1577,7 @@ export default function PokeJudgePro() {
                 {gameState.phase === PHASES.SETUP && (<Button variant="success" icon={PlayCircle} onClick={finishSetup}>Iniciar Partida</Button>)}
                 {gameState.phase === PHASES.START_TURN && (<div className="animate-pulse"><Button variant="primary" icon={ChevronRight} onClick={startTurnLogic}>Confirmar Início de Turno</Button></div>)}
                 {gameState.phase === PHASES.DRAW && (<div className="animate-pulse"><Button variant="primary" icon={History} onClick={drawCard}>COMPRAR CARTA (Obrigatório)</Button></div>)}
-                {gameState.phase === PHASES.ACTION && (<div className="flex gap-2"><Button variant="secondary" onClick={endTurn}>Passar sem Atacar</Button></div>)}
+                {(gameState.phase === PHASES.ACTION || gameState.phase === PHASES.ATTACK) && (<div className="flex gap-2"><Button variant="secondary" onClick={endTurn}>Encerrar Turno</Button></div>)}
                 {gameState.phase === PHASES.CHECKUP && (<Button variant="primary" icon={RotateCcw} onClick={performCheckup}>Concluir Checkup & Iniciar Próx. Turno</Button>)}
             </div>
             {renderPlayerSide(0)}
