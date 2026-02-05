@@ -707,17 +707,20 @@ const RankingModal = ({ onClose }) => {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        const fetchHistory = async () => {
-            setLoading(true);
-            const { data } = await supabase
-                .from('matches')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(10);
-            if (data) setMatches(data);
-            setLoading(false);
-        };
-        fetchHistory();
+    const fetchHistory = async () => {
+        const { data, error } = await supabase
+            .from('matches')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) {
+            console.error(error);
+        } else {
+            // Se data for um array vazio [], o estado será limpo corretamente
+            setMatches(data || []); 
+        }
+    };
+    fetchHistory();
     }, []);
 
     const sortedDecks = Object.values(deckStats).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
