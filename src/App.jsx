@@ -842,6 +842,7 @@ const RankingModal = ({ onClose }) => {
 // --- 7. APLICAÇÃO PRINCIPAL ---
 
 export default function PokeJudgePro() {
+  
   const [gameState, setGameState] = useState({
     phase: PHASES.LOBBY, 
     turnCount: 0,
@@ -1585,6 +1586,39 @@ export default function PokeJudgePro() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 p-4 font-sans relative">
+      {gameState.phase === PHASES.LOBBY && (
+        <div className="max-w-4xl mx-auto space-y-8 py-20 animate-in fade-in duration-500">
+            <div className="text-center space-y-4">
+                <div className="flex justify-center mb-6">
+                    <Shield className="text-blue-600" size={80} />
+                </div>
+                <h1 className="text-6xl font-black text-slate-900 tracking-tighter italic uppercase">
+                    POKÉ<span className="text-blue-600">JUDGE</span> PRO
+                </h1>
+                <p className="text-slate-500 font-medium uppercase tracking-widest text-sm font-mono">
+                    Assistente de Arbitragem Profissional v2.5
+                </p>
+                
+                <div className="flex flex-col sm:flex-row justify-center gap-4 mt-12">
+                    <Button 
+                        variant="primary" 
+                        className="px-10 py-8 text-xl shadow-xl hover:scale-105 transition-transform"
+                        onClick={() => setGameState(prev => ({...prev, phase: PHASES.SETUP}))}
+                    >
+                        <PlayCircle className="mr-2" size={24} /> NOVA PARTIDA
+                    </Button>
+
+                    <Button 
+                        variant="outline" 
+                        className="px-10 py-8 text-xl border-purple-500 text-purple-600 hover:bg-purple-50 shadow-lg hover:scale-105 transition-transform"
+                        onClick={() => setShowRanking(true)}
+                    >
+                        <Trophy className="mr-2" size={24} /> RANKING GLOBAL
+                    </Button>
+                </div>
+            </div>
+        </div>
+      )}   
       <header className="flex justify-between items-center mb-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
         <div className="flex items-center gap-3">
             <Shield className="text-blue-600" size={32} />
