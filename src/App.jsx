@@ -1047,7 +1047,7 @@ export default function PokeJudgePro() {
 
  const handleCoinFlip = () => {
     // 1. Toca o som de moeda (usando um link público de som curto)
-    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2004/2004-preview.mp3');
+    const audio = new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_d5ea1ec435.mp3');
     audio.volume = 0.5;
     audio.play();
 
