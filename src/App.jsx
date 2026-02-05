@@ -1701,7 +1701,7 @@ export default function PokeJudgePro() {
                               addLog(`${currentPlayer.allowUnlimitedEnergy ? 'Restringiu' : 'LIBEROU'} uso de energia ilimitada.`, 'RULE', gameState.currentPlayerIndex);
                           }}
                       >
-                          {currentPlayer.allowUnlimitedEnergy ? "Energia: Ilimitada" : "Energia: 1 p/ Turno"}
+                          {currentPlayer.allowUnlimitedEnergy ? "Energia: Ilimitada" : "Liberar Energia"}
                       </Button>
                       <Button variant="secondary" className="text-xs" icon={Download} onClick={downloadLog}>Exportar .txt</Button>
                   </div>
