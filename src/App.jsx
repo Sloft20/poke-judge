@@ -1585,103 +1585,133 @@ export default function PokeJudgePro() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800 p-4 font-sans relative">
-      {gameState.phase === PHASES.LOBBY && (
-        <div className="max-w-4xl mx-auto space-y-8 py-20 animate-in fade-in duration-500">
-            <div className="text-center space-y-4">
-                <div className="flex justify-center mb-6">
-                    <Shield className="text-blue-600" size={80} />
-                </div>
-                <h1 className="text-6xl font-black text-slate-900 tracking-tighter italic uppercase">
-                    POKÉ<span className="text-blue-600">JUDGE</span> PRO
-                </h1>
-                <p className="text-slate-500 font-medium uppercase tracking-widest text-sm font-mono">
-                    Assistente de Arbitragem Profissional v2.5
-                </p>
-                
-                <div className="flex flex-col sm:flex-row justify-center gap-4 mt-12">
-                    <Button 
-                        variant="primary" 
-                        className="px-10 py-8 text-xl shadow-xl hover:scale-105 transition-transform"
-                        onClick={() => setGameState(prev => ({...prev, phase: PHASES.SETUP}))}
-                    >
-                        <PlayCircle className="mr-2" size={24} /> NOVA PARTIDA
-                    </Button>
+  <div className="min-h-screen bg-gray-50 text-gray-800 p-4 font-sans relative">
+    
+    {/* 1. TELA DE LOBBY (SÓ APARECE SE A FASE FOR LOBBY) */}
+    {gameState.phase === PHASES.LOBBY && (
+      <div className="max-w-4xl mx-auto space-y-8 py-20 animate-in fade-in duration-500">
+          <div className="text-center space-y-4">
+              <div className="flex justify-center mb-6">
+                  <Shield className="text-blue-600" size={80} />
+              </div>
+              <h1 className="text-6xl font-black text-slate-900 tracking-tighter italic uppercase">
+                  POKÉ<span className="text-blue-600">JUDGE</span> PRO
+              </h1>
+              <p className="text-slate-500 font-medium uppercase tracking-widest text-sm font-mono">
+                  Assistente de Arbitragem Profissional v2.5
+              </p>
+              
+              <div className="flex flex-col sm:flex-row justify-center gap-4 mt-12">
+                  <Button 
+                      variant="primary" 
+                      className="px-10 py-8 text-xl shadow-xl hover:scale-105 transition-transform"
+                      onClick={() => setGameState(prev => ({...prev, phase: PHASES.SETUP}))}
+                  >
+                      <PlayCircle className="mr-2" size={24} /> NOVA PARTIDA
+                  </Button>
 
-                    <Button 
-                        variant="outline" 
-                        className="px-10 py-8 text-xl border-purple-500 text-purple-600 hover:bg-purple-50 shadow-lg hover:scale-105 transition-transform"
-                        onClick={() => setShowRanking(true)}
-                    >
-                        <Trophy className="mr-2" size={24} /> RANKING GLOBAL
-                    </Button>
-                </div>
-            </div>
-        </div>
-      )}   
-      <header className="flex justify-between items-center mb-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-        <div className="flex items-center gap-3">
-            <Shield className="text-blue-600" size={32} />
-            <div><h1 className="text-2xl font-black tracking-tighter uppercase italic text-white">PokéJudge Pro</h1>
-            <p className="text-xs text-slate-400 font-mono">Assistente de Arbitragem v2.5</p></div>
-        </div>
-        <div className="flex items-center gap-4">
-             <div className="flex items-center gap-2 mr-4 bg-gray-100 px-3 py-1 rounded">
-                 <Clock size={16} className={isTimerPaused ? 'text-red-500' : 'text-green-600'}/>
-                 <span className="font-mono font-bold text-lg">{formatTime(gameTimer)}</span>
-                 <button onClick={() => setIsTimerPaused(!isTimerPaused)} className="ml-2 text-xs text-blue-600 hover:underline">{isTimerPaused ? <Play size={12}/> : <Pause size={12}/>}</button>
-             </div>
-             <div className="text-right"><div className="text-xs uppercase font-bold text-gray-500">Fase Atual</div><div className="text-xl font-bold text-blue-600">{gameState.phase}</div></div>
-             <Button variant="ghost" onClick={handleCoinFlip} className="border border-yellow-400 bg-yellow-50 text-yellow-700 hover:bg-yellow-100"><Coins className="mr-1" size={16}/> Moeda</Button>
-             <Button variant="ghost" onClick={() => setShowRanking(true)} className="border border-purple-400 bg-purple-50 text-purple-700 hover:bg-purple-100"><BarChart2 className="mr-1" size={16}/> Ranking</Button>
-            <Button variant="secondary" icon={BookOpen} onClick={() => setShowRules(true)}>Regras</Button>
-        </div>
-      </header>
+                  <Button 
+                      variant="outline" 
+                      className="px-10 py-8 text-xl border-purple-500 text-purple-600 hover:bg-purple-50 shadow-lg hover:scale-105 transition-transform"
+                      onClick={() => setShowRanking(true)}
+                  >
+                      <Trophy className="mr-2" size={24} /> RANKING GLOBAL
+                  </Button>
+              </div>
+          </div>
+      </div>
+    )}
 
-      <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow flex justify-between items-center">
-                <div className="flex items-center gap-2"><Clock size={20} className="text-gray-400"/>
-                <span className="font-mono text-lg font-bold text-slate-100">Turno: {gameState.turnCount}</span></div>
-                {gameState.phase === PHASES.SETUP && (<Button variant="success" icon={PlayCircle} onClick={finishSetup}>Iniciar Partida</Button>)}
-                {gameState.phase === PHASES.START_TURN && (<div className="animate-pulse"><Button variant="primary" icon={ChevronRight} onClick={startTurnLogic}>Confirmar Início de Turno</Button></div>)}
-                {gameState.phase === PHASES.DRAW && (<div className="animate-pulse"><Button variant="primary" icon={History} onClick={drawCard}>COMPRAR CARTA (Obrigatório)</Button></div>)}
-                {(gameState.phase === PHASES.ACTION || gameState.phase === PHASES.ATTACK) && (<div className="flex gap-2"><Button variant="secondary" onClick={endTurn}>Encerrar Turno</Button></div>)}
-                {gameState.phase === PHASES.CHECKUP && (<Button variant="primary" icon={RotateCcw} onClick={performCheckup}>Concluir Checkup & Iniciar Próx. Turno</Button>)}
-            </div>
-            {renderPlayerSide(0)}
-            {renderPlayerSide(1)}
-        </div>
+    {/* 2. INTERFACE DE JOGO (SÓ APARECE SE NÃO ESTIVER NO LOBBY) */}
+    {gameState.phase !== PHASES.LOBBY && (
+      <>
+        <header className="flex justify-between items-center mb-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+          <div className="flex items-center gap-3">
+              <Shield className="text-blue-600" size={32} />
+              <div>
+                <h1 className="text-2xl font-black tracking-tighter uppercase italic text-white">PokéJudge Pro</h1>
+                <p className="text-xs text-slate-400 font-mono">Assistente de Arbitragem v2.5</p>
+              </div>
+          </div>
+          <div className="flex items-center gap-4">
+               <div className="flex items-center gap-2 mr-4 bg-gray-100 px-3 py-1 rounded">
+                   <Clock size={16} className={isTimerPaused ? 'text-red-500' : 'text-green-600'}/>
+                   <span className="font-mono font-bold text-lg">{formatTime(gameTimer)}</span>
+                   <button onClick={() => setIsTimerPaused(!isTimerPaused)} className="ml-2 text-xs text-blue-600 hover:underline">
+                    {isTimerPaused ? <Play size={12}/> : <Pause size={12}/>}
+                   </button>
+               </div>
+               <div className="text-right">
+                <div className="text-xs uppercase font-bold text-gray-500">Fase Atual</div>
+                <div className="text-xl font-bold text-blue-600">{gameState.phase}</div>
+               </div>
+               <Button variant="ghost" onClick={handleCoinFlip} className="border border-yellow-400 bg-yellow-50 text-yellow-700 hover:bg-yellow-100">
+                <Coins className="mr-1" size={16}/> Moeda
+               </Button>
+               <Button variant="ghost" onClick={() => setShowRanking(true)} className="border border-purple-400 bg-purple-50 text-purple-700 hover:bg-purple-100">
+                <BarChart2 className="mr-1" size={16}/> Ranking
+               </Button>
+              <Button variant="secondary" icon={BookOpen} onClick={() => setShowRules(true)}>Regras</Button>
+          </div>
+        </header>
 
-        <div className="space-y-6">
-            <Card className="h-[600px] flex flex-col">
-                <div className="flex justify-between items-center mb-4 pb-2 border-b"><h3 className="font-bold flex items-center gap-2"><History size={18}/> Linha do Tempo</h3><Badge color="gray">Live</Badge></div>
-                <div ref={logsContainerRef} className="flex-1 overflow-y-auto space-y-3 pr-2 font-mono text-sm">
-                    {logs.map((log) => (<div key={log.id} className={`p-2 rounded border-l-4 bg-gray-50 dark:bg-gray-700/50 ${log.level === 'CRIT' ? 'border-red-500 bg-red-50 dark:bg-red-900/20' : log.level === 'WARN' ? 'border-yellow-500' : log.level === 'RULE' ? 'border-purple-500 bg-purple-50' : log.level === 'SUCCESS' ? 'border-green-500 bg-green-50' : log.level === 'PRIZE' ? 'border-yellow-500 bg-yellow-50' : 'border-blue-400'}`}><div className="text-xs text-gray-500 mb-1">{log.time}</div><div>{log.text}</div></div>))}
-                </div>
-            </Card>
-            <Card>
-                <h3 className="font-bold mb-2 flex items-center gap-2"><AlertTriangle size={18}/> Alertas de Juiz</h3>
-                <div className="grid grid-cols-2 gap-2">
-                    <Button variant="ghost" className="border text-xs" onClick={() => addLog('Aviso: Jogo Lento (Slow Play).', 'WARN')}>Slow Play</Button>
-                    <Button variant="ghost" className="border text-xs" onClick={() => addLog('Erro de Procedimento Menor.', 'WARN')}>Erro Menor</Button>
-                    <Button variant="ghost" className="border text-xs" onClick={() => addLog('Game State Irreparável.', 'CRIT')}>Irreparável</Button>
-                    <Button 
-                        variant={currentPlayer.allowUnlimitedEnergy ? "success" : "ghost"} 
-                        className="border text-[10px]" 
-                        onClick={() => {
-                            updatePlayer(gameState.currentPlayerIndex, { allowUnlimitedEnergy: !currentPlayer.allowUnlimitedEnergy });
-                            addLog(`${currentPlayer.allowUnlimitedEnergy ? 'Restringiu' : 'LIBEROU'} uso de energia ilimitada.`, 'RULE', gameState.currentPlayerIndex);
-                        }}
-                    >
-                        {currentPlayer.allowUnlimitedEnergy ? "Energia: Ilimitada" : "Energia: 1 p/ Turno"}
-                    </Button>
-                    
-                    <Button variant="secondary" className="text-xs" icon={Download} onClick={downloadLog}>Exportar .txt</Button>
-                </div>
-            </Card>
-        </div>
-      </main>
+        <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <Clock size={20} className="text-gray-400"/>
+                    <span className="font-mono text-lg font-bold text-slate-100">Turno: {gameState.turnCount}</span>
+                  </div>
+                  {gameState.phase === PHASES.SETUP && (<Button variant="success" icon={PlayCircle} onClick={finishSetup}>Iniciar Partida</Button>)}
+                  {gameState.phase === PHASES.START_TURN && (<div className="animate-pulse"><Button variant="primary" icon={ChevronRight} onClick={startTurnLogic}>Confirmar Início de Turno</Button></div>)}
+                  {gameState.phase === PHASES.DRAW && (<div className="animate-pulse"><Button variant="primary" icon={History} onClick={drawCard}>COMPRAR CARTA (Obrigatório)</Button></div>)}
+                  {(gameState.phase === PHASES.ACTION || gameState.phase === PHASES.ATTACK) && (<div className="flex gap-2"><Button variant="secondary" onClick={endTurn}>Encerrar Turno</Button></div>)}
+                  {gameState.phase === PHASES.CHECKUP && (<Button variant="primary" icon={RotateCcw} onClick={performCheckup}>Concluir Checkup & Iniciar Próx. Turno</Button>)}
+              </div>
+              {renderPlayerSide(0)}
+              {renderPlayerSide(1)}
+          </div>
+
+          <div className="space-y-6">
+              <Card className="h-[600px] flex flex-col">
+                  <div className="flex justify-between items-center mb-4 pb-2 border-b">
+                    <h3 className="font-bold flex items-center gap-2"><History size={18}/> Linha do Tempo</h3>
+                    <Badge color="gray">Live</Badge>
+                  </div>
+                  <div ref={logsContainerRef} className="flex-1 overflow-y-auto space-y-3 pr-2 font-mono text-sm">
+                      {logs.map((log) => (
+                        <div key={log.id} className={`p-2 rounded border-l-4 bg-gray-50 dark:bg-gray-700/50 ${log.level === 'CRIT' ? 'border-red-500 bg-red-50 dark:bg-red-900/20' : log.level === 'WARN' ? 'border-yellow-500' : log.level === 'RULE' ? 'border-purple-500 bg-purple-50' : log.level === 'SUCCESS' ? 'border-green-500 bg-green-50' : log.level === 'PRIZE' ? 'border-yellow-500 bg-yellow-50' : 'border-blue-400'}`}>
+                          <div className="text-xs text-gray-500 mb-1">{log.time}</div>
+                          <div>{log.text}</div>
+                        </div>
+                      ))}
+                  </div>
+              </Card>
+              <Card>
+                  <h3 className="font-bold mb-2 flex items-center gap-2"><AlertTriangle size={18}/> Alertas de Juiz</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                      <Button variant="ghost" className="border text-xs" onClick={() => addLog('Aviso: Jogo Lento (Slow Play).', 'WARN')}>Slow Play</Button>
+                      <Button variant="ghost" className="border text-xs" onClick={() => addLog('Erro de Procedimento Menor.', 'WARN')}>Erro Menor</Button>
+                      <Button variant="ghost" className="border text-xs" onClick={() => addLog('Game State Irreparável.', 'CRIT')}>Irreparável</Button>
+                      <Button 
+                          variant={currentPlayer.allowUnlimitedEnergy ? "success" : "ghost"} 
+                          className="border text-[10px]" 
+                          onClick={() => {
+                              updatePlayer(gameState.currentPlayerIndex, { allowUnlimitedEnergy: !currentPlayer.allowUnlimitedEnergy });
+                              addLog(`${currentPlayer.allowUnlimitedEnergy ? 'Restringiu' : 'LIBEROU'} uso de energia ilimitada.`, 'RULE', gameState.currentPlayerIndex);
+                          }}
+                      >
+                          {currentPlayer.allowUnlimitedEnergy ? "Energia: Ilimitada" : "Energia: 1 p/ Turno"}
+                      </Button>
+                      <Button variant="secondary" className="text-xs" icon={Download} onClick={downloadLog}>Exportar .txt</Button>
+                  </div>
+              </Card>
+          </div>
+        </main>
+      </>
+    )}
+
+    
 
       {/* --- MODALS --- */}
       {selectedCardAction && (
