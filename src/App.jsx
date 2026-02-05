@@ -842,7 +842,7 @@ const RankingModal = ({ onClose }) => {
 // --- 7. APLICAÇÃO PRINCIPAL ---
 
 export default function PokeJudgePro() {
-  
+  const [coinResult, setCoinResult] = useState(null);
   const [gameState, setGameState] = useState({
     phase: PHASES.LOBBY, 
     turnCount: 0,
@@ -1046,10 +1046,15 @@ export default function PokeJudgePro() {
   };
 
   const handleCoinFlip = () => {
-      const result = Math.random() > 0.5 ? 'CARA' : 'COROA';
-      addLog(`Moeda jogada: ${result}`, result === 'CARA' ? 'SUCCESS' : 'WARN');
-      alert(`Resultado da Moeda: ${result}`);
-  };
+    const result = Math.random() < 0.5 ? 'CARA' : 'COROA';
+    setCoinResult(result);
+    
+    // Adiciona ao log para registro oficial
+    addLog(`Resultado da Moeda: ${result}`, 'SUCCESS');
+
+    // Remove o aviso da tela após 2 segundos
+    setTimeout(() => setCoinResult(null), 2000);
+};
 
   const finishSetup = () => {
     if (!players[0].activePokemon || !players[1].activePokemon) {
@@ -1964,7 +1969,25 @@ export default function PokeJudgePro() {
         </Card>
     </div>
 )}
-
+      {/* Overlay de Moeda Imersivo */}
+        {coinResult && (
+            <div className="fixed inset-0 flex items-center justify-center z-[100] animate-in zoom-in duration-300">
+                <div className={`
+                    p-8 rounded-full shadow-2xl border-4 flex flex-col items-center gap-4 bg-white
+                    ${coinResult === 'CARA' ? 'border-yellow-400' : 'border-slate-400'}
+                `}>
+                    <div className={`
+                        w-24 h-24 rounded-full flex items-center justify-center text-3xl font-black shadow-inner
+                        ${coinResult === 'CARA' ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-700'}
+                    `}>
+                        <Coins size={48} className="animate-bounce" />
+                    </div>
+                    <h2 className="text-2xl font-black uppercase tracking-widest text-gray-800">
+                        {coinResult}
+                    </h2>
+                </div>
+            </div>
+        )}    
       {showDeckModal && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-4xl max-h-[90vh] flex flex-col">
