@@ -10,7 +10,7 @@ import {
   // Novos ícones de energia importados do Lucide conforme solicitado
   Flame, Droplets, Leaf, Eye, Dumbbell, Moon, Crown, Circle, Star, Bolt, Origami 
 } from 'lucide-react';
-
+import { supabase } from './supabaseClient'; // ADICIONE ESTA LINHA AQUI
 // --- 2. CONSTANTES E TIPOS ---
 
 const PHASES = {
