@@ -700,31 +700,66 @@ const GameLobby = ({ players, onUpdatePlayer, onStartGame }) => {
 };
 
 const RankingModal = ({ onClose }) => {
-    const { deckStats, playerStats } = calculateStats();
     const [tab, setTab] = useState('decks');
     const [selectedMatchLogs, setSelectedMatchLogs] = useState(null);
     const [matches, setMatches] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
+    // 1. Busca os dados reais do Supabase
     useEffect(() => {
-    const fetchHistory = async () => {
-        const { data, error } = await supabase
-            .from('matches')
-            .select('*')
-            .order('created_at', { ascending: false });
-        
-        if (error) {
-            console.error(error);
-        } else {
-            // Se data for um array vazio [], o estado será limpo corretamente
-            setMatches(data || []); 
-        }
-    };
-    fetchHistory();
+        const fetchHistory = async () => {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('matches')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (error) {
+                console.error(error);
+            } else {
+                setMatches(data || []); 
+            }
+            setLoading(false);
+        };
+        fetchHistory();
     }, []);
 
+    // 2. FUNÇÃO DE CÁLCULO EM TEMPO REAL: Substitui a antiga calculateStats()
+    const calculateLiveStats = () => {
+        const deckStats = {};
+        const playerStats = {};
+
+        matches.forEach(m => {
+            // Processa Estatísticas de Decks
+            if (!deckStats[m.winner_deck]) deckStats[m.winner_deck] = { name: m.winner_deck, wins: 0, plays: 0 };
+            if (!deckStats[m.loser_deck]) deckStats[m.loser_deck] = { name: m.loser_deck, wins: 0, plays: 0 };
+            
+            deckStats[m.winner_deck].wins++;
+            deckStats[m.winner_deck].plays++;
+            deckStats[m.loser_deck].plays++;
+
+            // Processa Estatísticas de Jogadores
+            const wName = m.winner_name || "Desconhecido";
+            const lName = m.loser_name || "Desconhecido";
+
+            if (!playerStats[wName]) playerStats[wName] = { wins: 0, plays: 0 };
+            if (!playerStats[lName]) playerStats[lName] = { wins: 0, plays: 0 };
+            
+            playerStats[wName].wins++;
+            playerStats[wName].plays++;
+            playerStats[lName].plays++;
+        });
+
+        return { deckStats, playerStats };
+    };
+
+    // 3. Gera as listas ordenadas baseadas nos dados do banco
+    const { deckStats, playerStats } = calculateLiveStats();
+    
     const sortedDecks = Object.values(deckStats).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
     const sortedPlayers = Object.entries(playerStats).map(([name, stat]) => ({name, ...stat})).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
+
+    // O restante do seu código (return) permanece o mesmo...
 
     return (
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
