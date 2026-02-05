@@ -1046,22 +1046,20 @@ export default function PokeJudgePro() {
   };
 
  const handleCoinFlip = () => {
-    // 1. Toca o arquivo que você salvou na pasta public
-    const audio = new Audio('/coinflip.mp3'); // Use o nome exato do arquivo (ex: coinflip.mp3)
-    audio.volume = 0.5;
-    audio.play();
+    // 1. Caminho atualizado para a nova pasta organizada
+    const audio = new Audio('/sounds/coinflip.mp3'); 
+    audio.volume = 0.6;
+    audio.play().catch(e => console.log("Interação necessária para tocar som"));
 
-    // 2. Lógica do sorteio
     const result = Math.random() < 0.5 ? 'CARA' : 'COROA';
     
-    // Pequeno atraso para o visual aparecer junto com o fim do som
+    // 2. Mantemos o delay de 600ms para sincronia com o som
     setTimeout(() => {
         setCoinResult(result);
         addLog(`Resultado da Moeda: ${result}`, 'SUCCESS');
-    }, 500); 
+    }, 600); 
 
-    // 3. Remove o visual da tela após 2 segundos
-    setTimeout(() => setCoinResult(null), 2500);
+    setTimeout(() => setCoinResult(null), 3000);
 };
 
   const finishSetup = () => {
