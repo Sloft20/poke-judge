@@ -18,7 +18,8 @@
 
 ## 🚀 Sobre o Projeto
 
-O **PokéJudge Pro** é uma ferramenta desenvolvida para juízes e jogadores competitivos de Pokémon TCG. Ele substitui os marcadores físicos e cronômetros manuais por uma interface digital precisa, evitando erros de cálculo e disputas sobre o estado do jogo.
+O **PokéJudge Pro** é uma ferramenta desenvolvida para juízes e jogadores competitivos de Pokémon TCG. Ele substitui os marcadores físicos e cronômetros manuais por uma interface digital precisa, evitando erros de cálculo e disputas sobre o estado do jogo, Ainda não está completo mas é um projeto feito por um fã de TCG.
+
 
 ### ✨ Funcionalidades Principais
 
@@ -55,3 +56,26 @@ O **PokéJudge Pro** é uma ferramenta desenvolvida para juízes e jogadores com
    ```bash
    git clone [https://github.com/Sloft20/poke-judge.git](https://github.com/Sloft20/poke-judge.git)
    cd poke-judge
+   Instale as dependências
+
+Bash
+npm install
+Configure as Variáveis de Ambiente Crie um arquivo .env na raiz e adicione suas chaves do Supabase:
+
+Snippet de código
+VITE_SUPABASE_URL=sua_url_aqui
+VITE_SUPABASE_ANON_KEY=sua_chave_aqui
+Inicie o servidor
+
+Bash
+npm run dev
+🔮 Próximos Passos (Roadmap)
+[ ] Modo Torneio (Swiss Round Calculator)
+
+[ ] Login de Usuário (Auth)
+
+[ ] Integração com API oficial de cartas Pokémon TCG
+
+[ ] Suporte a Multi-idiomas (PT-BR / EN-US)
+
+Desenvolvido por Sloft20
