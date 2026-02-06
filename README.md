@@ -11,7 +11,7 @@
 
 | **Lobby & Setup** | **Painel de Arbitragem** |
 |:---:|:---:|
-| ![Lobby](<img width="1910" height="909" alt="Image" src="https://github.com/user-attachments/assets/ea2629c0-2284-4ede-92ee-18cb10022b38" />) | ![Game](https://via.placeholder.com/400x200?text=Print+do+Jogo) |
+| <img width="100%" src="https://github.com/user-attachments/assets/ea2629c0-2284-4ede-92ee-18cb10022b38" alt="Lobby" /> | ![Game](https://via.placeholder.com/400x200?text=Print+do+Jogo) |
 | *Seleção de Decks e Ranking* | *Controle de Turnos e Danos* |
 
 ---
