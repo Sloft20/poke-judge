@@ -695,13 +695,14 @@ const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking }) => {
                     <Play size={28} fill="currentColor" />
                     Iniciar Partida
                 </button>
+                
                 <button 
-                        onClick={onShowRanking}
-                        className="md:w-auto px-8 py-4 bg-white border-2 border-purple-500 text-purple-600 hover:bg-purple-50 rounded-xl font-bold text-xl uppercase tracking-widest shadow-lg transform transition hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3"
-                    >
-                        <Trophy size={28} />
-                        Ranking
-                    </button>
+                    onClick={onShowRanking}
+                    className="md:w-auto px-8 py-4 bg-[#1a1a2e] border border-purple-500/50 text-purple-400 hover:text-purple-300 hover:bg-[#232342] hover:border-purple-400 rounded-xl font-bold text-xl uppercase tracking-widest shadow-[0_0_10px_rgba(168,85,247,0.2)] hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transform transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3"
+                >
+                    <Trophy size={28} />
+                    Ranking
+                </button>
             </Card>
         </div>
     );
