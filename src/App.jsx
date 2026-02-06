@@ -1712,7 +1712,7 @@ export default function PokeJudgePro() {
                               addLog(`${currentPlayer.allowUnlimitedEnergy ? 'Restringiu' : 'LIBEROU'} uso de energia ilimitada.`, 'RULE', gameState.currentPlayerIndex);
                           }}
                       >
-                          {currentPlayer.allowUnlimitedEnergy ? "Energia: Ilimitada" : "Liberar Energia"}
+                          {currentPlayer.allowUnlimitedEnergy ? "Energia: Ilimitada" : "Energia: 1 p/ Turno"}
                       </Button>
                       <Button variant="secondary" className="text-xs" icon={Download} onClick={downloadLog}>Exportar .txt</Button>
                   </div>
@@ -1722,292 +1722,289 @@ export default function PokeJudgePro() {
       </>
     )}
 
-    
-
-      {/* --- MODALS --- */}
-      {selectedCardAction && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-              <Card className="w-full max-w-sm">
-                  <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-lg">{selectedCardAction.card.name}</h3><button onClick={() => setSelectedCardAction(null)}><X/></button></div>
-                  <div className="space-y-2">
-                        {/* Adjust Judge Controls */}
-                       <div className="bg-orange-50 p-2 rounded border border-orange-200 mb-2">
-                           <p className="text-xs font-bold text-orange-800 mb-1 uppercase">Ajuste de Juiz (Dano)</p>
-                           <div className="flex justify-between items-center">
-                               <button onClick={() => handleManualDamage(-10)} className="p-1 bg-white border rounded hover:bg-gray-50"><Minus size={16}/></button>
-                               <span className="font-mono font-bold">{selectedCardAction.card.damage || 0}</span>
-                               <button onClick={() => handleManualDamage(10)} className="p-1 bg-white border rounded hover:bg-gray-50"><Plus size={16}/></button>
-                           </div>
-                       </div>
-                       
-                       {/* Attached Energy List Removal */}
-                       {selectedCardAction.card.attachedEnergy && selectedCardAction.card.attachedEnergy.length > 0 && (
-                           <div className="bg-blue-50 p-2 rounded border border-blue-200 mb-2">
-                               <p className="text-xs font-bold text-blue-800 mb-1 uppercase">Remover Energia</p>
-                               <div className="flex flex-wrap gap-1">
-                                   {selectedCardAction.card.attachedEnergy.map((e, idx) => {
-                                       const EIcon = ENERGY_TYPES[e]?.icon || PlusCircle;
-                                       return (
-                                           <button key={idx} onClick={() => handleRemoveEnergy(idx)} className="relative group p-1 bg-white rounded border hover:bg-red-100">
-                                               <EIcon size={16}/>
-                                               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-red-500/50 rounded text-white"><X size={12}/></div>
-                                           </button>
-                                       )
-                                   })}
-                               </div>
-                           </div>
-                       )}
-
-                       {selectedCardAction.card.attacks && selectedCardAction.card.attacks.filter(atk => atk.cost[0] === 'Ability').map((ability, idx) => (<Button key={`ab-${idx}`} variant="warning" className="w-full mb-2 border border-yellow-600 text-yellow-900" icon={Sparkles} onClick={() => useAbility(ability.name, selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>Usar Habilidade: {ability.name}</Button>))}
-                       <Button variant="ghost" className="w-full border border-blue-200 bg-blue-50 text-blue-700" icon={Zap} onClick={() => requestEnergyAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>Ligar Energia</Button>
-                       <Button variant="ghost" className="w-full border border-purple-200 bg-purple-50 text-purple-700" icon={Briefcase} onClick={() => requestToolAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>Ligar Ferramenta</Button>
-                       <Button variant="primary" className="w-full" icon={GitMerge} onClick={() => requestEvolution(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>Evoluir</Button>
-                       {!players[selectedCardAction.pIndex].activePokemon && selectedCardAction.location === 'BENCH' && (<Button variant="success" className="w-full" icon={ChevronsUp} onClick={() => promoteFromBench(selectedCardAction.index, selectedCardAction.pIndex)}>Promover para Ativo</Button>)}
-                       <Button variant="secondary" className="w-full" onClick={() => setSelectedCardAction(null)}>Cancelar</Button>
-                  </div>
-              </Card>
-          </div>
-      )}
-
-      {/* PRIZE SELECTION MODAL */}
-      {showPrizeModal && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-              <Card className="w-full max-w-sm">
-                  <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-bold text-lg text-yellow-600 flex items-center gap-2"><Gift/> Pegar Prêmios</h3>
-                      <button onClick={() => setShowPrizeModal(false)}><X/></button>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                      {[1, 2, 3].map(qty => (
-                          <Button 
-                              key={qty} 
-                              variant="warning" 
-                              onClick={() => { takePrize(qty); setShowPrizeModal(false); }}
-                              disabled={currentPlayer.prizes < qty}
-                              className="flex flex-col h-16"
-                          >
-                              <span className="text-xl font-bold">{qty}</span>
-                              <span className="text-xs font-normal">{qty > 1 ? 'Prêmios' : 'Prêmio'}</span>
-                          </Button>
-                      ))}
-                  </div>
-              </Card>
-          </div>
-      )}
-
-      {/* DAMAGE CONFIRMATION MODAL */}
-      {damageConfirmation && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 animate-in fade-in">
-              <Card className="w-full max-w-sm border-2 border-red-500 shadow-2xl">
-                  <div className="text-center mb-4">
-                      <h3 className="text-lg font-bold text-gray-700">Confirmar Dano Principal</h3>
-                      <p className="text-sm text-gray-500">{damageConfirmation.attackName}</p>
-                  </div>
-                  
-                  <div className="flex items-center justify-center gap-4 mb-6">
-                      <button 
-                        onClick={() => setDamageConfirmation(prev => ({...prev, actualDamage: Math.max(0, prev.actualDamage - 10)}))}
-                        className="p-2 rounded-full bg-gray-200 hover:bg-gray-300"
-                      >
-                          <Minus size={20}/>
-                      </button>
-                      <div className="text-4xl font-black text-red-600 w-24 text-center">
-                          {damageConfirmation.actualDamage}
-                      </div>
-                      <button 
-                        onClick={() => setDamageConfirmation(prev => ({...prev, actualDamage: prev.actualDamage + 10}))}
-                        className="p-2 rounded-full bg-gray-200 hover:bg-gray-300"
-                      >
-                          <Plus size={20}/>
-                      </button>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                      <Button variant="secondary" onClick={() => setDamageConfirmation(null)}>Cancelar</Button>
-                      <Button variant="danger" onClick={finalizeAttack}>Confirmar</Button>
-                  </div>
-              </Card>
-          </div>
-      )}
-
-      {/* PHANTOM DIVE DISTRIBUTION MODAL */}
-      {distributionModal && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 animate-in fade-in">
-              <Card className="w-full max-w-2xl border-2 border-purple-500 shadow-2xl max-h-[90vh] flex flex-col">
-                  <div className="flex justify-between items-center mb-4 border-b pb-2">
-                      <h3 className="text-xl font-bold flex items-center gap-2 text-purple-800">
-                          <Crosshair size={24}/> Efeito de Distribuição
-                      </h3>
-                      <div className="text-right">
-                          <span className="text-xs text-gray-500 uppercase font-bold">Restante</span>
-                          <div className="text-2xl font-black text-purple-600">
-                              {distributionModal.total - distributionModal.allocated.reduce((a,b)=>a+b, 0)}
-                          </div>
-                      </div>
-                  </div>
-                  
-                  <p className="text-sm text-gray-600 mb-4 bg-purple-50 p-2 rounded border border-purple-100">
-                      Distribua o dano ({distributionModal.total}) nos Pokémon do banco do oponente da maneira que desejar.
-                  </p>
-
-                  <div className="flex-1 overflow-y-auto space-y-3 p-2">
-                      {players[distributionModal.opponentIndex].benchPokemon.map((poke, idx) => (
-                          <div key={idx} className="flex items-center justify-between bg-white p-3 rounded-lg border shadow-sm">
-                              <div className="flex items-center gap-3">
-                                  <PokemonCard card={poke} small={true} className="transform scale-75 origin-left" />
-                                  <div>
-                                      <div className="font-bold text-sm">{poke.name}</div>
-                                      <div className="text-xs text-gray-500">HP: {Math.max(0, poke.hp - (poke.damage||0))}/{poke.hp}</div>
-                                  </div>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                  <button onClick={() => handleDistributionChange(idx, -1)} className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-30"><Minus size={16}/></button>
-                                  <span className="font-bold w-8 text-center">{distributionModal.allocated[idx]}</span>
-                                  <button onClick={() => handleDistributionChange(idx, 1)} className="p-2 rounded-full bg-purple-100 text-purple-700 hover:bg-purple-200 disabled:opacity-30"><Plus size={16}/></button>
-                              </div>
-                          </div>
-                      ))}
-                  </div>
-
-                  <div className="mt-4 pt-2 border-t flex justify-end gap-2">
-                      <Button variant="primary" disabled={distributionModal.total - distributionModal.allocated.reduce((a,b)=>a+b, 0) !== 0} onClick={confirmDistribution}>
-                          Confirmar Distribuição
-                      </Button>
-                  </div>
-              </Card>
-          </div>
-      )}
-
-      {showEnergyModal && (
-  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-    <Card className="w-full max-w-lg">
-      <div className="flex justify-between items-center mb-4 border-b pb-2">
-        <div>
-          <h3 className="text-lg font-bold text-gray-800">Selecionar Energia</h3>
-          {/* Contador visual adicionado aqui */}
-          <p className="text-[10px] font-mono text-blue-600 font-bold uppercase">
-            Total no Pokémon: {
-              showEnergyModal.location === 'ACTIVE' 
-              ? players[showEnergyModal.pIndex].activePokemon?.attachedEnergy?.length || 0
-              : players[showEnergyModal.pIndex].benchPokemon[showEnergyModal.index]?.attachedEnergy?.length || 0
-            }
-          </p>
-        </div>
-        <button onClick={() => setShowEnergyModal(null)} className="text-gray-400 hover:text-red-500">
-          <X size={24}/>
-        </button>
-      </div>
-      
-      <div className="grid grid-cols-3 gap-2">
-        {Object.entries(ENERGY_TYPES).map(([key, val]) => (
-          <button 
-            key={key} 
-            onClick={() => confirmAttachEnergy(val)} 
-            className={`${val.color} p-3 rounded-lg flex flex-col items-center gap-2 hover:opacity-90 transition-opacity active:scale-95`}
-          >
-            <val.icon size={24} className={val.text === 'text-white' ? 'text-white' : 'text-black'} />
-            <span className={`text-xs font-bold ${val.text}`}>{val.name}</span>
-          </button>
-        ))}
-      </div>
-    </Card>
-  </div>
-)}
-
-      {showAttackModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-             <Card className="w-full max-w-md">
-                <div className="flex justify-between items-center mb-4 border-b pb-2"><h3 className="text-xl font-bold flex items-center gap-2"><Sword className="text-red-600"/> Declarar Ataque</h3><button onClick={() => setShowAttackModal(false)}><X/></button></div>
-                <div className="space-y-3">
-                    {currentPlayer.activePokemon.attacks.filter(atk => atk.cost[0] !== 'Ability').map((atk, idx) => {
-                            const canAfford = checkEnergyCost(atk.cost, currentPlayer.activePokemon.attachedEnergy || []);
-                            return (<button key={idx} disabled={!canAfford} onClick={() => confirmAttack(atk)} className={`w-full p-3 rounded-lg border-2 flex justify-between items-center transition-all ${canAfford ? 'border-red-500 bg-red-50 hover:bg-red-100 cursor-pointer' : 'border-gray-200 bg-gray-100 opacity-60 cursor-not-allowed'}`}><div className="flex flex-col items-start"><span className={`font-bold ${canAfford ? 'text-red-800' : 'text-gray-500'}`}>{atk.name}</span><div className="flex gap-1 mt-1">{atk.cost.map((c, i) => { const EColor = ENERGY_TYPES[c]?.color || 'bg-gray-400'; return <div key={i} className={`w-3 h-3 ${EColor} rounded-full`}></div>})}</div></div><span className="text-xl font-black">{atk.damage}</span></button>);
-                        })
-                    }
-                </div>
-             </Card>
-        </div>
-      )}
-      {retreatModal && (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4">
-        <Card className="w-full max-w-sm border-2 border-blue-500">
-            <h3 className="font-bold text-lg mb-2 flex items-center gap-2 text-blue-700">
-                <RefreshCw size={20}/> Pagar Custo de Recuo
-            </h3>
-            <p className="text-xs text-gray-500 mb-4">
-                Selecione {retreatModal.cost} energia(s) para descartar:
-            </p>
-            
-            <div className="flex flex-wrap gap-2 mb-6">
-                {retreatModal.availableEnergies.map((type, idx) => {
-                    const isSelected = retreatModal.selectedIndices.includes(idx);
-                    const EIcon = ENERGY_TYPES[type]?.icon || Circle;
-                    return (
-                        <button
-                            key={idx}
-                            onClick={() => {
-                                const newIndices = isSelected 
-                                    ? retreatModal.selectedIndices.filter(i => i !== idx)
-                                    : [...retreatModal.selectedIndices, idx].slice(0, retreatModal.cost);
-                                setRetreatModal(prev => ({ ...prev, selectedIndices: newIndices }));
-                            }}
-                            className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
-                                isSelected ? 'border-red-500 scale-110 shadow-lg' : 'border-transparent opacity-60'
-                            } ${ENERGY_TYPES[type]?.color}`}
-                        >
-                            <EIcon size={20} className="text-white" />
-                        </button>
-                    );
-                })}
-            </div>
-
-            <div className="flex gap-2">
-                <Button variant="secondary" className="flex-1" onClick={() => setRetreatModal(null)}>Cancelar</Button>
-                <Button 
-                    variant="primary" 
-                    className="flex-1" 
-                    disabled={retreatModal.selectedIndices.length !== retreatModal.cost}
-                    onClick={() => confirmRetreat(retreatModal.selectedIndices)}
-                >
-                    Recuar
-                </Button>
-            </div>
-        </Card>
-    </div>
-)}
-      {/* Overlay de Moeda Imersivo */}
-        {coinResult && (
-            <div className="fixed inset-0 flex items-center justify-center z-[100] animate-in zoom-in duration-300">
+    {/* --- OVERLAY DE MOEDA IMERSIVO --- */}
+    {coinResult && (
+        <div className="fixed inset-0 flex items-center justify-center z-[100] animate-in zoom-in duration-300">
+            <div className={`
+                p-8 rounded-full shadow-2xl border-4 flex flex-col items-center gap-4 bg-white
+                ${coinResult === 'CARA' ? 'border-yellow-400' : 'border-slate-400'}
+            `}>
                 <div className={`
-                    p-8 rounded-full shadow-2xl border-4 flex flex-col items-center gap-4 bg-white
-                    ${coinResult === 'CARA' ? 'border-yellow-400' : 'border-slate-400'}
+                    w-24 h-24 rounded-full flex items-center justify-center text-3xl font-black shadow-inner
+                    ${coinResult === 'CARA' ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-700'}
                 `}>
-                    <div className={`
-                        w-24 h-24 rounded-full flex items-center justify-center text-3xl font-black shadow-inner
-                        ${coinResult === 'CARA' ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-700'}
-                    `}>
-                        <Coins size={48} className="animate-bounce" />
-                    </div>
-                    <h2 className="text-2xl font-black uppercase tracking-widest text-gray-800">
-                        {coinResult}
-                    </h2>
+                    <Coins size={48} className="animate-bounce" />
                 </div>
+                <h2 className="text-2xl font-black uppercase tracking-widest text-gray-800">
+                    {coinResult}
+                </h2>
             </div>
-        )}    
-      {showDeckModal && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-4xl max-h-[90vh] flex flex-col">
-                <div className="flex justify-between items-center mb-4 pb-2 border-b"><div><h2 className="text-xl font-bold flex items-center gap-2">{DECKS[showDeckModal.deckId].name}</h2><p className="text-sm text-gray-500">{showDeckModal.target && showDeckModal.target.includes('EVOLVE') ? 'Selecione a carta para evoluir' : 'Selecione uma carta'}</p></div><button onClick={() => setShowDeckModal(null)} className="p-2 hover:bg-gray-100 rounded-full"><X/></button></div>
-                <div className="flex-1 overflow-y-auto p-2"><div className="flex flex-wrap gap-4 justify-center">{DECKS[showDeckModal.deckId].cards.map((card, idx) => (<PokemonCard key={idx} card={card} onClick={showDeckModal.target ? () => placePokemon(card, showDeckModal.target, showDeckModal.pIndex, showDeckModal.evolveTargetIndex) : undefined} actions={showDeckModal.target ? (<div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/30 transition-all"><span className="bg-white text-black font-bold px-3 py-1 rounded-full shadow-lg transform scale-90 group-hover:scale-100 transition-transform opacity-0 group-hover:opacity-100">{showDeckModal.target.includes('EVOLVE') ? 'Evoluir' : 'Selecionar'}</span></div>) : null} />))}</div></div>
-            </Card>
-          </div>
-      )}
+        </div>
+    )}
 
-      {gameState.phase === PHASES.GAME_OVER && (<div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"><div className="bg-white dark:bg-gray-800 p-8 rounded-lg text-center max-w-md w-full shadow-2xl border-4 border-yellow-400"><h2 className="text-4xl font-black text-yellow-500 mb-4">FIM DE JOGO!</h2><p className="text-2xl mb-6">Vencedor: <span className="font-bold text-blue-600">{gameState.winner}</span></p><Button variant="primary" onClick={resetGame}>Nova Partida</Button></div></div>)}
-      {showRules && (<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"><Card className="w-full max-w-2xl h-[80vh] flex flex-col"><div className="flex justify-between items-center mb-4 border-b pb-2"><h2 className="text-xl font-bold">Guia Rápido de Regras</h2><button onClick={() => setShowRules(false)} className="text-gray-500 hover:text-red-500"><Ban/>
-      </button></div><input type="text" placeholder="Buscar regra..." className="w-full p-2 border rounded mb-4 dark:bg-gray-700 dark:border-gray-600" value={searchRule} onChange={(e) => setSearchRule(e.target.value)} /><div className="flex-1 overflow-y-auto space-y-4">{RULES_DB.filter(r => r.title.toLowerCase().includes(searchRule.toLowerCase()) || r.text.toLowerCase().includes(searchRule.toLowerCase())).map(rule => (<div key={rule.id} className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-100 dark:border-blue-800"><h4 className="font-bold text-blue-800 dark:text-blue-300 mb-1">{rule.title}</h4><p className="text-sm text-black-700 dark:text-black-300">{rule.text}</p></div>))}</div></Card></div>)}
-      {showRanking && <RankingModal onClose={() => setShowRanking(false)} />}
-    </div>
+    {/* --- MODALS (SEMPRE DISPONÍVEIS) --- */}
+    {selectedCardAction && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-sm">
+                <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-lg">{selectedCardAction.card.name}</h3><button onClick={() => setSelectedCardAction(null)}><X/></button></div>
+                <div className="space-y-2">
+                      <div className="bg-orange-50 p-2 rounded border border-orange-200 mb-2">
+                          <p className="text-xs font-bold text-orange-800 mb-1 uppercase">Ajuste de Juiz (Dano)</p>
+                          <div className="flex justify-between items-center">
+                              <button onClick={() => handleManualDamage(-10)} className="p-1 bg-white border rounded hover:bg-gray-50"><Minus size={16}/></button>
+                              <span className="font-mono font-bold">{selectedCardAction.card.damage || 0}</span>
+                              <button onClick={() => handleManualDamage(10)} className="p-1 bg-white border rounded hover:bg-gray-50"><Plus size={16}/></button>
+                          </div>
+                      </div>
+                      
+                      {selectedCardAction.card.attachedEnergy && selectedCardAction.card.attachedEnergy.length > 0 && (
+                          <div className="bg-blue-50 p-2 rounded border border-blue-200 mb-2">
+                              <p className="text-xs font-bold text-blue-800 mb-1 uppercase">Remover Energia</p>
+                              <div className="flex flex-wrap gap-1">
+                                  {selectedCardAction.card.attachedEnergy.map((e, idx) => {
+                                      const EIcon = ENERGY_TYPES[e]?.icon || PlusCircle;
+                                      return (
+                                          <button key={idx} onClick={() => handleRemoveEnergy(idx)} className="relative group p-1 bg-white rounded border hover:bg-red-100">
+                                              <EIcon size={16}/>
+                                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-red-500/50 rounded text-white"><X size={12}/></div>
+                                          </button>
+                                      )
+                                  })}
+                              </div>
+                          </div>
+                      )}
+
+                      {selectedCardAction.card.attacks && selectedCardAction.card.attacks.filter(atk => atk.cost[0] === 'Ability').map((ability, idx) => (<Button key={`ab-${idx}`} variant="warning" className="w-full mb-2 border border-yellow-600 text-yellow-900" icon={Sparkles} onClick={() => useAbility(ability.name, selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>Usar Habilidade: {ability.name}</Button>))}
+                      <Button variant="ghost" className="w-full border border-blue-200 bg-blue-50 text-blue-700" icon={Zap} onClick={() => requestEnergyAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>Ligar Energia</Button>
+                      <Button variant="ghost" className="w-full border border-purple-200 bg-purple-50 text-purple-700" icon={Briefcase} onClick={() => requestToolAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>Ligar Ferramenta</Button>
+                      <Button variant="primary" className="w-full" icon={GitMerge} onClick={() => requestEvolution(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>Evoluir</Button>
+                      {!players[selectedCardAction.pIndex].activePokemon && selectedCardAction.location === 'BENCH' && (<Button variant="success" className="w-full" icon={ChevronsUp} onClick={() => promoteFromBench(selectedCardAction.index, selectedCardAction.pIndex)}>Promover para Ativo</Button>)}
+                      <Button variant="secondary" className="w-full" onClick={() => setSelectedCardAction(null)}>Cancelar</Button>
+                </div>
+            </Card>
+        </div>
+    )}
+
+    {showPrizeModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-sm">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-lg text-yellow-600 flex items-center gap-2"><Gift/> Pegar Prêmios</h3>
+                    <button onClick={() => setShowPrizeModal(false)}><X/></button>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                    {[1, 2, 3].map(qty => (
+                        <Button 
+                            key={qty} 
+                            variant="warning" 
+                            onClick={() => { takePrize(qty); setShowPrizeModal(false); }}
+                            disabled={currentPlayer.prizes < qty}
+                            className="flex flex-col h-16"
+                        >
+                            <span className="text-xl font-bold">{qty}</span>
+                            <span className="text-xs font-normal">{qty > 1 ? 'Prêmios' : 'Prêmio'}</span>
+                        </Button>
+                    ))}
+                </div>
+            </Card>
+        </div>
+    )}
+
+    {damageConfirmation && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 animate-in fade-in">
+            <Card className="w-full max-w-sm border-2 border-red-500 shadow-2xl">
+                <div className="text-center mb-4">
+                    <h3 className="text-lg font-bold text-gray-700">Confirmar Dano Principal</h3>
+                    <p className="text-sm text-gray-500">{damageConfirmation.attackName}</p>
+                </div>
+                
+                <div className="flex items-center justify-center gap-4 mb-6">
+                    <button 
+                      onClick={() => setDamageConfirmation(prev => ({...prev, actualDamage: Math.max(0, prev.actualDamage - 10)}))}
+                      className="p-2 rounded-full bg-gray-200 hover:bg-gray-300"
+                    >
+                        <Minus size={20}/>
+                    </button>
+                    <div className="text-4xl font-black text-red-600 w-24 text-center">
+                        {damageConfirmation.actualDamage}
+                    </div>
+                    <button 
+                      onClick={() => setDamageConfirmation(prev => ({...prev, actualDamage: prev.actualDamage + 10}))}
+                      className="p-2 rounded-full bg-gray-200 hover:bg-gray-300"
+                    >
+                        <Plus size={20}/>
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                    <Button variant="secondary" onClick={() => setDamageConfirmation(null)}>Cancelar</Button>
+                    <Button variant="danger" onClick={finalizeAttack}>Confirmar</Button>
+                </div>
+            </Card>
+        </div>
+    )}
+
+    {distributionModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 animate-in fade-in">
+            <Card className="w-full max-w-2xl border-2 border-purple-500 shadow-2xl max-h-[90vh] flex flex-col">
+                <div className="flex justify-between items-center mb-4 border-b pb-2">
+                    <h3 className="text-xl font-bold flex items-center gap-2 text-purple-800">
+                        <Crosshair size={24}/> Efeito de Distribuição
+                    </h3>
+                    <div className="text-right">
+                        <span className="text-xs text-gray-500 uppercase font-bold">Restante</span>
+                        <div className="text-2xl font-black text-purple-600">
+                            {distributionModal.total - distributionModal.allocated.reduce((a,b)=>a+b, 0)}
+                        </div>
+                    </div>
+                </div>
+                
+                <p className="text-sm text-gray-600 mb-4 bg-purple-50 p-2 rounded border border-purple-100">
+                    Distribua o dano ({distributionModal.total}) nos Pokémon do banco do oponente da maneira que desejar.
+                </p>
+
+                <div className="flex-1 overflow-y-auto space-y-3 p-2">
+                    {players[distributionModal.opponentIndex].benchPokemon.map((poke, idx) => (
+                        <div key={idx} className="flex items-center justify-between bg-white p-3 rounded-lg border shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <PokemonCard card={poke} small={true} className="transform scale-75 origin-left" />
+                                <div>
+                                    <div className="font-bold text-sm">{poke.name}</div>
+                                    <div className="text-xs text-gray-500">HP: {Math.max(0, poke.hp - (poke.damage||0))}/{poke.hp}</div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => handleDistributionChange(idx, -1)} className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-30"><Minus size={16}/></button>
+                                <span className="font-bold w-8 text-center">{distributionModal.allocated[idx]}</span>
+                                <button onClick={() => handleDistributionChange(idx, 1)} className="p-2 rounded-full bg-purple-100 text-purple-700 hover:bg-purple-200 disabled:opacity-30"><Plus size={16}/></button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="mt-4 pt-2 border-t flex justify-end gap-2">
+                    <Button variant="primary" disabled={distributionModal.total - distributionModal.allocated.reduce((a,b)=>a+b, 0) !== 0} onClick={confirmDistribution}>
+                        Confirmar Distribuição
+                    </Button>
+                </div>
+            </Card>
+        </div>
+    )}
+
+    {showEnergyModal && (
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+           <Card className="w-full max-w-lg">
+              <div className="flex justify-between items-center mb-4 border-b pb-2">
+                <div>
+                    <h3 className="text-lg font-bold">Selecionar Tipo de Energia</h3>
+                    <p className="text-[10px] font-mono text-blue-600 font-bold uppercase">
+                      Total no Pokémon: {
+                        showEnergyModal.location === 'ACTIVE' 
+                        ? players[showEnergyModal.pIndex].activePokemon?.attachedEnergy?.length || 0
+                        : players[showEnergyModal.pIndex].benchPokemon[showEnergyModal.index]?.attachedEnergy?.length || 0
+                      }
+                    </p>
+                </div>
+                <button onClick={() => setShowEnergyModal(null)}><X/></button>
+              </div>
+              <div className="grid grid-cols-3 gap-2">{Object.entries(ENERGY_TYPES).map(([key, val]) => (<button key={key} onClick={() => confirmAttachEnergy(val)} className={`${val.color} p-3 rounded-lg flex flex-col items-center gap-2 hover:opacity-90 transition-opacity`}><val.icon size={24} className={val.text === 'text-white' ? 'text-white' : 'text-black'} /><span className={`text-xs font-bold ${val.text}`}>{val.name}</span></button>))}</div>
+           </Card>
+      </div>
+    )}
+
+    {showToolModal && (
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+           <Card className="w-full max-w-lg">
+              <div className="flex justify-between items-center mb-4"><h3 className="text-lg font-bold">Selecionar Ferramenta</h3><button onClick={() => setShowToolModal(null)}><X/></button></div>
+              <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                  {TOOLS.map((tool) => (
+                      <button key={tool.id} onClick={() => confirmAttachTool(tool)} className="w-full p-3 bg-white border border-gray-200 rounded hover:bg-blue-50 flex justify-between items-center">
+                          <span className="font-bold text-sm">{tool.name}</span>
+                          <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600">{tool.effect}</span>
+                      </button>
+                  ))}
+              </div>
+           </Card>
+      </div>
+    )}
+
+    {showAttackModal && (
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+           <Card className="w-full max-w-md">
+              <div className="flex justify-between items-center mb-4 border-b pb-2"><h3 className="text-xl font-bold flex items-center gap-2"><Sword className="text-red-600"/> Declarar Ataque</h3><button onClick={() => setShowAttackModal(false)}><X/></button></div>
+              <div className="space-y-3">
+                  {currentPlayer.activePokemon.attacks.filter(atk => atk.cost[0] !== 'Ability').map((atk, idx) => {
+                          const canAfford = checkEnergyCost(atk.cost, currentPlayer.activePokemon.attachedEnergy || []);
+                          return (<button key={idx} disabled={!canAfford} onClick={() => confirmAttack(atk)} className={`w-full p-3 rounded-lg border-2 flex justify-between items-center transition-all ${canAfford ? 'border-red-500 bg-red-50 hover:bg-red-100 cursor-pointer' : 'border-gray-200 bg-gray-100 opacity-60 cursor-not-allowed'}`}><div className="flex flex-col items-start"><span className={`font-bold ${canAfford ? 'text-red-800' : 'text-gray-500'}`}>{atk.name}</span><div className="flex gap-1 mt-1">{atk.cost.map((c, i) => { const EColor = ENERGY_TYPES[c]?.color || 'bg-gray-400'; return <div key={i} className={`w-3 h-3 ${EColor} rounded-full`}></div>})}</div></div><span className="text-xl font-black">{atk.damage}</span></button>);
+                      })
+                  }
+              </div>
+           </Card>
+      </div>
+    )}
+
+    {retreatModal && (
+      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4">
+          <Card className="w-full max-w-sm border-2 border-blue-500">
+              <h3 className="font-bold text-lg mb-2 flex items-center gap-2 text-blue-700">
+                  <RefreshCw size={20}/> Pagar Custo de Recuo
+              </h3>
+              <p className="text-xs text-gray-500 mb-4">
+                  Selecione {retreatModal.cost} energia(s) para descartar:
+              </p>
+              
+              <div className="flex flex-wrap gap-2 mb-6">
+                  {retreatModal.availableEnergies.map((type, idx) => {
+                      const isSelected = retreatModal.selectedIndices.includes(idx);
+                      const EIcon = ENERGY_TYPES[type]?.icon || Circle;
+                      return (
+                          <button
+                              key={idx}
+                              onClick={() => {
+                                  const newIndices = isSelected 
+                                      ? retreatModal.selectedIndices.filter(i => i !== idx)
+                                      : [...retreatModal.selectedIndices, idx].slice(0, retreatModal.cost);
+                                  setRetreatModal(prev => ({ ...prev, selectedIndices: newIndices }));
+                              }}
+                              className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
+                                  isSelected ? 'border-red-500 scale-110 shadow-lg' : 'border-transparent opacity-60'
+                              } ${ENERGY_TYPES[type]?.color}`}
+                          >
+                              <EIcon size={20} className="text-white" />
+                          </button>
+                      );
+                  })}
+              </div>
+
+              <div className="flex gap-2">
+                  <Button variant="secondary" className="flex-1" onClick={() => setRetreatModal(null)}>Cancelar</Button>
+                  <Button 
+                      variant="primary" 
+                      className="flex-1" 
+                      disabled={retreatModal.selectedIndices.length !== retreatModal.cost}
+                      onClick={() => confirmRetreat(retreatModal.selectedIndices)}
+                  >
+                      Recuar
+                  </Button>
+              </div>
+          </Card>
+      </div>
+    )}
+
+    {showDeckModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-4xl max-h-[90vh] flex flex-col">
+              <div className="flex justify-between items-center mb-4 pb-2 border-b"><div><h2 className="text-xl font-bold flex items-center gap-2">{DECKS[showDeckModal.deckId].name}</h2><p className="text-sm text-gray-500">{showDeckModal.target && showDeckModal.target.includes('EVOLVE') ? 'Selecione a carta para evoluir' : 'Selecione uma carta'}</p></div><button onClick={() => setShowDeckModal(null)} className="p-2 hover:bg-gray-100 rounded-full"><X/></button></div>
+              <div className="flex-1 overflow-y-auto p-2"><div className="flex flex-wrap gap-4 justify-center">{DECKS[showDeckModal.deckId].cards.map((card, idx) => (<PokemonCard key={idx} card={card} onClick={showDeckModal.target ? () => placePokemon(card, showDeckModal.target, showDeckModal.pIndex, showDeckModal.evolveTargetIndex) : undefined} actions={showDeckModal.target ? (<div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/30 transition-all"><span className="bg-white text-black font-bold px-3 py-1 rounded-full shadow-lg transform scale-90 group-hover:scale-100 transition-transform opacity-0 group-hover:opacity-100">{showDeckModal.target.includes('EVOLVE') ? 'Evoluir' : 'Selecionar'}</span></div>) : null} />))}</div></div>
+          </Card>
+        </div>
+    )}
+
+    {gameState.phase === PHASES.GAME_OVER && (<div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"><div className="bg-white dark:bg-gray-800 p-8 rounded-lg text-center max-w-md w-full shadow-2xl border-4 border-yellow-400"><h2 className="text-4xl font-black text-yellow-500 mb-4">FIM DE JOGO!</h2><p className="text-2xl mb-6">Vencedor: <span className="font-bold text-blue-600">{gameState.winner}</span></p><Button variant="primary" onClick={resetGame}>Nova Partida</Button></div></div>)}
+    {showRules && (<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"><Card className="w-full max-w-2xl h-[80vh] flex flex-col"><div className="flex justify-between items-center mb-4 border-b pb-2"><h2 className="text-xl font-bold">Guia Rápido de Regras</h2><button onClick={() => setShowRules(false)} className="text-gray-500 hover:text-red-500"><Ban/>
+    </button></div><input type="text" placeholder="Buscar regra..." className="w-full p-2 border rounded mb-4 dark:bg-gray-700 dark:border-gray-600" value={searchRule} onChange={(e) => setSearchRule(e.target.value)} /><div className="flex-1 overflow-y-auto space-y-4">{RULES_DB.filter(r => r.title.toLowerCase().includes(searchRule.toLowerCase()) || r.text.toLowerCase().includes(searchRule.toLowerCase())).map(rule => (<div key={rule.id} className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-100 dark:border-blue-800"><h4 className="font-bold text-blue-800 dark:text-blue-300 mb-1">{rule.title}</h4><p className="text-sm text-black-700 dark:text-black-300">{rule.text}</p></div>))}</div></Card></div>)}
     
-  );
-}
+    {/* --- O RANKING GLOBAL AGORA PODE SER VISTO NO LOBBY OU NO JOGO --- */}
+    {showRanking && <RankingModal onClose={() => setShowRanking(false)} />}
+  </div>
+); };
