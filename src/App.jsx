@@ -192,6 +192,17 @@ const HPBar = ({ current, max }) => {
 // --- COMPONENTE POKEMON CARD (REDESENHADO) ---
 const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) => {
   // 1. PROTEÇÃO CONTRA CRASH
+  
+  // ADICIONE ESTAS 3 LINHAS DE DEBUG:
+  if (card && card.name.includes("Charizard")) {
+      console.log("--- DEBUG CHARIZARD ---");
+      console.log("Tem imagem nova?", card.image);
+      console.log("Tem imagem velha?", card.images?.small);
+      console.log("Card completo:", card);
+  }
+
+  if (!card) return null;
+  // ... o resto continua igual ...
   if (!card) return null;
 
   const TypeIcon = ENERGY_TYPES[card.type]?.icon || Circle;
