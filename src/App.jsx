@@ -1622,8 +1622,8 @@ export default function PokeJudgePro() {
                   </Button>
 
                   <Button 
-                      variant="outline" 
-                      className="px-10 py-8 text-xl border-purple-500 text-purple-600 hover:bg-purple-50 shadow-lg hover:scale-105 transition-transform"
+                      
+                      className="px-10 py-8 text-xl font-bold rounded-lg border-2 border-purple-500 text-purple-600 bg-white hover:bg-purple-50 shadow-lg hover:scale-105 transition-transform flex items-center justify-center gap-2"
                       onClick={() => setShowRanking(true)}
                   >
                       <Trophy className="mr-2" size={24} /> RANKING GLOBAL
