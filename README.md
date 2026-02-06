@@ -11,7 +11,7 @@
 
 | **Lobby & Setup** | **Painel de Arbitragem** |
 |:---:|:---:|
-| ![Lobby](<img width="1910" height="909" alt="Image" src="https://github.com/user-attachments/assets/ea2629c0-2284-4ede-92ee-18cb10022b38" />) | ![Game](https://via.placeholder.com/400x200?text=Print+do+Jogo) |
+| ![Lobby]([<img width="1910" height="909" alt="Image" src="https://github.com/user-attachments/assets/ea2629c0-2284-4ede-92ee-18cb10022b38" />](https://private-user-images.githubusercontent.com/254816311/545973949-ea2629c0-2284-4ede-92ee-18cb10022b38.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NzAzNDgyNDEsIm5iZiI6MTc3MDM0Nzk0MSwicGF0aCI6Ii8yNTQ4MTYzMTEvNTQ1OTczOTQ5LWVhMjYyOWMwLTIyODQtNGVkZS05MmVlLTE4Y2IxMDAyMmIzOC5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjYwMjA2JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI2MDIwNlQwMzE5MDFaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT1mZTVmOTdkYzRhYjc0Nzg3ODllYjM2MWQ1NmIzYWUwZTVhOTkwZmE3MmUzODNjNDM4ZmE4NjkxODQ1M2VhNDZjJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.OxxDL7H91Xt3pcTT7qWlc0WxE2fgL8nE6DCkeAbRopk)) | ![Game](https://via.placeholder.com/400x200?text=Print+do+Jogo) |
 | *Seleção de Decks e Ranking* | *Controle de Turnos e Danos* |
 
 ---
