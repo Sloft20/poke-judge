@@ -733,7 +733,7 @@ const RankingModal = ({ onClose }) => {
         fetchHistory();
     }, []);
 
-    // 2. FUNÇÃO DE CÁLCULO EM TEMPO REAL
+    // 2. FUNÇÃO DE CÁLCULO EM TEMPO REAL: Substitui a antiga calculateStats()
     const calculateLiveStats = () => {
         const deckStats = {};
         const playerStats = {};
@@ -762,118 +762,81 @@ const RankingModal = ({ onClose }) => {
         return { deckStats, playerStats };
     };
 
+    // 3. Gera as listas ordenadas baseadas nos dados do banco
     const { deckStats, playerStats } = calculateLiveStats();
     
     const sortedDecks = Object.values(deckStats).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
     const sortedPlayers = Object.entries(playerStats).map(([name, stat]) => ({name, ...stat})).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
 
+    // O restante do seu código (return) permanece o mesmo...
+
     return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
-          {/* --- TEMA ESCURO APLICADO AQUI (bg-slate-900, text-white) --- */}
-          <Card className="w-full max-w-3xl h-[85vh] flex flex-col bg-slate-900 border-slate-700 shadow-2xl text-white">
-              
-              {/* Header Escuro */}
-              <div className="flex justify-between items-center mb-6 border-b border-slate-700 pb-4 px-6 pt-6">
-                  <h2 className="text-2xl font-black flex items-center gap-3 text-white uppercase tracking-tight italic">
-                      <Trophy className="text-yellow-400 drop-shadow-lg" size={32} fill="currentColor"/> 
-                      Ranking <span className="text-blue-500">Global</span>
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
+          {/* Fundo Branco e Estilo Light conforme a primeira foto */}
+          <Card className="w-full max-w-2xl h-[85vh] flex flex-col bg-white border-gray-100 shadow-2xl">
+              <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4 px-4 pt-4">
+                  <h2 className="text-xl font-bold flex items-center gap-3 text-gray-800 uppercase tracking-tight">
+                      <Trophy className="text-yellow-500" size={28}/> 
+                      Ranking & Stats
                   </h2>
-                  <button onClick={onClose} className="text-slate-400 hover:text-white hover:bg-slate-800 p-2 rounded-full transition-colors"><X size={24}/></button>
+                  <button onClick={onClose} className="text-gray-400 hover:text-red-500 transition-colors"><X size={24}/></button>
               </div>
               
-              {/* Abas Escuras */}
-              <div className="flex gap-2 mb-6 p-1 bg-slate-800 mx-6 rounded-xl border border-slate-700">
-                  <button onClick={() => setTab('decks')} className={`flex-1 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${tab === 'decks' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}>Decks Meta</button>
-                  <button onClick={() => setTab('players')} className={`flex-1 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${tab === 'players' ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/50' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}>Jogadores</button>
-                  <button onClick={() => setTab('history')} className={`flex-1 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${tab === 'history' ? 'bg-slate-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}>Histórico</button>
+              {/* Abas com fundo cinza claro */}
+              <div className="flex gap-2 mb-6 p-1 bg-gray-100 mx-4 rounded-lg border border-gray-200">
+                  <button onClick={() => setTab('decks')} className={`flex-1 py-2 rounded-md text-xs font-bold uppercase transition-all ${tab === 'decks' ? 'bg-white text-blue-600 shadow-sm border border-gray-200' : 'text-gray-500'}`}>Decks Meta</button>
+                  <button onClick={() => setTab('players')} className={`flex-1 py-2 rounded-md text-xs font-bold uppercase transition-all ${tab === 'players' ? 'bg-white text-blue-600 shadow-sm border border-gray-200' : 'text-gray-500'}`}>Jogadores</button>
+                  <button onClick={() => setTab('history')} className={`flex-1 py-2 rounded-md text-xs font-bold uppercase transition-all ${tab === 'history' ? 'bg-white text-blue-600 shadow-sm border border-gray-200' : 'text-gray-500'}`}>Histórico</button>
               </div>
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar px-6 pb-6">
+              <div className="flex-1 overflow-y-auto custom-scrollbar px-4 pb-4">
                   {tab === 'history' ? (
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                           {loading ? (
-                              <div className="flex flex-col items-center justify-center h-40 gap-4">
-                                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                                  <p className="text-slate-400 animate-pulse text-sm">Sincronizando dados...</p>
-                              </div>
+                              <p className="text-center py-10 text-gray-400 animate-pulse">Carregando histórico do Supabase...</p>
                           ) : matches.map((m, idx) => (
-                              <div key={idx} className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center group hover:border-slate-600 transition-all">
-                                  <div className="flex flex-col gap-1">
-                                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider">
-                                          <span className="text-green-400 flex items-center gap-1"><Trophy size={12}/> {m.winner_name}</span>
-                                          <span className="text-slate-600">vs</span>
-                                          <span className="text-red-400">{m.loser_name}</span>
-                                      </div>
-                                      <div className="text-[11px] text-slate-500 font-mono">
-                                          {DECKS[m.winner_deck]?.name || m.winner_deck} vs {DECKS[m.loser_deck]?.name || m.loser_deck} • {new Date(m.created_at).toLocaleDateString()}
-                                      </div>
+                              <div key={idx} className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex justify-between items-center hover:bg-gray-100 transition-all">
+                                  <div>
+                                      <div className="text-[10px] text-gray-400 font-mono mb-1">{new Date(m.created_at).toLocaleString()}</div>
+                                      <div className="text-sm font-bold text-gray-800"><span className="text-green-600">{m.winner_name}</span> vs {m.loser_name}</div>
+                                      <div className="text-[10px] italic text-gray-500">{(DECKS[m.winner_deck]?.name || m.winner_deck)} vs {(DECKS[m.loser_deck]?.name || m.loser_deck)}</div>
                                   </div>
-                                  <button onClick={() => setSelectedMatchLogs(m.game_logs)} className="px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-blue-600 hover:text-white transition-all text-[10px] uppercase font-bold border border-slate-600 group-hover:border-blue-500">Log</button>
+                                  <button onClick={() => setSelectedMatchLogs(m.game_logs)} className="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all text-[10px] uppercase font-bold border border-blue-100">Ver Log</button>
                               </div>
                           ))}
                       </div>
                   ) : (
-                      <table className="w-full text-left border-separate border-spacing-y-3">
-                          <thead className="text-xs uppercase text-slate-500 font-bold tracking-wider">
-                              <tr>
-                                  <th className="px-4 pb-2">Nome</th>
-                                  <th className="px-4 pb-2 text-center">Jogos</th>
-                                  <th className="px-4 pb-2">Win Rate</th>
-                              </tr>
-                          </thead>
-                          <tbody className="text-slate-200">
-                              {(tab === 'decks' ? sortedDecks : sortedPlayers).map((item, idx) => {
-                                  // Pegar imagem da carta se for deck
-                                  const mainCard = tab === 'decks' && DECKS[item.name] ? DECKS[item.name].cards[0] : null;
-                                  const wr = (item.plays > 0 ? (item.wins / item.plays) * 100 : 0);
-                                  
-                                  return (
-                                      <tr key={idx} className="bg-slate-800 hover:bg-slate-750 transition-colors group rounded-xl">
-                                          <td className="px-4 py-3 font-bold border-l-4 border-blue-500 rounded-l-xl flex items-center gap-4">
-                                              {/* 2. ÍCONE DO DECK AQUI */}
-                                              {mainCard && (
-                                                  <div className="w-8 h-10 rounded overflow-hidden shadow-sm border border-slate-600 relative group-hover:scale-110 transition-transform">
-                                                      <img src={mainCard.image} alt={item.name} className="w-full h-full object-cover" />
-                                                  </div>
-                                              )}
-                                              <span className="text-sm">{tab === 'decks' && DECKS[item.name] ? DECKS[item.name].name : item.name}</span>
-                                          </td>
-                                          <td className="px-4 py-3 text-center text-sm font-mono text-slate-400">{item.plays}</td>
-                                          <td className="px-4 py-3 rounded-r-xl w-1/3">
-                                              {/* 3. BARRA DE WIN RATE VISUAL */}
-                                              <div className="flex flex-col gap-1">
-                                                  <div className="flex justify-between text-[10px] font-bold uppercase">
-                                                      <span className={wr >= 50 ? 'text-green-400' : 'text-red-400'}>{wr.toFixed(0)}%</span>
-                                                  </div>
-                                                  <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
-                                                      <div 
-                                                          className={`h-full rounded-full transition-all duration-500 ${wr >= 50 ? 'bg-gradient-to-r from-green-600 to-green-400' : 'bg-red-500'}`} 
-                                                          style={{ width: `${wr}%` }}
-                                                      ></div>
-                                                  </div>
-                                              </div>
-                                          </td>
-                                      </tr>
-                                  )
-                              })}
+                      <table className="w-full text-sm text-left border-separate border-spacing-y-2">
+                          <tbody className="text-gray-700">
+                              {(tab === 'decks' ? sortedDecks : sortedPlayers).map((item, idx) => (
+                                  <tr key={idx} className="bg-gray-50 hover:bg-gray-100 transition-colors rounded-xl overflow-hidden border border-gray-200">
+                                      <td className="px-4 py-3 font-bold border-l-4 border-blue-500 rounded-l-xl">{item.name}</td>
+                                      <td className="px-4 py-3 text-center text-xs text-gray-500">{item.plays} partidas</td>
+                                      <td className="px-4 py-3 text-center font-bold rounded-r-xl">
+                                          <span className={`px-2 py-1 rounded-md text-[10px] ${((item.wins / item.plays) * 100) >= 50 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                              {((item.wins / item.plays) * 100).toFixed(1)}% WR
+                                          </span>
+                                      </td>
+                                  </tr>
+                              ))}
                           </tbody>
                       </table>
                   )}
               </div>
           </Card>
 
-          {/* Sub-modal de Replay (Dark Mode) */}
+          {/* Sub-modal de Replay com Estilo Light Moderno */}
           {selectedMatchLogs && (
-              <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4 animate-in zoom-in duration-200">
-                  <Card className="w-full max-w-lg h-[75vh] flex flex-col bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl">
-                      <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2 p-4">
-                          <h3 className="text-white font-bold flex items-center gap-2">
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4 animate-in zoom-in duration-200">
+                  <Card className="w-full max-w-lg h-[75vh] flex flex-col bg-white border-gray-200 shadow-2xl rounded-2xl">
+                      <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-2 p-4">
+                          <h3 className="text-gray-800 font-bold flex items-center gap-2">
                               <History size={18} className="text-blue-500"/> Logs da Partida
                           </h3>
-                          <button onClick={() => setSelectedMatchLogs(null)} className="text-slate-500 hover:text-white"><X/></button>
+                          <button onClick={() => setSelectedMatchLogs(null)} className="text-gray-400 hover:text-red-500"><X/></button>
                       </div>
-                      <div className="flex-1 overflow-y-auto p-4 m-4 bg-black/30 rounded-xl font-mono text-[11px] text-green-400 leading-relaxed custom-scrollbar whitespace-pre-wrap border border-slate-800">
-                          {selectedMatchLogs || "Nenhum log registrado."}
+                      <div className="flex-1 overflow-y-auto p-4 m-4 bg-gray-50 rounded-xl font-mono text-[11px] text-gray-700 leading-relaxed custom-scrollbar whitespace-pre-wrap border border-gray-200">
+                          {selectedMatchLogs || "Nenhum log registrado para esta partida antiga."}
                       </div>
                       <div className="p-4 pt-0">
                           <Button variant="primary" className="w-full py-3" onClick={() => setSelectedMatchLogs(null)}>Voltar ao Ranking</Button>
