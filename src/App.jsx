@@ -587,7 +587,8 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
 
 // --- 6. COMPONENTES DE TELA (LOBBY & RANKING) ---
 
-const GameLobby = ({ players, onUpdatePlayer, onStartGame }) => {
+// Adicione o onShowRanking aqui dentro!
+const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking }) => {
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
             <Card className="w-full max-w-4xl p-8 bg-white dark:bg-gray-800 shadow-xl rounded-2xl">
