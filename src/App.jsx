@@ -191,14 +191,14 @@ const HPBar = ({ current, max }) => {
 
 // --- COMPONENTE POKEMON CARD (REDESENHADO) ---
 const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) => {
-  // 1. PROTEÇÃO CONTRA CRASH: Se o card não existir, não faz nada
+  // 1. PROTEÇÃO CONTRA CRASH
   if (!card) return null;
 
   const TypeIcon = ENERGY_TYPES[card.type]?.icon || Circle;
   const cardBackground = ENERGY_TYPES[card.type]?.gradient || 'bg-gray-300';
   const typeText = ENERGY_TYPES[card.type]?.text || 'text-black';
   
-  // 2. CORREÇÃO DA IMAGEM: Lê o link novo (card.image) OU o antigo
+  // 2. ESSA É A LINHA QUE O GIT APAGOU E QUE FAZ A IMAGEM APARECER:
   const imageUrl = card.image || card.images?.small;
 
   let maxHP = card.hp || 0;
@@ -249,7 +249,7 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
         </div>
       </div>
       
-      {/* 3. ÁREA DA IMAGEM CORRIGIDA */}
+      {/* 3. ÁREA DA IMAGEM BLINDADA */}
       <div className={`relative mx-2 mt-0.5 mb-0.5 border-2 border-yellow-200/50 shadow-inner bg-white/90 overflow-hidden flex items-center justify-center ${small ? 'h-12' : 'h-28'}`}>
          
          {/* Se tiver imagem, mostra a imagem. Se não, mostra o ícone. */}
@@ -289,7 +289,7 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
           <HPBar current={currentHP} max={maxHP} />
       </div>
 
-      {/* 4. ATAQUES PROTEGIDOS (Corrige o erro do slice) */}
+      {/* 4. ATAQUES PROTEGIDOS (Evita erro de slice) */}
       <div className="bg-white/40 flex-1 flex flex-col overflow-hidden text-gray-900 mx-1 mb-1 rounded-sm p-1">
           {!small && (
               <div className="flex-1 space-y-1 overflow-y-auto px-1 py-1 custom-scrollbar">
@@ -297,7 +297,6 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
                       <div key={i} className="flex flex-col text-[10px] border-b border-gray-300 last:border-0 pb-1 mb-0.5">
                           <div className="flex justify-between items-center mb-0.5">
                               <div className="flex gap-0.5">
-                                  {/* AQUI ESTÁ A CORREÇÃO PRINCIPAL DO ERRO: (atk.cost || []) */}
                                   {(atk.cost || []).map((c, idx) => {
                                       if(c === 'Ability') return <span key={idx} className="text-[8px] font-bold text-red-600 uppercase tracking-tighter">Habilidade</span>;
                                       const EIcon = ENERGY_TYPES[c]?.icon || Circle;
