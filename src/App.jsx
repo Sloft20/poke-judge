@@ -201,7 +201,7 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
       console.log("Card completo:", card);
   }
 
-  if (!card) return null;
+  
   // ... o resto continua igual ...
   if (!card) return null;
 
