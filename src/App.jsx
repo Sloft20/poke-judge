@@ -1990,6 +1990,17 @@ export default function PokeJudgePro() {
           </Card>
       </div>
     )}
+    {gameState.phase === PHASES.SETUP && (
+          <div className="fixed top-6 right-6 z-[60] animate-in fade-in slide-in-from-top-4">
+              <button 
+                  onClick={() => setShowRanking(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md transition-all shadow-lg font-bold uppercase text-sm tracking-wider"
+              >
+                  <Trophy size={18} className="text-yellow-400" />
+                  Ranking Global
+              </button>
+          </div>
+      )}
 
     {showDeckModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
