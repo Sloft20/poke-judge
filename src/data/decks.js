@@ -1,4 +1,4 @@
-export const DECKS
+export const DECKS = {
   CHARIZARD: { 
     id: 'charizard', 
     name: 'Charizard ex', 
