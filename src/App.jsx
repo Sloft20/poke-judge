@@ -191,13 +191,16 @@ const HPBar = ({ current, max }) => {
 
 // --- COMPONENTE POKEMON CARD (REDESENHADO) ---
 const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) => {
+  // Proteção inicial
+  if (!card) return null;
+
   const TypeIcon = ENERGY_TYPES[card.type]?.icon || Circle;
   // Usar gradients do objeto ENERGY_TYPES
   const cardBackground = ENERGY_TYPES[card.type]?.gradient || 'bg-gray-300';
   const typeText = ENERGY_TYPES[card.type]?.text || 'text-black';
   
-  let maxHP = card.hp;
-  let retreatCost = card.retreat;
+  let maxHP = card.hp || 0;
+  let retreatCost = card.retreat || 0;
   
   if (card.attachedTool) {
       if (card.attachedTool.type === 'hp' && card.attachedTool.condition(card)) {
@@ -212,7 +215,7 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
   const currentHP = Math.max(0, maxHP - currentDamage);
   
   // Borda especial para ex
-  const isEx = card.name.toLowerCase().includes('ex') || card.name.toLowerCase().includes(' v');
+  const isEx = card.name?.toLowerCase().includes('ex') || card.name?.toLowerCase().includes(' v');
   const borderClass = isEx ? 'border-gray-400 ring-2 ring-gray-300' : 'border-yellow-400 ring-2 ring-yellow-400';
 
   return (
@@ -245,11 +248,23 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
         </div>
       </div>
       
-      {/* Image Area with Status Markers */}
+      {/* --- [LETRA A] ÁREA DA IMAGEM CENTRAL --- */}
       <div className={`relative mx-2 mt-0.5 mb-0.5 border-2 border-yellow-200/50 shadow-inner bg-white/90 overflow-hidden flex items-center justify-center ${small ? 'h-12' : 'h-28'}`}>
-         {/* SUBSTITUIÇÃO DA IMAGEM PELO ÍCONE DO TIPO - Tamanho Reduzido */}
-         <TypeIcon size={small ? 24 : 60} className={`opacity-80 drop-shadow-md text-${card.imgColor}-600`} />
          
+         {/* LÓGICA NOVA: Se tiver imagem no cadastro, usa ela. Se não, usa o ícone antigo. */}
+         {card.image ? (
+             <img 
+                src={card.image} 
+                alt={card.name} 
+                // 'object-cover' faz a imagem preencher o quadrado sem esticar
+                className="w-full h-full object-cover z-0" 
+             />
+         ) : (
+             // Fallback: o ícone antigo se não tiver imagem
+             <TypeIcon size={small ? 24 : 60} className={`opacity-80 drop-shadow-md text-${card.imgColor || 'gray'}-600`} />
+         )}
+
+         {/* Ícone de Ferramenta (Tool) no canto */}
          {card.attachedTool && (
              <div className="absolute top-1 right-1 bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-md flex items-center gap-1 z-10 border border-white" title={card.attachedTool.effect}>
                  <Briefcase size={8} />
@@ -257,8 +272,9 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
              </div>
          )}
 
+         {/* Ícones de Energia no canto inferior */}
          <div className="absolute bottom-1 right-1 flex flex-wrap-reverse gap-0.5 justify-end max-w-[80%] z-10">
-             {card.attachedEnergy && card.attachedEnergy.map((energyType, idx) => {
+             {(card.attachedEnergy || []).map((energyType, idx) => {
                  const EIcon = ENERGY_TYPES[energyType]?.icon || PlusCircle;
                  const EColor = ENERGY_TYPES[energyType]?.color || 'bg-gray-400';
                  const EText = ENERGY_TYPES[energyType]?.text || 'text-white';
@@ -280,11 +296,13 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
       <div className="bg-white/40 flex-1 flex flex-col overflow-hidden text-gray-900 mx-1 mb-1 rounded-sm p-1">
           {!small && (
               <div className="flex-1 space-y-1 overflow-y-auto px-1 py-1 custom-scrollbar">
-                  {card.attacks && card.attacks.slice(0, 3).map((atk, i) => (
+                  {/* Proteção para attacks */}
+                  {(card.attacks || []).slice(0, 3).map((atk, i) => (
                       <div key={i} className="flex flex-col text-[10px] border-b border-gray-300 last:border-0 pb-1 mb-0.5">
                           <div className="flex justify-between items-center mb-0.5">
                               <div className="flex gap-0.5">
-                                  {atk.cost.map((c, idx) => {
+                                  {/* Proteção para cost */}
+                                  {(atk.cost || []).map((c, idx) => {
                                       if(c === 'Ability') return <span key={idx} className="text-[8px] font-bold text-red-600 uppercase tracking-tighter">Habilidade</span>;
                                       const EIcon = ENERGY_TYPES[c]?.icon || Circle;
                                       const EColor = ENERGY_TYPES[c]?.color || 'bg-gray-400';
@@ -304,12 +322,12 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
               </div>
           )}
           
-          {small && card.attacks && card.attacks[0] && (
+          {small && (card.attacks || [])[0] && (
               <div className="flex-1 flex flex-col justify-center text-center p-0.5 space-y-0.5">
-                  {card.attacks.slice(0,2).map((atk, i) => (
+                  {(card.attacks || []).slice(0,2).map((atk, i) => (
                       <div key={i} className="flex items-center gap-1 border-b border-gray-100 last:border-0 pb-0.5">
                            <div className="flex gap-0.5 shrink-0">
-                                  {atk.cost.slice(0,2).map((c, idx) => {
+                                  {(atk.cost || []).slice(0,2).map((c, idx) => {
                                       if(c === 'Ability') return <span key={idx} className="text-[5px] font-bold text-red-600 uppercase">HAB</span>;
                                       const EIcon = ENERGY_TYPES[c]?.icon || Circle;
                                       const EColor = ENERGY_TYPES[c]?.color || 'bg-gray-400';
@@ -319,13 +337,8 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
                                           </div>
                                       );
                                   })}
-                          </div>
-                          <span className="text-[7px] text-gray-600 font-bold leading-none truncate w-full">{atk.name}</span>
-                          {atk.effect && (
-                                <p className="text-[7px] leading-[1.1] text-gray-600 mt-0.5 italic break-words">
-                                    {atk.effect}
-                                </p>
-                           )}
+                           </div>
+                           <span className="text-[7px] text-gray-600 font-bold leading-none truncate w-full">{atk.name}</span>
                       </div>
                   ))}
               </div>
@@ -343,17 +356,6 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
               ) : <span>-</span>}
           </div>
           
-          {!small && (
-              <div className="flex items-center gap-0.5">
-                  <span className="uppercase text-gray-400">Res.</span>
-                  {card.resistance ? (
-                      <div className={`w-3 h-3 ${ENERGY_TYPES[card.resistance]?.color} rounded-full flex items-center justify-center text-white text-[8px]`}>
-                          {React.createElement(ENERGY_TYPES[card.resistance]?.icon, { size: 6 })}
-                      </div>
-                  ) : <span>-</span>}
-              </div>
-          )}
-
           <div className="flex items-center gap-0.5">
               <span className="uppercase text-gray-400">Recuo</span>
               <div className="flex gap-0.5">
