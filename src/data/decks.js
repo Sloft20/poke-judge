@@ -167,7 +167,7 @@ export const DECKS = {
       { 
         id: 'drag_ex', name: 'Dragapult ex', hp: 320, type: 'Dragon', stage: 2, evolvesFrom: 'Drakloak',
         weakness: null, resistance: null, retreat: 1, imgColor: 'indigo',
-        image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/887.png',
+        image: 'https://images4.alphacoders.com/125/thumb-1920-1251611.jpg',
         attacks: [
           { name: 'Jet Headbutt', cost: ['Colorless'], damage: '70' },
           { name: 'Phantom Dive', cost: ['Fire', 'Psychic'], damage: '200', effectType: 'distribute_damage', effectValue: 60 }
