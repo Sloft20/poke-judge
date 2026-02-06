@@ -1,16 +1,57 @@
-# React + Vite
+# 🛡️ PokéJudge Pro v2.5
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> **Sistema Profissional de Arbitragem para Pokémon TCG**
+> Controle de tempo, gestão de danos e ranking global em tempo real.
 
-Currently, two official plugins are available:
+![Status do Projeto](https://img.shields.io/badge/Status-Em_Desenvolvimento-blue?style=for-the-badge&logo=react)
+![Vercel Deployment](https://img.shields.io/badge/Deploy-Vercel-black?style=for-the-badge&logo=vercel)
+![Tech Stack](https://img.shields.io/badge/Stack-React_|_Tailwind_|_Supabase-purple?style=for-the-badge)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 📸 Screenshots
 
-## React Compiler
+| **Lobby & Setup** | **Painel de Arbitragem** |
+|:---:|:---:|
+| ![Lobby](https://via.placeholder.com/400x200?text=Print+do+Lobby) | ![Game](https://via.placeholder.com/400x200?text=Print+do+Jogo) |
+| *Seleção de Decks e Ranking* | *Controle de Turnos e Danos* |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 🚀 Sobre o Projeto
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+O **PokéJudge Pro** é uma ferramenta desenvolvida para juízes e jogadores competitivos de Pokémon TCG. Ele substitui os marcadores físicos e cronômetros manuais por uma interface digital precisa, evitando erros de cálculo e disputas sobre o estado do jogo.
+
+### ✨ Funcionalidades Principais
+
+#### 🎮 Gestão de Partida (Live Game)
+- **Cronômetro Oficial:** Timer de 30/50 minutos com controle de fases (Setup, Draw, Action, Attack, Checkup).
+- **Log de Eventos:** Histórico automático de todas as ações (Dano, Recuo, Habilidades) exportável em `.txt` para auditoria.
+- **Ferramentas de Juiz:** Botões rápidos para aplicar penalidades (*Slow Play*, *Procedural Error*) e corrigir Game State.
+- **Moeda Imersiva:** Simulador de Cara ou Coroa com efeitos visuais e sonoros 3D.
+
+#### 🏆 Sistema de Ranking & Meta
+- **Global Leaderboard:** Integração com **Supabase** para salvar histórico de partidas.
+- **Análise de Meta:** Estatísticas de *Win Rate* (Taxa de Vitória) por Deck (ex: Charizard ex vs Dragapult ex).
+- **Visual Pro:** Modal com tema escuro (Dark Mode), ícones das cartas e barras de progresso visuais.
+
+#### 📱 UI/UX Moderna
+- **Design Responsivo:** Funciona perfeitamente em Tablets (para mesas de torneio) e Celulares.
+- **Lobby Interativo:** Tela inicial com acesso rápido a Nova Partida e Ranking.
+- **Feedback Visual:** Animações de dano, modais de seleção de cartas e alertas coloridos.
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+* **Frontend:** React.js (Vite)
+* **Estilização:** Tailwind CSS (com Lucide React Icons)
+* **Backend/Database:** Supabase (PostgreSQL)
+* **Hospedagem:** Vercel
+
+---
+
+## 📦 Como Rodar Localmente
+
+1. **Clone o repositório**
+   ```bash
+   git clone [https://github.com/Sloft20/poke-judge.git](https://github.com/Sloft20/poke-judge.git)
+   cd poke-judge
