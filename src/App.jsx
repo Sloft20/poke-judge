@@ -733,13 +733,13 @@ const RankingModal = ({ onClose }) => {
         fetchHistory();
     }, []);
 
-    // 2. Cálculo de Estatísticas
+    // 2. FUNÇÃO DE CÁLCULO EM TEMPO REAL
     const calculateLiveStats = () => {
         const deckStats = {};
         const playerStats = {};
 
         matches.forEach(m => {
-            // Stats de Decks
+            // Processa Estatísticas de Decks
             if (!deckStats[m.winner_deck]) deckStats[m.winner_deck] = { name: m.winner_deck, wins: 0, plays: 0 };
             if (!deckStats[m.loser_deck]) deckStats[m.loser_deck] = { name: m.loser_deck, wins: 0, plays: 0 };
             
@@ -747,7 +747,7 @@ const RankingModal = ({ onClose }) => {
             deckStats[m.winner_deck].plays++;
             deckStats[m.loser_deck].plays++;
 
-            // Stats de Jogadores
+            // Processa Estatísticas de Jogadores
             const wName = m.winner_name || "Desconhecido";
             const lName = m.loser_name || "Desconhecido";
 
@@ -764,17 +764,15 @@ const RankingModal = ({ onClose }) => {
 
     const { deckStats, playerStats } = calculateLiveStats();
     
-    // Ordenação
     const sortedDecks = Object.values(deckStats).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
     const sortedPlayers = Object.entries(playerStats).map(([name, stat]) => ({name, ...stat})).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
 
     return (
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
-          {/* --- 1. TEMA ESCURO (Dark Mode) --- */}
-          {/* Mudamos de bg-white para bg-slate-900 e ajustamos bordas/texto */}
+          {/* --- TEMA ESCURO APLICADO AQUI (bg-slate-900, text-white) --- */}
           <Card className="w-full max-w-3xl h-[85vh] flex flex-col bg-slate-900 border-slate-700 shadow-2xl text-white">
               
-              {/* Header */}
+              {/* Header Escuro */}
               <div className="flex justify-between items-center mb-6 border-b border-slate-700 pb-4 px-6 pt-6">
                   <h2 className="text-2xl font-black flex items-center gap-3 text-white uppercase tracking-tight italic">
                       <Trophy className="text-yellow-400 drop-shadow-lg" size={32} fill="currentColor"/> 
@@ -783,7 +781,7 @@ const RankingModal = ({ onClose }) => {
                   <button onClick={onClose} className="text-slate-400 hover:text-white hover:bg-slate-800 p-2 rounded-full transition-colors"><X size={24}/></button>
               </div>
               
-              {/* Abas Estilizadas */}
+              {/* Abas Escuras */}
               <div className="flex gap-2 mb-6 p-1 bg-slate-800 mx-6 rounded-xl border border-slate-700">
                   <button onClick={() => setTab('decks')} className={`flex-1 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${tab === 'decks' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}>Decks Meta</button>
                   <button onClick={() => setTab('players')} className={`flex-1 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${tab === 'players' ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/50' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}>Jogadores</button>
@@ -825,15 +823,14 @@ const RankingModal = ({ onClose }) => {
                           </thead>
                           <tbody className="text-slate-200">
                               {(tab === 'decks' ? sortedDecks : sortedPlayers).map((item, idx) => {
-                                  // --- 2. ÍCONES DOS DECKS ---
-                                  // Pegamos a imagem da primeira carta do deck para usar como ícone
+                                  // Pegar imagem da carta se for deck
                                   const mainCard = tab === 'decks' && DECKS[item.name] ? DECKS[item.name].cards[0] : null;
                                   const wr = (item.plays > 0 ? (item.wins / item.plays) * 100 : 0);
                                   
                                   return (
                                       <tr key={idx} className="bg-slate-800 hover:bg-slate-750 transition-colors group rounded-xl">
                                           <td className="px-4 py-3 font-bold border-l-4 border-blue-500 rounded-l-xl flex items-center gap-4">
-                                              {/* Exibição do Ícone */}
+                                              {/* 2. ÍCONE DO DECK AQUI */}
                                               {mainCard && (
                                                   <div className="w-8 h-10 rounded overflow-hidden shadow-sm border border-slate-600 relative group-hover:scale-110 transition-transform">
                                                       <img src={mainCard.image} alt={item.name} className="w-full h-full object-cover" />
@@ -843,15 +840,12 @@ const RankingModal = ({ onClose }) => {
                                           </td>
                                           <td className="px-4 py-3 text-center text-sm font-mono text-slate-400">{item.plays}</td>
                                           <td className="px-4 py-3 rounded-r-xl w-1/3">
-                                              
-                                              {/* --- 3. BARRAS DE WIN RATE --- */}
+                                              {/* 3. BARRA DE WIN RATE VISUAL */}
                                               <div className="flex flex-col gap-1">
                                                   <div className="flex justify-between text-[10px] font-bold uppercase">
                                                       <span className={wr >= 50 ? 'text-green-400' : 'text-red-400'}>{wr.toFixed(0)}%</span>
                                                   </div>
-                                                  {/* Barra de Fundo */}
                                                   <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
-                                                      {/* Barra de Progresso Colorida */}
                                                       <div 
                                                           className={`h-full rounded-full transition-all duration-500 ${wr >= 50 ? 'bg-gradient-to-r from-green-600 to-green-400' : 'bg-red-500'}`} 
                                                           style={{ width: `${wr}%` }}
@@ -868,7 +862,7 @@ const RankingModal = ({ onClose }) => {
               </div>
           </Card>
 
-          {/* Modal de Logs (Também em Dark Mode) */}
+          {/* Sub-modal de Replay (Dark Mode) */}
           {selectedMatchLogs && (
               <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4 animate-in zoom-in duration-200">
                   <Card className="w-full max-w-lg h-[75vh] flex flex-col bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl">
