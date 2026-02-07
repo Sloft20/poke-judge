@@ -1,4 +1,4 @@
-alert("O SITE ESTÁ VIVO!");
+alert("VERSÃO 3.0 - COM IMAGENS"); // Alerta para confirmar atualização
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Shield, Sword, RefreshCw, AlertTriangle, BookOpen, 
@@ -12,8 +12,10 @@ import {
   Flame, Droplets, Leaf, Eye, Dumbbell, Moon, Crown, Circle, Star, Bolt, Origami 
 } from 'lucide-react';
 import { supabase } from './supabaseClient'; // ADICIONE ESTA LINHA AQUI
-import { DECKS } from './data/decks';
-console.log("IMPORT DO ARQUIVO:", DECKS);
+import { DECKS } from './data/decks'; 
+
+console.log("--- DEBUG CARREGAMENTO ---");
+console.log("Decks carregados:", DECKS);
 // --- 2. CONSTANTES E TIPOS ---
 
 const PHASES = {
