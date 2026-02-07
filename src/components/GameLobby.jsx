@@ -1,11 +1,16 @@
 // src/components/GameLobby.jsx
 import React from 'react';
-import { Shield, User, Play, Trophy } from 'lucide-react';
-import { Card } from './UI'; // Importando do arquivo novo
-import PokemonCard from './PokemonCard'; // Importando o card que movemos antes
-import { DECKS } from '../data/decks'; // Importando os dados
+import { Shield, User, Play, Trophy, Edit3 } from 'lucide-react'; // Adicionei Edit3 aqui
+import { Card } from './UI'; 
+import PokemonCard from './PokemonCard'; 
+import { DECKS } from '../data/decks'; 
 
+// ATENÇÃO AQUI: Recebendo 'onManageDecks' (sem 'd' extra)
 const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking, availableDecks, onManageDecks }) => {
+    
+    // Garante que availableDecks não seja undefined para evitar crash
+    const deckList = availableDecks || DECKS;
+
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
             <Card className="w-full max-w-4xl p-8 bg-white dark:bg-gray-800 shadow-xl rounded-2xl">
@@ -19,6 +24,11 @@ const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking, availa
                         PokéJudge <span className="text-blue-500">Pro</span>
                     </h1>
                     <p className="text-gray-500 font-mono tracking-wide text-sm">Sistema de Arbitragem Competitiva</p>
+                    
+                    {/* BOTÃO DE GERENCIAR DECKS (Usando a função correta) */}
+                    <button onClick={onManageDecks} className="mt-4 mb-6 text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 w-full underline cursor-pointer">
+                        <Edit3 size={12}/> Gerenciar Decks (Supabase)
+                    </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
@@ -47,7 +57,7 @@ const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking, availa
                                 onChange={(e) => onUpdatePlayer(0, { deckArchetype: e.target.value })}
                                 className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                             >
-                                {Object.entries(DECKS).map(([key, val]) => (
+                                {Object.entries(deckList).map(([key, val]) => (
                                     <option key={key} value={key}>{val.name}</option>
                                 ))}
                             </select>
@@ -55,9 +65,9 @@ const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking, availa
                         
                         <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200 flex flex-col items-center">
                             <h3 className="font-bold text-xs text-gray-400 mb-3 uppercase tracking-widest">Deck Preview</h3>
-                            {DECKS[players[0].deckArchetype].cards[0] && (
+                            {deckList[players[0].deckArchetype] && deckList[players[0].deckArchetype].cards[0] && (
                                 <div className="transform scale-90 hover:scale-100 transition-transform duration-300">
-                                    <PokemonCard card={DECKS[players[0].deckArchetype].cards[0]} small={true} />
+                                    <PokemonCard card={deckList[players[0].deckArchetype].cards[0]} small={true} />
                                 </div>
                             )}
                         </div>
@@ -88,7 +98,7 @@ const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking, availa
                                 onChange={(e) => onUpdatePlayer(1, { deckArchetype: e.target.value })}
                                 className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-800 focus:ring-2 focus:ring-red-500 outline-none transition-all"
                             >
-                                {Object.entries(DECKS).map(([key, val]) => (
+                                {Object.entries(deckList).map(([key, val]) => (
                                     <option key={key} value={key}>{val.name}</option>
                                 ))}
                             </select>
@@ -96,9 +106,9 @@ const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking, availa
 
                         <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200 flex flex-col items-center">
                             <h3 className="font-bold text-xs text-gray-400 mb-3 uppercase tracking-widest">Deck Preview</h3>
-                            {DECKS[players[1].deckArchetype].cards[0] && (
+                            {deckList[players[1].deckArchetype] && deckList[players[1].deckArchetype].cards[0] && (
                                 <div className="transform scale-90 hover:scale-100 transition-transform duration-300">
-                                    <PokemonCard card={DECKS[players[1].deckArchetype].cards[0]} small={true} />
+                                    <PokemonCard card={deckList[players[1].deckArchetype].cards[0]} small={true} />
                                 </div>
                             )}
                         </div>
@@ -117,7 +127,7 @@ const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking, availa
                     onClick={onShowRanking}
                     className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xl uppercase tracking-widest shadow-lg shadow-blue-200 transform transition hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 border border-blue-500 mt-2"
                 >
-                    <Trophy size={28} className="text-yellow-300" /> {/* Yellow Trophy */}
+                    <Trophy size={28} className="text-yellow-300" />
                     Ranking
                 </button>
             </Card>
