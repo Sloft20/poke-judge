@@ -1,4 +1,3 @@
-alert("VERSÃO 3.0 - COM IMAGENS"); // Alerta para confirmar atualização
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Shield, Sword, RefreshCw, AlertTriangle, BookOpen, 
@@ -7,72 +6,19 @@ import {
   Settings, Image as ImageIcon, X,
   ChevronsUp, GitMerge, Sparkles, Briefcase,
   Minus, Plus, Crosshair, Coins, Zap, Download, Trophy, BarChart2,
-  Users, Play, Pause, Trash2, Edit2, Gift,
+  Users, Play, Pause, Trash2, Edit2, Gift,Edit3,
   // Novos ícones de energia importados do Lucide conforme solicitado
   Flame, Droplets, Leaf, Eye, Dumbbell, Moon, Crown, Circle, Star, Bolt, Origami 
 } from 'lucide-react';
 import { supabase } from './supabaseClient'; // ADICIONE ESTA LINHA AQUI
 import { DECKS } from './data/decks'; 
-
-console.log("--- DEBUG CARREGAMENTO ---");
-console.log("Decks carregados:", DECKS);
-// --- 2. CONSTANTES E TIPOS ---
-
-const PHASES = {
-  LOBBY: 'LOBBY', 
-  SETUP: 'SETUP',
-  START_TURN: 'INÍCIO DO TURNO',
-  DRAW: 'COMPRA',
-  ACTION: 'AÇÕES (MAIN)',
-  ATTACK: 'ATAQUE',
-  CHECKUP: 'CHECKUP/ENTRE TURNOS',
-  GAME_OVER: 'FIM DE JOGO'
-};
-
-const CONDITIONS = {
-  NONE: 'Nenhuma',
-  ASLEEP: 'Adormecido (Sleep)',
-  BURNED: 'Queimado (Burned)',
-  CONFUSED: 'Confuso (Confused)',
-  PARALYZED: 'Paralisado (Paralyzed)',
-  POISONED: 'Envenenado (Poisoned)'
-};
-
-const TOOLS = [
-    { id: 'bravery_charm', name: 'Bravery Charm', effect: 'HP+50 (Básicos)', type: 'hp', value: 50, condition: (card) => card.stage === 0 },
-    { id: 'heros_cape', name: 'Hero\'s Cape (Ace)', effect: 'HP+100', type: 'hp', value: 100, condition: () => true },
-    { id: 'rescue_board', name: 'Rescue Board', effect: 'Recuo -1', type: 'retreat', value: -1, condition: () => true },
-    { id: 'heavy_baton', name: 'Heavy Baton', effect: 'Retém Energia ao morrer', type: 'effect', value: 0, condition: () => true },
-    { id: 'maximum_belt', name: 'Maximum Belt (Ace)', effect: '+50 Dano em ex', type: 'damage', value: 50, condition: () => true },
-    { id: 'defiance_band', name: 'Defiance Band', effect: '+30 Dano se atrás', type: 'damage', value: 30, condition: () => true },
-    { id: 'tm_evo', name: 'TM: Evolution', effect: 'Ataque: Evolução', type: 'attack', value: 0, condition: () => true },
-    { id: 'tm_devo', name: 'TM: Devolution', effect: 'Ataque: Devolução', type: 'attack', value: 0, condition: () => true },
-];
-
-// Configuração atualizada com SEUS ÍCONES NOVOS
-const ENERGY_TYPES = {
-  Fire: { name: 'Fogo', color: 'bg-red-500', gradient: 'bg-gradient-to-br from-red-400 to-red-600', icon: Flame, text: 'text-white' },
-  Water: { name: 'Água', color: 'bg-blue-500', gradient: 'bg-gradient-to-br from-blue-400 to-blue-600', icon: Droplets, text: 'text-white' },
-  Grass: { name: 'Planta', color: 'bg-green-600', gradient: 'bg-gradient-to-br from-green-400 to-green-700', icon: Leaf, text: 'text-white' },
-  Lightning: { name: 'Elétrico', color: 'bg-yellow-400', gradient: 'bg-gradient-to-br from-yellow-300 to-yellow-500', icon: Zap, text: 'text-black' },
-  Psychic: { name: 'Psíquico', color: 'bg-purple-600', gradient: 'bg-gradient-to-br from-purple-400 to-purple-700', icon: Eye, text: 'text-white' },
-  Fighting: { name: 'Luta', color: 'bg-orange-700', gradient: 'bg-gradient-to-br from-orange-600 to-orange-800', icon: Dumbbell, text: 'text-white' },
-  Darkness: { name: 'Escuridão', color: 'bg-slate-800', gradient: 'bg-gradient-to-br from-slate-700 to-slate-900', icon: Moon, text: 'text-white' },
-  Metal: { name: 'Metal', color: 'bg-gray-400', gradient: 'bg-gradient-to-br from-gray-300 to-gray-500', icon: Bolt, text: 'text-black' },
-  Dragon: { name: 'Dragão', color: 'bg-yellow-600', gradient: 'bg-gradient-to-br from-yellow-600 to-amber-700', icon: Origami, text: 'text-white' },
-  Colorless: { name: 'Incolor', color: 'bg-gray-200', gradient: 'bg-gradient-to-br from-gray-100 to-gray-300', icon: Star, text: 'text-black' },
-};
+import { PHASES, CONDITIONS, TOOLS, ENERGY_TYPES, RULES_DB } from './data/constants';
+import PokemonCard from './components/PokemonCard';
+import { Card, Button, Badge } from './components/UI';
+import GameLobby from './components/GameLobby';
+import PrizeZone from './components/PrizeZone';
 
 
-
-const RULES_DB = [
-  { id: 1, title: 'Evolução', text: 'Você não pode evoluir um Pokémon no turno em que ele foi baixado (Turno de "Enjoo"). Além disso, o Jogador 1 não pode evoluir no primeiro turno da partida. (Livro de Regras, p. 16)' },
-  { id: 2, title: 'Energia Manual', text: 'Um jogador só pode ligar 1 carta de Energia da sua mão a 1 dos seus Pokémon por turno. (Livro de Regras, p. 12)' },
-  { id: 3, title: 'Apoiador (Supporter)', text: 'Você só pode jogar 1 carta de Apoiador por turno. (Livro de Regras, p. 14)' },
-  { id: 4, title: 'Recuar', text: 'Para recuar, você deve descartar energia igual ao Custo de Recuo do Pokémon. (Livro de Regras, p. 13)' },
-  { id: 5, title: 'Fraqueza e Resistência', text: 'Se o atacante for do tipo da Fraqueza do Defensor, o dano é x2. Se for Resistência, é -30.' },
-  { id: 6, title: 'Checkup', text: 'Entre turnos: Veneno põe 1 contador (10). Queimadura põe 2 contadores (20) e joga moeda. Sono joga moeda. Paralisia cura se o turno do jogador afetado acabou.' }
-];
 
 // --- 4. FUNÇÕES UTILITÁRIAS ---
 
@@ -139,374 +85,7 @@ const calculateStats = () => {
   return { deckStats, playerStats };
 };
 
-// --- 5. COMPONENTES AUXILIARES ---
 
-const Card = ({ children, className = "" }) => (
-  <div className={`bg-white rounded-lg shadow-md p-4 ${className}`}>
-    {children}
-  </div>
-);
-
-const Button = ({ onClick, disabled, variant = 'primary', icon: Icon, children, className = '' }) => {
-  const baseStyle = "flex items-center justify-center gap-2 px-4 py-2 rounded font-medium transition-all text-sm uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed";
-  const variants = {
-    primary: "bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400",
-    secondary: "bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200",
-    danger: "bg-red-600 hover:bg-red-700 text-white",
-    success: "bg-green-600 hover:bg-green-700 text-white",
-    warning: "bg-yellow-500 hover:bg-yellow-600 text-white",
-    ghost: "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
-  };
-
-  return (
-    <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${variants[variant]} ${className}`}>
-      {Icon && <Icon size={16} />}
-      {children}
-    </button>
-  );
-};
-
-const Badge = ({ children, className = '' }) => {
-  return (
-    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${className}`}>
-      {children}
-    </span>
-  );
-};
-
-const HPBar = ({ current, max }) => {
-    const percentage = Math.max(0, Math.min(100, (current / max) * 100));
-    let colorClass = 'bg-green-500';
-    if (percentage < 50) colorClass = 'bg-yellow-500';
-    if (percentage < 20) colorClass = 'bg-red-600 animate-pulse';
-
-    return (
-        <div className="w-full h-3 bg-gray-200 rounded-full mt-1 overflow-hidden border border-gray-400 relative">
-            <div 
-                className={`h-full transition-all duration-500 ease-out ${colorClass}`} 
-                style={{ width: `${percentage}%` }}
-            />
-            <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-black drop-shadow-sm">
-                {current}/{max}
-            </div>
-        </div>
-    );
-};
-
-// --- COMPONENTE POKEMON CARD (REDESENHADO) ---
-const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) => {
-  // 1. PROTEÇÃO CONTRA CRASH
-  
-  // ADICIONE ESTAS 3 LINHAS DE DEBUG:
-  if (card && card.name.includes("Charizard")) {
-      console.log("--- DEBUG CHARIZARD ---");
-      console.log("Tem imagem nova?", card.image);
-      console.log("Tem imagem velha?", card.images?.small);
-      console.log("Card completo:", card);
-  }
-
-  
-  // ... o resto continua igual ...
-  if (!card) return null;
-
-  const TypeIcon = ENERGY_TYPES[card.type]?.icon || Circle;
-  const cardBackground = ENERGY_TYPES[card.type]?.gradient || 'bg-gray-300';
-  const typeText = ENERGY_TYPES[card.type]?.text || 'text-black';
-  
-  // 2. ESSA É A LINHA QUE O GIT APAGOU E QUE FAZ A IMAGEM APARECER:
-  const imageUrl = card.image || card.images?.small;
-
-  let maxHP = card.hp || 0;
-  let retreatCost = card.retreat || 0;
-  
-  if (card.attachedTool) {
-      if (card.attachedTool.type === 'hp' && card.attachedTool.condition(card)) {
-          maxHP += card.attachedTool.value;
-      }
-      if (card.attachedTool.type === 'retreat') {
-          retreatCost = Math.max(0, retreatCost + card.attachedTool.value);
-      }
-  }
-
-  const currentDamage = card.damage || 0;
-  const currentHP = Math.max(0, maxHP - currentDamage);
-  
-  const isEx = card.name?.toLowerCase().includes('ex') || card.name?.toLowerCase().includes(' v');
-  const borderClass = isEx ? 'border-gray-400 ring-2 ring-gray-300' : 'border-yellow-400 ring-2 ring-yellow-400';
-
-  return (
-    <div 
-      onClick={onClick}
-      className={`relative ${small ? 'w-24 h-36' : 'w-52 h-80'} rounded-xl overflow-hidden shadow-lg border-4 ${borderClass} flex flex-col transform transition-transform duration-300 ${actions || onClick ? '' : 'hover:scale-105'} ${onClick ? 'cursor-pointer hover:ring-2 hover:ring-blue-500' : 'cursor-default'} group ${cardBackground} ${className}`}
-    >
-      
-      {actions && (
-          <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20 p-2 pointer-events-none">
-              <div className="pointer-events-auto w-full flex flex-col gap-2">
-                   {actions}
-              </div>
-          </div>
-      )}
-
-      {/* Header */}
-      <div className={`flex justify-between items-center px-2 py-1 ${typeText} text-[10px] font-bold z-10`}>
-        <div className="flex flex-col leading-tight">
-            <span className={`truncate ${small ? 'max-w-[50px] text-[9px]' : 'max-w-[80px] text-xs'} font-bold ${isEx ? 'italic' : ''}`}>{card.name}</span>
-            {card.stage > 0 && (
-                <span className={`inline-block mt-0.5 bg-white/40 px-1 rounded text-[6px] uppercase font-bold w-fit border border-white/50 text-black`}>
-                   Estágio {card.stage}
-                </span>
-            )}
-        </div>
-        <div className="flex items-center gap-1">
-             <span className={`${small ? 'text-[8px]' : 'text-xs'} font-black`}>HP{maxHP}</span>
-             <TypeIcon size={small ? 14 : 18} />
-        </div>
-      </div>
-      
-      {/* 3. ÁREA DA IMAGEM BLINDADA */}
-        {/* ÁREA DE TESTE VISUAL */}
-      <div className={`relative mx-2 mt-0.5 mb-0.5 border-2 border-yellow-200/50 shadow-inner bg-white/90 overflow-hidden flex items-center justify-center ${small ? 'h-12' : 'h-28'}`}>
-            
-            {/* Debug na tela: Mostra o link se existir */}
-            <span className="absolute z-50 text-[8px] bg-white text-red-600 font-bold top-0 left-0">
-            {card.image ? "TEM LINK" : "SEM LINK"}
-            </span>
-
-            {imageUrl ? (
-                <img src={imageUrl} alt={card.name} className="w-full h-full object-cover z-0" />
-            ) : (
-                <TypeIcon size={small ? 24 : 60} className={`opacity-80 drop-shadow-md text-${card.imgColor || 'gray'}-600`} />
-            )}
-            
- 
-
-         {card.attachedTool && (
-             <div className="absolute top-1 right-1 bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-md flex items-center gap-1 z-10 border border-white" title={card.attachedTool.effect}>
-                 <Briefcase size={8} />
-                 {!small && card.attachedTool.name.split(' ')[0]}
-             </div>
-         )}
-
-         <div className="absolute bottom-1 right-1 flex flex-wrap-reverse gap-0.5 justify-end max-w-[80%] z-10">
-             {(card.attachedEnergy || []).map((energyType, idx) => {
-                 const EIcon = ENERGY_TYPES[energyType]?.icon || PlusCircle;
-                 const EColor = ENERGY_TYPES[energyType]?.color || 'bg-gray-400';
-                 const EText = ENERGY_TYPES[energyType]?.text || 'text-white';
-                 return (
-                     <div key={idx} className={`${small ? 'w-3 h-3 text-[8px]' : 'w-4 h-4 text-[10px]'} ${EColor} rounded-full flex items-center justify-center ${EText} border border-white/20 shadow-sm`} title={energyType}>
-                         <EIcon size={8} />
-                     </div>
-                 );
-             })}
-         </div>
-      </div>
-
-      {/* HP Bar */}
-      <div className={`px-2 pb-0.5 ${small ? 'h-2' : ''}`}>
-          <HPBar current={currentHP} max={maxHP} />
-      </div>
-
-      {/* 4. ATAQUES PROTEGIDOS (Evita erro de slice) */}
-      <div className="bg-white/40 flex-1 flex flex-col overflow-hidden text-gray-900 mx-1 mb-1 rounded-sm p-1">
-          {!small && (
-              <div className="flex-1 space-y-1 overflow-y-auto px-1 py-1 custom-scrollbar">
-                  {(card.attacks || []).slice(0, 3).map((atk, i) => (
-                      <div key={i} className="flex flex-col text-[10px] border-b border-gray-300 last:border-0 pb-1 mb-0.5">
-                          <div className="flex justify-between items-center mb-0.5">
-                              <div className="flex gap-0.5">
-                                  {(atk.cost || []).map((c, idx) => {
-                                      if(c === 'Ability') return <span key={idx} className="text-[8px] font-bold text-red-600 uppercase tracking-tighter">Habilidade</span>;
-                                      const EIcon = ENERGY_TYPES[c]?.icon || Circle;
-                                      const EColor = ENERGY_TYPES[c]?.color || 'bg-gray-400';
-                                      const EText = ENERGY_TYPES[c]?.text || 'text-white';
-                                      return (
-                                          <div key={idx} className={`w-3.5 h-3.5 ${EColor} rounded-full flex items-center justify-center ${EText} shadow-sm`}>
-                                              <EIcon size={6} />
-                                          </div>
-                                      );
-                                  })}
-                              </div>
-                              <span className="font-black text-black text-xs">{atk.damage}</span>
-                          </div>
-                          <span className="text-gray-800 font-bold truncate leading-tight text-[9px]">{atk.name}</span>
-                      </div>
-                  ))}
-              </div>
-          )}
-          
-          {small && (card.attacks || [])[0] && (
-              <div className="flex-1 flex flex-col justify-center text-center p-0.5 space-y-0.5">
-                  {(card.attacks || []).slice(0,2).map((atk, i) => (
-                      <div key={i} className="flex items-center gap-1 border-b border-gray-100 last:border-0 pb-0.5">
-                           <div className="flex gap-0.5 shrink-0">
-                                  {(atk.cost || []).slice(0,2).map((c, idx) => {
-                                      if(c === 'Ability') return <span key={idx} className="text-[5px] font-bold text-red-600 uppercase">HAB</span>;
-                                      const EIcon = ENERGY_TYPES[c]?.icon || Circle;
-                                      const EColor = ENERGY_TYPES[c]?.color || 'bg-gray-400';
-                                      return (
-                                          <div key={idx} className={`w-2.5 h-2.5 ${EColor} rounded-full flex items-center justify-center text-[6px] text-white`}>
-                                              <EIcon size={4} />
-                                          </div>
-                                      );
-                                  })}
-                           </div>
-                           <span className="text-[7px] text-gray-600 font-bold leading-none truncate w-full">{atk.name}</span>
-                      </div>
-                  ))}
-              </div>
-          )}
-      </div>
-
-      {/* Footer */}
-      <div className={`bg-gray-100 p-0.5 border-t border-gray-300 text-gray-600 flex justify-between items-center px-1 rounded-b-lg ${small ? 'h-4 text-[6px]' : 'h-6 text-[8px]'}`}>
-          <div className="flex items-center gap-0.5">
-              <span className="uppercase text-gray-400">Fraq.</span>
-              {card.weakness ? (
-                  <div className={`${small ? 'w-2.5 h-2.5 text-[6px]' : 'w-3 h-3 text-[8px]'} ${ENERGY_TYPES[card.weakness]?.color} rounded-full flex items-center justify-center text-white`}>
-                      {React.createElement(ENERGY_TYPES[card.weakness]?.icon, { size: 6 })}
-                  </div>
-              ) : <span>-</span>}
-          </div>
-          
-          <div className="flex items-center gap-0.5">
-              <span className="uppercase text-gray-400">Recuo</span>
-              <div className="flex gap-0.5">
-                  {[...Array(retreatCost)].map((_, i) => (
-                      <div key={i} className={`${small ? 'w-2 h-2 text-[5px]' : 'w-2.5 h-2.5 text-[6px]'} rounded-full bg-gray-300 flex items-center justify-center`}>
-                          <Star size={4} className="text-white"/>
-                      </div>
-                  ))}
-                  {retreatCost === 0 && <span className="font-bold">-</span>}
-              </div>
-          </div>
-      </div>
-    </div>
-  );
-};
-
-// --- 6. COMPONENTES DE TELA (LOBBY & RANKING) ---
-
-// Adicione o onShowRanking aqui dentro!
-const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking }) => {
-    return (
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
-            <Card className="w-full max-w-4xl p-8 bg-white dark:bg-gray-800 shadow-xl rounded-2xl">
-                <div className="text-center mb-10">
-                    <div className="flex justify-center mb-4">
-                        <div className="p-4 bg-gray-100 rounded-full border border-gray-200 shadow-lg">
-                             <Shield className="text-blue-600 w-12 h-12" />
-                        </div>
-                    </div>
-                    <h1 className="text-5xl font-black tracking-tighter uppercase italic text-gray-800 dark:text-white mb-2 drop-shadow-sm">
-                        PokéJudge <span className="text-blue-500">Pro</span>
-                    </h1>
-                    <p className="text-gray-500 font-mono tracking-wide text-sm">Sistema de Arbitragem Competitiva</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                    {/* Jogador 1 */}
-                    <div className="space-y-5 p-6 bg-blue-50 rounded-xl border border-blue-100 shadow-sm">
-                        <div className="flex items-center gap-3 mb-2 text-blue-600 border-b border-blue-200 pb-3">
-                            <User size={24} />
-                            <h2 className="text-xl font-bold uppercase tracking-wider">Jogador 1</h2>
-                        </div>
-                        
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nickname</label>
-                            <input 
-                                type="text" 
-                                value={players[0].name}
-                                onChange={(e) => onUpdatePlayer(0, { name: e.target.value })}
-                                className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400"
-                                placeholder="Nome do Jogador"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Deck Selecionado</label>
-                            <select 
-                                value={players[0].deckArchetype}
-                                onChange={(e) => onUpdatePlayer(0, { deckArchetype: e.target.value })}
-                                className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                            >
-                                {Object.entries(DECKS).map(([key, val]) => (
-                                    <option key={key} value={key}>{val.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        
-                        <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200 flex flex-col items-center">
-                            <h3 className="font-bold text-xs text-gray-400 mb-3 uppercase tracking-widest">Deck Preview</h3>
-                            {DECKS[players[0].deckArchetype].cards[0] && (
-                                <div className="transform scale-90 hover:scale-100 transition-transform duration-300">
-                                    <PokemonCard card={DECKS[players[0].deckArchetype].cards[0]} small={true} />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Jogador 2 */}
-                    <div className="space-y-5 p-6 bg-red-50 rounded-xl border border-red-100 shadow-sm">
-                        <div className="flex items-center gap-3 mb-2 text-red-600 border-b border-red-200 pb-3">
-                            <User size={24} />
-                            <h2 className="text-xl font-bold uppercase tracking-wider">Jogador 2</h2>
-                        </div>
-                        
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nickname</label>
-                            <input 
-                                type="text" 
-                                value={players[1].name}
-                                onChange={(e) => onUpdatePlayer(1, { name: e.target.value })}
-                                className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-800 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all placeholder-gray-400"
-                                placeholder="Nome do Jogador"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Deck Selecionado</label>
-                            <select 
-                                value={players[1].deckArchetype}
-                                onChange={(e) => onUpdatePlayer(1, { deckArchetype: e.target.value })}
-                                className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-800 focus:ring-2 focus:ring-red-500 outline-none transition-all"
-                            >
-                                {Object.entries(DECKS).map(([key, val]) => (
-                                    <option key={key} value={key}>{val.name}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200 flex flex-col items-center">
-                            <h3 className="font-bold text-xs text-gray-400 mb-3 uppercase tracking-widest">Deck Preview</h3>
-                            {DECKS[players[1].deckArchetype].cards[0] && (
-                                <div className="transform scale-90 hover:scale-100 transition-transform duration-300">
-                                    <PokemonCard card={DECKS[players[1].deckArchetype].cards[0]} small={true} />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                <button 
-                    onClick={onStartGame}
-                    className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xl uppercase tracking-widest shadow-lg shadow-blue-200 transform transition hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 border border-blue-500"
-                >
-                    <Play size={28} fill="currentColor" />
-                    Iniciar Partida
-                </button>
-                
-                <button
-                    onClick={onShowRanking}
-                    className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xl uppercase tracking-widest shadow-lg shadow-blue-200 transform transition hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 border border-blue-500"
-                >
-                    <Trophy size={28} className="text-yellow-300" /> {/* Yellow Trophy */}
-                    Ranking
-                </button>
-            </Card>
-        </div>
-    );
-};
 
 const RankingModal = ({ onClose }) => {
     const [tab, setTab] = useState('decks');
@@ -647,6 +226,15 @@ const RankingModal = ({ onClose }) => {
       </div>
     );
 };
+// Função auxiliar para embaralhar (Fisher-Yates Shuffle)
+const shuffleDeck = (array) => {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+};
 
 // --- 7. APLICAÇÃO PRINCIPAL ---
 
@@ -673,8 +261,8 @@ export default function PokeJudgePro() {
       name: 'Jogador 1',
       deckArchetype: 'CHARIZARD', 
       prizes: 6,
-      deckCount: 60,
-      handCount: 7,
+      deck: [],
+      hand: [],
       benchCount: 0, 
       activePokemon: null, 
       benchPokemon: [], 
@@ -682,6 +270,7 @@ export default function PokeJudgePro() {
       isPoisoned: false, // NEW
       isBurned: false, // NEW
       allowUnlimitedEnergy: false, // NEW
+      allowRareCandy: false, // NEW
       energyAttachedThisTurn: false,
       supporterPlayedThisTurn: false,
       retreatedThisTurn: false,
@@ -692,8 +281,8 @@ export default function PokeJudgePro() {
       name: 'Jogador 2',
       deckArchetype: 'DRAGAPULT', 
       prizes: 6,
-      deckCount: 60,
-      handCount: 7,
+      deck: [],
+      hand: [],
       benchCount: 0, 
       activePokemon: null, 
       benchPokemon: [], 
@@ -701,6 +290,7 @@ export default function PokeJudgePro() {
       isPoisoned: false, // NEW
       isBurned: false, // NEW
       allowUnlimitedEnergy: false, // NEW
+      allowRareCandy: false, // NEW
       energyAttachedThisTurn: false,
       supporterPlayedThisTurn: false,
       retreatedThisTurn: false,
@@ -720,6 +310,99 @@ export default function PokeJudgePro() {
   const [distributionModal, setDistributionModal] = useState(null);
   const [selectedCardAction, setSelectedCardAction] = useState(null); 
   const [searchRule, setSearchRule] = useState('');
+  // --- SISTEMA DE DESFAZER (UNDO) ---
+  const [history, setHistory] = useState([]);
+  // --- GERENCIADOR DE DECKS (SUPABASE) ---
+  const [showDeckManager, setShowDeckManager] = useState(false);
+  const [availableDecks, setAvailableDecks] = useState(DECKS); // Começa com os padrões do arquivo
+
+  // Função que vai no Banco e busca os decks novos
+  const fetchDecksFromSupabase = async () => {
+      try {
+          const { data, error } = await supabase
+              .from('decks')
+              .select(`
+                  id, name, color,
+                  cards (*)
+              `); // O (*) traz as cartas juntas
+          
+          if (error) throw error;
+
+          if (data) {
+              // Transforma a lista do banco no formato que o jogo entende (Objeto)
+              const dbDecks = {};
+              data.forEach(deck => {
+                  dbDecks[deck.id] = {
+                      name: deck.name,
+                      color: deck.color || 'bg-gray-500',
+                      cards: deck.cards || []
+                  };
+              });
+              
+              // Junta os decks oficiais (DECKS) com os do banco (dbDecks)
+              setAvailableDecks({ ...DECKS, ...dbDecks });
+          }
+      } catch (error) {
+          console.error("Erro ao carregar decks:", error);
+      }
+  };
+
+  // Carrega os decks assim que o site abre
+  useEffect(() => {
+      fetchDecksFromSupabase();
+  }, []);
+
+  // Função auxiliar para restaurar ferramentas (objetos complexos)
+  const rehydrateTools = (playerList) => {
+      const fixPokemon = (poke) => {
+          // Se tiver ferramenta, reconecta a lógica dela (função condition)
+          if (poke && poke.attachedTool && !poke.attachedTool.condition) {
+              const originalTool = TOOLS.find(t => t.id === poke.attachedTool.id);
+              if (originalTool) return { ...poke, attachedTool: originalTool };
+          }
+          return poke;
+      };
+
+      return playerList.map(p => ({
+          ...p,
+          activePokemon: fixPokemon(p.activePokemon),
+          benchPokemon: p.benchPokemon.map(fixPokemon)
+      }));
+  };
+
+  const saveGameHistory = () => {
+      setHistory(prev => {
+          // Salva uma cópia profunda (Deep Copy) do estado atual
+          const newHistory = [...prev, {
+              players: JSON.parse(JSON.stringify(players)), 
+              gameState: JSON.parse(JSON.stringify(gameState))
+          }];
+          // Limita a 10 passos para não travar o navegador
+          if (newHistory.length > 10) return newHistory.slice(1);
+          return newHistory;
+      });
+  };
+
+  const handleUndo = () => {
+      if (history.length === 0) {
+          addLog("Nada para desfazer.", 'WARN');
+          return;
+      }
+      
+      // Pega o último estado salvo
+      const lastState = history[history.length - 1];
+      
+      // Restaura Jogadores (reconectando lógica das ferramentas)
+      setPlayers(rehydrateTools(lastState.players));
+      
+      // Restaura o Estado do Jogo (Fase, Turno, etc)
+      setGameState(lastState.gameState);
+      
+      // Remove esse estado da pilha
+      setHistory(prev => prev.slice(0, -1)); 
+      
+      addLog("↺ Ação desfeita! Voltando no tempo...", 'SUCCESS');
+  };
   
   const logsContainerRef = useRef(null);
 
@@ -770,13 +453,46 @@ export default function PokeJudgePro() {
   };
 
   const handleStartGameFromLobby = () => {
-      setGameState(prev => ({
-          ...prev,
-          phase: PHASES.SETUP
+      // 1. Preparar os Decks
+      const newPlayers = players.map(p => {
+          // Pega a lista de cartas do arquétipo escolhido
+          const originalCards = DECKS[p.deckArchetype]?.cards || [];
+          
+          // O seu deck.js atual tem poucas cartas (ex: 5). 
+          // Para simular um deck de 60, vamos duplicar as cartas até encher.
+          let fullDeck = [];
+          while (fullDeck.length < 60) {
+              fullDeck = [...fullDeck, ...originalCards];
+          }
+          fullDeck = fullDeck.slice(0, 60); // Garante 60 cartas exatas
+          
+          // Embaralha
+          const shuffledDeck = shuffleDeck(fullDeck);
+          
+          // Compra as 7 primeiras (Mão Inicial)
+          const initialHand = shuffledDeck.splice(0, 7);
+          
+          return {
+              ...p,
+              deck: shuffledDeck, // O que sobrou (53 cartas)
+              hand: initialHand,  // As 7 cartas na mão
+              deckCount: shuffledDeck.length, // Mantemos o contador para compatibilidade visual
+              handCount: initialHand.length   // Mantemos o contador para compatibilidade visual
+          };
+      });
+
+      setPlayers(newPlayers);
+      
+      setGameState(prev => ({ 
+          ...prev, 
+          phase: PHASES.SETUP 
       }));
       setGameTimer(0);
-      addLog(`Mesa configurada. Jogadores: ${players[0].name} vs ${players[1].name}`, 'INFO');
-      addLog(`Fase de Preparação Iniciada.`, 'INFO');
+      
+      // Logs de sistema
+      addLog(`Mesa configurada. Decks embaralhados (60 cartas).`, 'INFO');
+      addLog(`${newPlayers[0].name} comprou 7 cartas.`, 'INFO');
+      addLog(`${newPlayers[1].name} comprou 7 cartas.`, 'INFO');
   };
 
   const saveMatchResult = async (winnerIndex) => {
@@ -906,8 +622,12 @@ export default function PokeJudgePro() {
 
   // --- LÓGICA DE CARTAS E TABULEIRO --- (Mantida)
   // ... (placePokemon, requestEvolution, promoteFromBench, etc... - Igual anterior) ...
-  const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.currentPlayerIndex, evolveTargetIndex = null) => {
+  // Substitua a função placePokemon antiga por esta NOVA VERSÃO COM REGRAS
+const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.currentPlayerIndex, evolveTargetIndex = null) => {
+    saveGameHistory();
     const player = players[pIndex];
+    
+    // Criação do objeto da carta
     const cardData = { 
         ...(card || { name: 'Desconhecido', type: 'Colorless', hp: '???', imgColor: 'gray', retreat: 1, isGeneric: true, stage: 0 }), 
         turnPlayed: gameState.turnCount, 
@@ -917,41 +637,84 @@ export default function PokeJudgePro() {
         abilitiesUsedThisTurn: [] 
     };
 
+    // --- REGRA 1: BÁSICOS ---
+    // Só pode baixar diretamente se for Básico (Stage 0)
+    if ((destination === 'ACTIVE' || destination === 'BENCH') && cardData.stage !== 0) {
+        addLog(`JOGADA ILEGAL: ${cardData.name} é Estágio ${cardData.stage} e não pode ser baixado direto.`, 'CRIT', pIndex);
+        return;
+    }
+
     if (destination === 'ACTIVE') {
-        if (player.activePokemon) { addLog(`Erro: Já existe um Pokémon Ativo.`, 'WARN', pIndex); return; }
+        if (player.activePokemon) { 
+            addLog(`Erro: Já existe um Pokémon Ativo.`, 'WARN', pIndex); 
+            return; 
+        }
         updatePlayer(pIndex, { activePokemon: cardData, activeCondition: CONDITIONS.NONE, handCount: Math.max(0, player.handCount - 1) });
         addLog(`BAIXOU: ${cardData.name} como Ativo.`, 'INFO', pIndex);
     } 
     else if (destination === 'BENCH') {
-        if (player.benchCount >= 5) { addLog(`Erro: Banco cheio.`, 'CRIT', pIndex); return; }
+        if (player.benchCount >= 5) { 
+            addLog(`Erro: Banco cheio.`, 'CRIT', pIndex); 
+            return; 
+        }
         updatePlayer(pIndex, { benchPokemon: [...player.benchPokemon, cardData], benchCount: player.benchCount + 1, handCount: Math.max(0, player.handCount - 1) });
         addLog(`BAIXOU: ${cardData.name} no Banco.`, 'INFO', pIndex);
     } 
-    else if (destination === 'EVOLVE_ACTIVE') {
-        const oldName = player.activePokemon.name; // Nome anterior
-        const oldEnergies = player.activePokemon.attachedEnergy || []; 
-        const oldTool = player.activePokemon.attachedTool; 
-        const oldDamage = player.activePokemon.damage || 0;
+    // --- LÓGICA DE EVOLUÇÃO (ATUALIZADA COM RARE CANDY) ---
+    else if (destination === 'EVOLVE_ACTIVE' || destination === 'EVOLVE_BENCH') {
+        // Identifica o alvo da evolução
+        const targetPokemon = destination === 'EVOLVE_ACTIVE' ? player.activePokemon : player.benchPokemon[evolveTargetIndex];
         
-        const newActive = { ...cardData, attachedEnergy: oldEnergies, attachedTool: oldTool, damage: oldDamage };
-        updatePlayer(pIndex, { activePokemon: newActive, activeCondition: CONDITIONS.NONE, handCount: Math.max(0, player.handCount - 1) });
+        // --- NOVO: VERIFICAÇÃO DE RARE CANDY ---
+        // Permite se o botão estiver ligado, for Stage 2 e o alvo for Stage 0
+        const isRareCandyAction = player.allowRareCandy && cardData.stage === 2 && targetPokemon.stage === 0;
+
+        // --- REGRA 2: NOME DA EVOLUÇÃO ---
+        // Se NÃO for Rare Candy, o nome precisa bater. Se FOR Rare Candy, ignora o nome (mas exige Stage 0 -> Stage 2)
+        if (cardData.evolvesFrom !== targetPokemon.name && !isRareCandyAction) {
+            addLog(`EVOLUÇÃO INVÁLIDA: ${cardData.name} evolui de ${cardData.evolvesFrom}, mas o alvo é ${targetPokemon.name}.`, 'CRIT', pIndex);
+            return;
+        }
+
+        const oldName = targetPokemon.name;
+        const oldEnergies = targetPokemon.attachedEnergy || []; 
+        const oldTool = targetPokemon.attachedTool; 
+        const oldDamage = targetPokemon.damage || 0;
         
-        // Log específico com nomes
-        addLog(`EVOLUIU: ${oldName} para ${cardData.name} (Ativo).`, 'SUCCESS', pIndex);
-    } 
-    else if (destination === 'EVOLVE_BENCH') {
-        const newBench = [...player.benchPokemon];
-        const oldName = newBench[evolveTargetIndex].name; // Nome anterior
-        const oldEnergies = newBench[evolveTargetIndex].attachedEnergy || []; 
-        const oldTool = newBench[evolveTargetIndex].attachedTool; 
-        const oldDamage = newBench[evolveTargetIndex].damage || 0;
+        // Mantém danos e energias, mas atualiza HP Máximo e Ataques
+        const newPokemonStats = { ...cardData, attachedEnergy: oldEnergies, attachedTool: oldTool, damage: oldDamage };
         
-        newBench[evolveTargetIndex] = { ...cardData, attachedEnergy: oldEnergies, attachedTool: oldTool, damage: oldDamage };
-        updatePlayer(pIndex, { benchPokemon: newBench, handCount: Math.max(0, player.handCount - 1) });
-        
-        // Log específico com nomes
-        addLog(`EVOLUIU: ${oldName} para ${cardData.name} (Banco).`, 'SUCCESS', pIndex);
+        if (destination === 'EVOLVE_ACTIVE') {
+            updatePlayer(pIndex, { 
+                activePokemon: newPokemonStats, 
+                activeCondition: CONDITIONS.NONE, 
+                handCount: Math.max(0, player.handCount - 1),
+                allowRareCandy: false // Desliga o modo automaticamente após usar
+            });
+
+            if (isRareCandyAction) {
+                addLog(`🍬 RARE CANDY: ${oldName} evoluiu direto para ${cardData.name} (Ativo).`, 'SUCCESS', pIndex);
+            } else {
+                addLog(`EVOLUIU: ${oldName} para ${cardData.name} (Ativo).`, 'SUCCESS', pIndex);
+            }
+        } else {
+            const newBench = [...player.benchPokemon];
+            newBench[evolveTargetIndex] = newPokemonStats;
+            updatePlayer(pIndex, { 
+                benchPokemon: newBench, 
+                handCount: Math.max(0, player.handCount - 1),
+                allowRareCandy: false // Desliga o modo automaticamente após usar
+            });
+
+            if (isRareCandyAction) {
+                addLog(`🍬 RARE CANDY: ${oldName} evoluiu direto para ${cardData.name} (Banco).`, 'SUCCESS', pIndex);
+            } else {
+                addLog(`EVOLUIU: ${oldName} para ${cardData.name} (Banco).`, 'SUCCESS', pIndex);
+            }
+        }
     }
+    
+    // Fecha o modal após o sucesso
     setShowDeckModal(null); 
 };
   const requestEvolution = (pIndex, location, index = null) => {
@@ -984,6 +747,7 @@ export default function PokeJudgePro() {
       setSelectedCardAction(null); 
   };
   const confirmAttachEnergy = (energyType) => {
+    saveGameHistory();
     if (!showEnergyModal) return; const { pIndex, location, index } = showEnergyModal; const p = players[pIndex];
     let eKey = 'Colorless'; Object.entries(ENERGY_TYPES).forEach(([key, val]) => { if(val.name === energyType.name) eKey = key; });
     if (location === 'ACTIVE') { updatePlayer(pIndex, { activePokemon: { ...p.activePokemon, attachedEnergy: [...(p.activePokemon.attachedEnergy || []), eKey] }, energyAttachedThisTurn: true, handCount: Math.max(0, p.handCount - 1) }); addLog(`Ligou Energia ao Ativo.`, 'INFO', pIndex); } 
@@ -1015,6 +779,7 @@ export default function PokeJudgePro() {
   };
 
   const handleManualDamage = (amount) => {
+    saveGameHistory();
     const { pIndex, location, index, card } = selectedCardAction;
     const currentDmg = card.damage || 0;
     const newDmg = Math.max(0, currentDmg + amount);
@@ -1216,6 +981,7 @@ export default function PokeJudgePro() {
     } 
 };
   const finalizeAttack = () => { 
+    saveGameHistory();
     const finalDamage = damageConfirmation.actualDamage; 
     const attack = damageConfirmation.attackRef; 
     const attackerName = damageConfirmation.attackerName; // Recuperado do estado
@@ -1398,23 +1164,111 @@ export default function PokeJudgePro() {
 
   // --- RENDERIZADORES ---
   const renderBench = (pIndex) => { const p = players[pIndex]; const slots = []; p.benchPokemon.forEach((poke, idx) => { slots.push( <div key={`bench-${idx}`} className="relative group"> <div onClick={() => handleExistingCardClick(pIndex, 'BENCH', idx)}> <PokemonCard card={poke} small={true} /> </div> </div> ); }); for(let i=p.benchCount; i<5; i++) { slots.push( <div key={`empty-${i}`} className="w-24 h-36 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-white/20 cursor-pointer hover:bg-white/40 transition-colors group" onClick={() => setShowDeckModal({ deckId: p.deckArchetype, pIndex, target: 'BENCH' })}> <PlusCircle className="text-gray-300 group-hover:text-gray-400" size={24}/> </div> ); } return <div className="flex gap-2 mt-2 overflow-x-auto pb-2 min-h-[170px]">{slots}</div>; };
-  const renderPlayerSide = (pIndex) => { const p = players[pIndex]; const isCurrent = gameState.currentPlayerIndex === pIndex; const isSetup = gameState.phase === PHASES.SETUP; const deckInfo = DECKS[p.deckArchetype]; return ( <Card className={`border-l-4 ${isCurrent ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-300'} mb-4 relative transition-all duration-300 ${pIndex === 0 ? 'bg-slate-50' : 'bg-red-50'}`}> <div className="flex justify-between items-start mb-4"> <div> <h2 className={`text-xl font-bold flex items-center gap-2 ${isCurrent ? 'text-blue-600' : 'text-gray-600'}`}> <User size={20} /> {p.name} {isCurrent && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">TURNO ATIVO</span>} </h2> <div className="mt-1 flex gap-2 items-center"> <Badge className={deckInfo.color}>{deckInfo.name}</Badge> <button onClick={() => setShowDeckModal({ deckId: p.deckArchetype, pIndex, target: null })} className="text-xs text-blue-600 flex items-center hover:underline bg-white/50 px-2 py-0.5 rounded border border-blue-200"> <ImageIcon size={12} className="mr-1"/> Ver Cartas </button> </div> </div> <div className="flex gap-2"> <div className="text-center p-2 bg-white rounded shadow-sm"><div className="text-xs text-gray-500">Prêmios</div><div className="text-xl font-bold text-red-600">{p.prizes}</div></div> <div className="text-center p-2 bg-white rounded shadow-sm"><div className="text-xs text-gray-500">Mão</div><div className="font-mono">{p.handCount}</div></div> </div> </div> <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"> <div className="bg-white/60 p-3 rounded border border-gray-200 flex flex-col items-center justify-center min-h-[320px]"> <p className="text-xs text-gray-500 uppercase font-bold mb-2 w-full text-left">Pokémon Ativo</p> {p.activePokemon ? ( <div className="relative"> <div onClick={() => handleExistingCardClick(pIndex, 'ACTIVE')}><PokemonCard card={{...p.activePokemon, activeCondition: p.activeCondition, isPoisoned: p.isPoisoned, isBurned: p.isBurned}} /></div> <div className="absolute -bottom-10 left-0 right-0 p-2 bg-white rounded border shadow-lg z-20 flex gap-2 justify-center"> {/* STATUS CONTROLS */} <select className={`w-1/2 text-[10px] rounded border p-1 font-bold ${p.activeCondition !== CONDITIONS.NONE ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-50'}`} value={p.activeCondition} onChange={(e) => updateStatus(pIndex, {activeCondition: e.target.value})}> {Object.values(CONDITIONS).map(c => <option key={c} value={c}>{c}</option>)} </select> <button className={`p-1 rounded border ${p.isPoisoned ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-400'}`} onClick={() => updateStatus(pIndex, {isPoisoned: !p.isPoisoned})} title="Veneno"><Skull size={14}/></button> <button className={`p-1 rounded border ${p.isBurned ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-400'}`} onClick={() => updateStatus(pIndex, {isBurned: !p.isBurned})} title="Queimadura"><Flame size={14}/></button> </div> </div> ) : ( <div className="w-48 h-72 border-2 border-dashed border-red-300 rounded-lg flex flex-col items-center justify-center bg-white/40 text-red-400 p-4 text-center cursor-pointer hover:bg-white/80 transition-colors" onClick={() => setShowDeckModal({ deckId: p.deckArchetype, pIndex, target: 'ACTIVE' })}> <PlusCircle size={32} className="mb-2 opacity-50"/> <span className="font-bold text-sm">Adicionar Ativo</span> </div> )} </div> <div className="flex flex-col gap-2"> <div className="bg-white/60 p-3 rounded border border-gray-200 flex-1 overflow-x-auto"> <div className="flex justify-between items-center mb-1"><p className="text-xs text-gray-500 uppercase font-bold">Banco ({p.benchCount}/5)</p></div> {renderBench(pIndex)} </div> <div className="bg-white/60 p-3 rounded border border-gray-200 text-sm space-y-1"> <div className="flex justify-between"><span>Energia Manual:</span>{p.energyAttachedThisTurn ? <CheckCircle size={16} className="text-green-500"/> : <span className="text-gray-400">-</span>}</div> <div className="flex justify-between"><span>Apoiador:</span>{p.supporterPlayedThisTurn ? <CheckCircle size={16} className="text-green-500"/> : <span className="text-gray-400">-</span>}</div> <div className="flex justify-between"><span>Recuou:</span>{p.retreatedThisTurn ? <CheckCircle size={16} className="text-green-500"/> : <span className="text-gray-400">-</span>}</div> </div> </div> </div> {isSetup ? ( <div className="flex gap-2"><Button variant="secondary" onClick={() => handleMulligan(pIndex)}>Registrar Mulligan ({p.mulligans})</Button></div> ) : ( <div className="grid grid-cols-2 md:grid-cols-4 gap-2"> <Button variant="ghost" className="border bg-white" disabled={!isCurrent || gameState.phase !== PHASES.ACTION} onClick={playItem}>Jogar Item</Button> <Button variant="ghost" className="border bg-white" disabled={!isCurrent || gameState.phase !== PHASES.ACTION} onClick={playSupporter}>Apoiador</Button> <Button variant="ghost" className="border bg-white" disabled={!isCurrent || gameState.phase !== PHASES.ACTION || p.benchCount >= 5} onClick={() => setShowDeckModal({ deckId: p.deckArchetype, pIndex, target: 'BENCH' })}>+ Básico</Button> <Button variant="ghost" className="border bg-white" disabled={!isCurrent || gameState.phase !== PHASES.ACTION} onClick={retreat}>Recuar</Button> <Button variant="danger" className="col-span-2 text-xs" icon={Sword} disabled={!isCurrent || gameState.phase !== PHASES.ACTION} onClick={openAttackModal}>Fase de Ataque</Button> <Button variant="warning" className="col-span-2 text-xs" disabled={p.prizes <= 0} onClick={() => setShowPrizeModal(true)}>Pegar Prêmios</Button> <Button variant="secondary" className="col-span-2 text-xs md:col-span-4 mt-1 bg-red-100 hover:bg-red-200 text-red-800 border-red-200" onClick={() => reportKnockout(pIndex)}><Skull size={14} className="mr-1"/> Registrar Nocaute</Button> </div> )} </Card> ); };
+  const renderPlayerSide = (pIndex) => { 
+        const p = players[pIndex]; 
+        const isCurrent = gameState.currentPlayerIndex === pIndex; 
+        const isSetup = gameState.phase === PHASES.SETUP; 
+        const deckInfo = DECKS[p.deckArchetype]; 
+        
+        return ( 
+            <Card className={`border-l-4 ${isCurrent ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-300'} mb-4 relative transition-all duration-300 ${pIndex === 0 ? 'bg-slate-50' : 'bg-red-50'}`}> 
+                <div className="flex justify-between items-start mb-4"> 
+                    <div> 
+                        <h2 className={`text-xl font-bold flex items-center gap-2 ${isCurrent ? 'text-blue-600' : 'text-gray-600'}`}> 
+                            <User size={20} /> {p.name} {isCurrent && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">TURNO ATIVO</span>} 
+                        </h2> 
+                        <div className="mt-1 flex gap-2 items-center"> 
+                            <Badge className={deckInfo.color}>{deckInfo.name}</Badge> 
+                            <button onClick={() => setShowDeckModal({ deckId: p.deckArchetype, pIndex, target: null })} className="text-xs text-blue-600 flex items-center hover:underline bg-white/50 px-2 py-0.5 rounded border border-blue-200"> 
+                                <ImageIcon size={12} className="mr-1"/> Ver Cartas 
+                            </button> 
+                        </div> 
+                    </div> 
+                    
+                    <div className="flex gap-2"> 
+                        {/* --- SUBSTITUIÇÃO DO PASSO 2 (PRÊMIOS VISUAIS) --- */}
+                        <div className="flex flex-col items-center bg-white p-2 rounded shadow-sm min-w-[70px]">
+                            <div className="text-xs text-gray-500 uppercase font-bold mb-1">Prêmios</div>
+                            <div onClick={() => isCurrent ? setShowPrizeModal(true) : null} className={isCurrent ? 'cursor-pointer hover:scale-105 transition-transform' : ''}>
+                                <PrizeZone count={p.prizes} compact={true} />
+                            </div>
+                        </div>
+                        {/* ------------------------------------------------ */}
 
-  if (gameState.phase === PHASES.LOBBY) {
-      return (
-        <>
-          <GameLobby 
-            players={players} 
-            onUpdatePlayer={updatePlayer} 
-            onStartGame={handleStartGameFromLobby} 
-            onShowRanking={() => setShowRanking(true)} 
-          />
-          
-          {/* O MODAL PRECISA ESTAR AQUI TAMBÉM PARA APARECER NO LOBBY */}
-          {showRanking && <RankingModal onClose={() => setShowRanking(false)} />}
-        </>
-      );
-  }
+                        <div className="text-center p-2 bg-white rounded shadow-sm min-w-[60px] flex flex-col justify-center">
+                            <div className="text-xs text-gray-500">Mão</div>
+                            <div className="font-mono text-xl">{p.handCount}</div>
+                        </div> 
+                    </div> 
+                </div> 
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"> 
+                    <div className="bg-white/60 p-3 rounded border border-gray-200 flex flex-col items-center justify-center min-h-[320px]"> 
+                        <p className="text-xs text-gray-500 uppercase font-bold mb-2 w-full text-left">Pokémon Ativo</p> 
+                        {p.activePokemon ? ( 
+                            <div className="relative"> 
+                                <div onClick={() => handleExistingCardClick(pIndex, 'ACTIVE')}><PokemonCard card={{...p.activePokemon, activeCondition: p.activeCondition, isPoisoned: p.isPoisoned, isBurned: p.isBurned}} /></div> 
+                                <div className="absolute -bottom-10 left-0 right-0 p-2 bg-white rounded border shadow-lg z-20 flex gap-2 justify-center"> 
+                                    {/* STATUS CONTROLS */} 
+                                    <select className={`w-1/2 text-[10px] rounded border p-1 font-bold ${p.activeCondition !== CONDITIONS.NONE ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-50'}`} value={p.activeCondition} onChange={(e) => updateStatus(pIndex, {activeCondition: e.target.value})}> 
+                                        {Object.values(CONDITIONS).map(c => <option key={c} value={c}>{c}</option>)} 
+                                    </select> 
+                                    <button className={`p-1 rounded border ${p.isPoisoned ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-400'}`} onClick={() => updateStatus(pIndex, {isPoisoned: !p.isPoisoned})} title="Veneno"><Skull size={14}/></button> 
+                                    <button className={`p-1 rounded border ${p.isBurned ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-400'}`} onClick={() => updateStatus(pIndex, {isBurned: !p.isBurned})} title="Queimadura"><Flame size={14}/></button> 
+                                </div> 
+                            </div> 
+                        ) : ( 
+                            <div className="w-48 h-72 border-2 border-dashed border-red-300 rounded-lg flex flex-col items-center justify-center bg-white/40 text-red-400 p-4 text-center cursor-pointer hover:bg-white/80 transition-colors" onClick={() => setShowDeckModal({ deckId: p.deckArchetype, pIndex, target: 'ACTIVE' })}> 
+                                <PlusCircle size={32} className="mb-2 opacity-50"/> 
+                                <span className="font-bold text-sm">Adicionar Ativo</span> 
+                            </div> 
+                        )} 
+                    </div> 
+                    <div className="flex flex-col gap-2"> 
+                        <div className="bg-white/60 p-3 rounded border border-gray-200 flex-1 overflow-x-auto"> 
+                            <div className="flex justify-between items-center mb-1"><p className="text-xs text-gray-500 uppercase font-bold">Banco ({p.benchCount}/5)</p></div> 
+                            {renderBench(pIndex)} 
+                        </div> 
+                        <div className="bg-white/60 p-3 rounded border border-gray-200 text-sm space-y-1"> 
+                            <div className="flex justify-between"><span>Energia Manual:</span>{p.energyAttachedThisTurn ? <CheckCircle size={16} className="text-green-500"/> : <span className="text-gray-400">-</span>}</div> 
+                            <div className="flex justify-between"><span>Apoiador:</span>{p.supporterPlayedThisTurn ? <CheckCircle size={16} className="text-green-500"/> : <span className="text-gray-400">-</span>}</div> 
+                            <div className="flex justify-between"><span>Recuou:</span>{p.retreatedThisTurn ? <CheckCircle size={16} className="text-green-500"/> : <span className="text-gray-400">-</span>}</div> 
+                        </div> 
+                    </div> 
+                </div> 
+                {isSetup ? ( 
+                    <div className="flex gap-2"><Button variant="secondary" onClick={() => handleMulligan(pIndex)}>Registrar Mulligan ({p.mulligans})</Button></div> 
+                ) : ( 
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2"> 
+                        <Button variant="ghost" className="border bg-white" disabled={!isCurrent || gameState.phase !== PHASES.ACTION} onClick={playItem}>Jogar Item</Button> 
+                        <Button variant="ghost" className="border bg-white" disabled={!isCurrent || gameState.phase !== PHASES.ACTION} onClick={playSupporter}>Apoiador</Button> 
+                        <Button variant="ghost" className="border bg-white" disabled={!isCurrent || gameState.phase !== PHASES.ACTION || p.benchCount >= 5} onClick={() => setShowDeckModal({ deckId: p.deckArchetype, pIndex, target: 'BENCH' })}>+ Básico</Button> 
+                        <Button variant="ghost" className="border bg-white" disabled={!isCurrent || gameState.phase !== PHASES.ACTION} onClick={retreat}>Recuar</Button> 
+                        <Button variant="danger" className="col-span-2 text-xs" icon={Sword} disabled={!isCurrent || gameState.phase !== PHASES.ACTION} onClick={openAttackModal}>Fase de Ataque</Button> 
+                        <Button variant="warning" className="col-span-2 text-xs" disabled={p.prizes <= 0} onClick={() => setShowPrizeModal(true)}>Pegar Prêmios</Button> 
+                        <Button variant="secondary" className="col-span-2 text-xs md:col-span-4 mt-1 bg-red-100 hover:bg-red-200 text-red-800 border-red-200" onClick={() => reportKnockout(pIndex)}><Skull size={14} className="mr-1"/> Registrar Nocaute</Button> 
+                    </div> 
+                )} 
+            </Card> 
+        ); 
+    };
+    if (gameState.phase === PHASES.LOBBY) {
+        return (
+            <>
+            <GameLobby 
+                players={players} 
+                onUpdatePlayer={updatePlayer} 
+                onStartGame={handleStartGameFromLobby} 
+                onShowRanking={() => setShowRanking(true)} 
+                availableDecks={availableDecks} 
+                onManageDecks={() => setShowDeckManager(true)}
+            />
+            
+            {/* O MODAL PRECISA ESTAR AQUI TAMBÉM PARA APARECER NO LOBBY */}
+            {showRanking && <RankingModal onClose={() => setShowRanking(false)} />}
+            </>
+        );
+    }
 
   return (
   <div className="min-h-screen bg-gray-50 text-gray-800 p-4 font-sans relative">
@@ -1456,6 +1310,9 @@ export default function PokeJudgePro() {
               <Shield className="text-blue-600" size={32} />
               <div>
                 <h1 className="text-2xl font-black tracking-tighter uppercase italic text-white">PokéJudge Pro</h1>
+                <button onClick={onManageDecks} className="mb-6 text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 w-full underline">
+                    <Edit3 size={12}/> Gerenciar Decks (Supabase)
+                </button>
                 <p className="text-xs text-slate-400 font-mono">Assistente de Arbitragem v2.5</p>
               </div>
           </div>
@@ -1530,6 +1387,17 @@ export default function PokeJudgePro() {
                           {currentPlayer.allowUnlimitedEnergy ? "Energia: Ilimitada" : "Energia: 1 p/ Turno"}
                       </Button>
                       <Button variant="secondary" className="text-xs" icon={Download} onClick={downloadLog}>Exportar .txt</Button>
+                      <Button 
+                        variant={currentPlayer.allowRareCandy ? "warning" : "ghost"} 
+                        className={`border text-[10px] ${currentPlayer.allowRareCandy ? 'bg-blue-100 text-blue-800 border-blue-300' : ''}`}
+                        onClick={() => {
+                            updatePlayer(gameState.currentPlayerIndex, { allowRareCandy: !currentPlayer.allowRareCandy });
+                            addLog(`${currentPlayer.allowRareCandy ? 'DESATIVOU' : 'ATIVOU'} modo Rare Candy (Pular Estágio).`, 'RULE', gameState.currentPlayerIndex);
+                        }}
+                      >
+                        <Sparkles size={14} className={currentPlayer.allowRareCandy ? "text-blue-600" : "text-gray-400"}/>
+                        {currentPlayer.allowRareCandy ? "Rare Candy: ON" : "Rare Candy: OFF"}
+                      </Button>
                   </div>
               </Card>
           </div>
@@ -1557,71 +1425,221 @@ export default function PokeJudgePro() {
         </div>
     )}
 
-    {/* --- MODALS (SEMPRE DISPONÍVEIS) --- */}
+    {/* --- MODAL DE AÇÕES (VISUAL "DASHBOARD" MODERNO) --- */}
     {selectedCardAction && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-sm">
-                <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-lg">{selectedCardAction.card.name}</h3><button onClick={() => setSelectedCardAction(null)}><X/></button></div>
-                <div className="space-y-2">
-                      <div className="bg-orange-50 p-2 rounded border border-orange-200 mb-2">
-                          <p className="text-xs font-bold text-orange-800 mb-1 uppercase">Ajuste de Juiz (Dano)</p>
-                          <div className="flex justify-between items-center">
-                              <button onClick={() => handleManualDamage(-10)} className="p-1 bg-white border rounded hover:bg-gray-50"><Minus size={16}/></button>
-                              <span className="font-mono font-bold">{selectedCardAction.card.damage || 0}</span>
-                              <button onClick={() => handleManualDamage(10)} className="p-1 bg-white border rounded hover:bg-gray-50"><Plus size={16}/></button>
-                          </div>
-                      </div>
-                      
-                      {selectedCardAction.card.attachedEnergy && selectedCardAction.card.attachedEnergy.length > 0 && (
-                          <div className="bg-blue-50 p-2 rounded border border-blue-200 mb-2">
-                              <p className="text-xs font-bold text-blue-800 mb-1 uppercase">Remover Energia</p>
-                              <div className="flex flex-wrap gap-1">
-                                  {selectedCardAction.card.attachedEnergy.map((e, idx) => {
-                                      const EIcon = ENERGY_TYPES[e]?.icon || PlusCircle;
-                                      return (
-                                          <button key={idx} onClick={() => handleRemoveEnergy(idx)} className="relative group p-1 bg-white rounded border hover:bg-red-100">
-                                              <EIcon size={16}/>
-                                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-red-500/50 rounded text-white"><X size={12}/></div>
-                                          </button>
-                                      )
-                                  })}
-                              </div>
-                          </div>
-                      )}
-
-                      {selectedCardAction.card.attacks && selectedCardAction.card.attacks.filter(atk => atk.cost[0] === 'Ability').map((ability, idx) => (<Button key={`ab-${idx}`} variant="warning" className="w-full mb-2 border border-yellow-600 text-yellow-900" icon={Sparkles} onClick={() => useAbility(ability.name, selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>Usar Habilidade: {ability.name}</Button>))}
-                      <Button variant="ghost" className="w-full border border-blue-200 bg-blue-50 text-blue-700" icon={Zap} onClick={() => requestEnergyAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>Ligar Energia</Button>
-                      <Button variant="ghost" className="w-full border border-purple-200 bg-purple-50 text-purple-700" icon={Briefcase} onClick={() => requestToolAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>Ligar Ferramenta</Button>
-                      <Button variant="primary" className="w-full" icon={GitMerge} onClick={() => requestEvolution(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>Evoluir</Button>
-                      {!players[selectedCardAction.pIndex].activePokemon && selectedCardAction.location === 'BENCH' && (<Button variant="success" className="w-full" icon={ChevronsUp} onClick={() => promoteFromBench(selectedCardAction.index, selectedCardAction.pIndex)}>Promover para Ativo</Button>)}
-                      <Button variant="secondary" className="w-full" onClick={() => setSelectedCardAction(null)}>Cancelar</Button>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+            {/* Container Principal */}
+            <div className="bg-white dark:bg-gray-900 w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col md:flex-row overflow-hidden border border-gray-200 dark:border-gray-800">
+                
+                {/* COLUNA DA ESQUERDA: VISUALIZAÇÃO DA CARTA */}
+                <div className="bg-slate-100 dark:bg-slate-950 p-8 flex flex-col items-center justify-center md:w-1/3 border-r border-gray-200 relative group">
+                    <div className="transform transition-transform hover:scale-105 duration-300 shadow-2xl rounded-xl">
+                        <PokemonCard card={selectedCardAction.card} />
+                    </div>
+                    {/* Botão Fechar Mobile (só aparece em telas pequenas) */}
+                    <button 
+                        onClick={() => setSelectedCardAction(null)} 
+                        className="absolute top-4 left-4 md:hidden p-2 bg-white rounded-full shadow-lg text-gray-500"
+                    >
+                        <X size={20}/>
+                    </button>
                 </div>
-            </Card>
+
+                {/* COLUNA DA DIREITA: PAINEL DE CONTROLE */}
+                <div className="flex-1 flex flex-col h-full bg-white">
+                    {/* Cabeçalho do Painel */}
+                    <div className="p-6 border-b border-gray-100 flex justify-between items-start bg-white z-10">
+                        <div>
+                            <h3 className="text-3xl font-black text-gray-800 tracking-tighter italic uppercase mb-1">
+                                {selectedCardAction.card.name}
+                            </h3>
+                            <div className="flex items-center gap-2 text-xs font-bold font-mono uppercase tracking-widest text-gray-400">
+                                <span className={`w-2 h-2 rounded-full ${selectedCardAction.location === 'ACTIVE' ? 'bg-green-500 animate-pulse' : 'bg-blue-400'}`}></span>
+                                {selectedCardAction.location === 'ACTIVE' ? 'Posição: Ativo' : `Posição: Banco ${selectedCardAction.index + 1}`}
+                                <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-500">Turno {selectedCardAction.card.turnPlayed}</span>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => setSelectedCardAction(null)} 
+                            className="hidden md:block p-2 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors text-gray-300"
+                        >
+                            <X size={28}/>
+                        </button>
+                    </div>
+
+                    {/* Conteúdo Rolável */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                        
+                        {/* 1. SEÇÃO DE DANO (AJUSTE DE JUIZ) */}
+                        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                            <div className="flex justify-between items-center mb-3">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                    <Shield size={14}/> Contador de Dano
+                                </h4>
+                                <span className="text-[10px] text-slate-400 font-mono">HP Máx: {selectedCardAction.card.hp}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4 bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+                                <button onClick={() => handleManualDamage(-10)} className="w-12 h-12 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
+                                    <Minus size={24}/>
+                                </button>
+                                <div className="text-center">
+                                    <span className={`text-4xl font-black ${selectedCardAction.card.damage > 0 ? 'text-red-500' : 'text-slate-300'}`}>
+                                        {selectedCardAction.card.damage || 0}
+                                    </span>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Dano Atual</p>
+                                </div>
+                                <button onClick={() => handleManualDamage(10)} className="w-12 h-12 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 transition-colors">
+                                    <Plus size={24}/>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 2. SEÇÃO DE ENERGIAS LIGADAS */}
+                        <div>
+                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                <Zap size={14}/> Energias Ligadas
+                            </h4>
+                            {selectedCardAction.card.attachedEnergy && selectedCardAction.card.attachedEnergy.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {selectedCardAction.card.attachedEnergy.map((e, idx) => {
+                                        const EInfo = ENERGY_TYPES[e] || { icon: Circle, color: 'bg-gray-400', text: 'text-white' };
+                                        const EIcon = EInfo.icon;
+                                        return (
+                                            <div key={idx} className={`relative group pl-2 pr-8 py-2 rounded-lg border flex items-center gap-2 shadow-sm transition-all hover:shadow-md ${EInfo.color} bg-opacity-10 border-gray-200`}>
+                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${EInfo.color} ${EInfo.text} shadow-sm`}>
+                                                    <EIcon size={14}/>
+                                                </div>
+                                                <span className="text-xs font-bold text-gray-700">{EInfo.name}</span>
+                                                <button 
+                                                    onClick={() => handleRemoveEnergy(idx)}
+                                                    className="absolute right-1 top-1 bottom-1 w-6 bg-white/50 hover:bg-red-500 hover:text-white rounded text-gray-400 flex items-center justify-center transition-colors"
+                                                    title="Remover Energia"
+                                                >
+                                                    <X size={14}/>
+                                                </button>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="text-sm text-gray-400 italic bg-gray-50 p-3 rounded-lg border border-dashed border-gray-200 text-center">
+                                    Nenhuma energia ligada.
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 3. AÇÕES RÁPIDAS (GRID DE BOTÕES) */}
+                        <div>
+                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                <PlayCircle size={14}/> Ações Disponíveis
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {/* Habilidades (Destaque Especial) */}
+                                {selectedCardAction.card.attacks && selectedCardAction.card.attacks.filter(atk => atk.cost[0] === 'Ability').map((ability, idx) => (
+                                    <button 
+                                        key={`ab-${idx}`} 
+                                        onClick={() => useAbility(ability.name, selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}
+                                        className="col-span-1 md:col-span-2 p-4 bg-gradient-to-r from-amber-50 to-yellow-50 border border-yellow-200 rounded-xl flex items-center justify-between hover:shadow-md hover:border-yellow-400 transition-all group text-left"
+                                    >
+                                        <div>
+                                            <span className="text-xs font-bold text-yellow-600 uppercase tracking-wider block mb-1">Habilidade</span>
+                                            <span className="font-bold text-gray-800 group-hover:text-yellow-700 transition-colors">{ability.name}</span>
+                                        </div>
+                                        <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 group-hover:scale-110 transition-transform">
+                                            <Sparkles size={20}/>
+                                        </div>
+                                    </button>
+                                ))}
+
+                                {/* Botões Padrão */}
+                                <Button 
+                                    variant="ghost" 
+                                    className="h-14 border border-gray-200 bg-gray-50 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 justify-start px-4"
+                                    onClick={() => requestEnergyAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}
+                                >
+                                    <Zap className="mr-3 text-gray-400" size={20}/> Ligar Energia
+                                </Button>
+
+                                <Button 
+                                    variant="ghost" 
+                                    className="h-14 border border-gray-200 bg-gray-50 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-600 justify-start px-4"
+                                    onClick={() => requestToolAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}
+                                >
+                                    <Briefcase className="mr-3 text-gray-400" size={20}/> Ligar Ferramenta
+                                </Button>
+
+                                <Button 
+                                    variant="ghost" 
+                                    className="h-14 border border-gray-200 bg-gray-50 hover:bg-green-50 hover:border-green-300 hover:text-green-600 justify-start px-4" 
+                                    onClick={() => requestEvolution(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}
+                                >
+                                    <GitMerge className="mr-3 text-gray-400" size={20}/> Evoluir Pokémon
+                                </Button>
+
+                                {/* Botão de Promover (Só aparece se estiver no Banco e não tiver Ativo) */}
+                                {!players[selectedCardAction.pIndex].activePokemon && selectedCardAction.location === 'BENCH' && (
+                                    <Button 
+                                        variant="success" 
+                                        className="h-14 col-span-1 md:col-span-2 justify-center shadow-lg shadow-green-200" 
+                                        onClick={() => promoteFromBench(selectedCardAction.index, selectedCardAction.pIndex)}
+                                    >
+                                        <ChevronsUp className="mr-2" size={20}/> Promover para Ativo
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Rodapé do Painel */}
+                    <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                        <Button variant="secondary" onClick={() => setSelectedCardAction(null)}>
+                            Fechar Painel
+                        </Button>
+                    </div>
+                </div>
+            </div>
         </div>
     )}
 
+    {/* --- MODAL VISUAL DE PRÊMIOS --- */}
     {showPrizeModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-sm">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-lg text-yellow-600 flex items-center gap-2"><Gift/> Pegar Prêmios</h3>
-                    <button onClick={() => setShowPrizeModal(false)}><X/></button>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-in fade-in">
+            <div className="bg-white/10 p-8 rounded-3xl shadow-2xl border border-white/20 text-center max-w-2xl w-full">
+                <div className="flex justify-between items-center mb-8">
+                    <h3 className="text-3xl font-black text-white italic uppercase tracking-widest flex items-center gap-3">
+                        <Gift className="text-yellow-400 animate-bounce" size={32}/> 
+                        Pegar Prêmio
+                    </h3>
+                    <button onClick={() => setShowPrizeModal(false)} className="bg-white/20 p-2 rounded-full hover:bg-red-500 hover:text-white transition-colors text-white">
+                        <X size={24}/>
+                    </button>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                    {[1, 2, 3].map(qty => (
-                        <Button 
-                            key={qty} 
-                            variant="warning" 
-                            onClick={() => { takePrize(qty); setShowPrizeModal(false); }}
-                            disabled={currentPlayer.prizes < qty}
-                            className="flex flex-col h-16"
-                        >
-                            <span className="text-xl font-bold">{qty}</span>
-                            <span className="text-xs font-normal">{qty > 1 ? 'Prêmios' : 'Prêmio'}</span>
-                        </Button>
-                    ))}
+                
+                <p className="text-gray-300 mb-6 text-lg">
+                    Você tem <span className="font-bold text-white text-2xl">{currentPlayer.prizes}</span> prêmios restantes.
+                    <br/>Clique em uma carta para pegá-la!
+                </p>
+
+                {/* Renderiza as cartas grandes lado a lado */}
+                <div className="flex justify-center">
+                    <PrizeZone 
+                        count={currentPlayer.prizes} 
+                        compact={false} // Modo expandido!
+                        onClick={() => { 
+                            takePrize(1); // Clicar = Pegar 1 prêmio
+                            // Se quiser pegar mais, o usuário clica de novo depois, ou fechamos o modal se for o comportamento padrão
+                            // Para UX melhor: Se pegou 1, avisa e fecha se só precisava de 1.
+                            // Mas como TCG às vezes pega 2, vamos manter aberto ou fechar? 
+                            // Vamos manter aberto rapidinho ou fechar. Simplicidade: Pega 1 e fecha.
+                            setShowPrizeModal(false); 
+                        }} 
+                    />
                 </div>
-            </Card>
+                
+                <div className="mt-8 text-sm text-gray-400">
+                    (Se precisar pegar 2 prêmios, abra este menu novamente)
+                </div>
+            </div>
         </div>
     )}
 
@@ -1743,16 +1761,79 @@ export default function PokeJudgePro() {
       </div>
     )}
 
+    {/* --- MODAL DE ATAQUE (VISUAL DE BATALHA) --- */}
     {showAttackModal && (
-      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-           <Card className="w-full max-w-md">
-              <div className="flex justify-between items-center mb-4 border-b pb-2"><h3 className="text-xl font-bold flex items-center gap-2"><Sword className="text-red-600"/> Declarar Ataque</h3><button onClick={() => setShowAttackModal(false)}><X/></button></div>
-              <div className="space-y-3">
-                  {currentPlayer.activePokemon.attacks.filter(atk => atk.cost[0] !== 'Ability').map((atk, idx) => {
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in zoom-in duration-200">
+           <Card className="w-full max-w-lg border-none shadow-2xl bg-gradient-to-b from-gray-900 to-gray-800 text-white overflow-hidden">
+              
+              {/* Cabeçalho de Batalha */}
+              <div className="flex justify-between items-center p-4 bg-red-600 shadow-md">
+                 <h3 className="text-xl font-black italic uppercase flex items-center gap-2">
+                    <Sword className="text-white animate-pulse"/> 
+                    Fase de Batalha
+                 </h3>
+                 <button onClick={() => setShowAttackModal(false)} className="hover:bg-red-700 p-1 rounded transition-colors"><X/></button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                 <div className="text-center mb-4">
+                    <p className="text-gray-400 text-xs uppercase tracking-widest mb-1">Atacante</p>
+                    <h2 className="text-2xl font-bold">{currentPlayer.activePokemon.name}</h2>
+                 </div>
+
+                 <div className="space-y-3">
+                     {currentPlayer.activePokemon.attacks.filter(atk => atk.cost[0] !== 'Ability').map((atk, idx) => {
                           const canAfford = checkEnergyCost(atk.cost, currentPlayer.activePokemon.attachedEnergy || []);
-                          return (<button key={idx} disabled={!canAfford} onClick={() => confirmAttack(atk)} className={`w-full p-3 rounded-lg border-2 flex justify-between items-center transition-all ${canAfford ? 'border-red-500 bg-red-50 hover:bg-red-100 cursor-pointer' : 'border-gray-200 bg-gray-100 opacity-60 cursor-not-allowed'}`}><div className="flex flex-col items-start"><span className={`font-bold ${canAfford ? 'text-red-800' : 'text-gray-500'}`}>{atk.name}</span><div className="flex gap-1 mt-1">{atk.cost.map((c, i) => { const EColor = ENERGY_TYPES[c]?.color || 'bg-gray-400'; return <div key={i} className={`w-3 h-3 ${EColor} rounded-full`}></div>})}</div></div><span className="text-xl font-black">{atk.damage}</span></button>);
-                      })
-                  }
+                          
+                          return (
+                            <button 
+                                key={idx} 
+                                disabled={!canAfford} 
+                                onClick={() => confirmAttack(atk)} 
+                                className={`
+                                    w-full p-4 rounded-xl border-l-8 flex justify-between items-center transition-all group relative overflow-hidden
+                                    ${canAfford 
+                                        ? 'bg-white text-gray-800 border-red-500 hover:bg-gray-50 hover:translate-x-1 shadow-lg' 
+                                        : 'bg-gray-700 text-gray-500 border-gray-600 opacity-50 cursor-not-allowed grayscale'}
+                                `}
+                            >
+                                {/* Fundo sutil animado ao passar o mouse */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-red-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"/>
+
+                                <div className="flex flex-col items-start z-10">
+                                    <span className={`font-black text-lg uppercase tracking-tight ${canAfford ? 'text-gray-800' : 'text-gray-500'}`}>
+                                        {atk.name}
+                                    </span>
+                                    
+                                    {/* Bolinhas de Energia Coloridas */}
+                                    <div className="flex gap-1 mt-1.5">
+                                        {atk.cost.map((c, i) => { 
+                                            // Usa as cores reais do constants.js
+                                            const typeInfo = ENERGY_TYPES[c] || { color: 'bg-gray-400' }; 
+                                            return (
+                                                <div key={i} className={`w-4 h-4 rounded-full ${typeInfo.color} shadow-sm border border-black/10`} title={c}></div>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+
+                                <div className="z-10 flex flex-col items-end">
+                                    <span className={`text-3xl font-black ${canAfford ? 'text-red-600' : 'text-gray-600'}`}>
+                                        {atk.damage}
+                                    </span>
+                                    {atk.damage && <span className="text-[10px] font-bold uppercase text-gray-400">Dano</span>}
+                                </div>
+                            </button>
+                          );
+                     })
+                 }
+                 
+                 {currentPlayer.activePokemon.attacks.filter(atk => atk.cost[0] !== 'Ability').length === 0 && (
+                     <div className="text-center p-8 border-2 border-dashed border-gray-600 rounded-xl text-gray-500">
+                        Este Pokémon não possui ataques válidos.
+                     </div>
+                 )}
+                 </div>
               </div>
            </Card>
       </div>
@@ -1822,5 +1903,27 @@ export default function PokeJudgePro() {
     
     {/* --- O RANKING GLOBAL AGORA PODE SER VISTO NO LOBBY OU NO JOGO --- */}
     {showRanking && <RankingModal onClose={() => setShowRanking(false)} />}
+    {/* --- MODAL DO GERENCIADOR DE DECKS --- */}
+    {showDeckManager && (
+        <DeckManager 
+            decks={availableDecks} 
+            onClose={() => setShowDeckManager(false)}
+            onUpdate={fetchDecksFromSupabase} // Recarrega quando você salva algo novo
+        />
+    )}
+        
+    {/* --- BOTÃO FLUTUANTE DE DESFAZER (UNDO) --- */}
+    {history.length > 0 && gameState.phase !== PHASES.LOBBY && (
+        <div className="fixed bottom-6 left-6 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
+            <button 
+                onClick={handleUndo}
+                className="flex items-center gap-2 bg-gray-900 text-white px-5 py-3 rounded-full shadow-2xl border border-gray-700 hover:bg-gray-800 hover:scale-105 active:scale-95 transition-all group"
+                title="Desfazer última ação"
+            >
+                <RotateCcw size={20} className="text-yellow-400 group-hover:-rotate-180 transition-transform duration-500"/>
+                <span className="font-bold text-xs uppercase tracking-widest">Desfazer</span>
+            </button>
+        </div>
+    )}
   </div>
 ); };
