@@ -260,6 +260,7 @@ export default function PokeJudgePro() {
       isPoisoned: false, // NEW
       isBurned: false, // NEW
       allowUnlimitedEnergy: false, // NEW
+      allowRareCandy: false, // NEW
       energyAttachedThisTurn: false,
       supporterPlayedThisTurn: false,
       retreatedThisTurn: false,
@@ -279,6 +280,7 @@ export default function PokeJudgePro() {
       isPoisoned: false, // NEW
       isBurned: false, // NEW
       allowUnlimitedEnergy: false, // NEW
+      allowRareCandy: false, // NEW
       energyAttachedThisTurn: false,
       supporterPlayedThisTurn: false,
       retreatedThisTurn: false,
@@ -502,7 +504,6 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
     // Só pode baixar diretamente se for Básico (Stage 0)
     if ((destination === 'ACTIVE' || destination === 'BENCH') && cardData.stage !== 0) {
         addLog(`JOGADA ILEGAL: ${cardData.name} é Estágio ${cardData.stage} e não pode ser baixado direto.`, 'CRIT', pIndex);
-        // Toca um som de erro se quiser, ou só retorna
         return;
     }
 
@@ -522,14 +523,18 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
         updatePlayer(pIndex, { benchPokemon: [...player.benchPokemon, cardData], benchCount: player.benchCount + 1, handCount: Math.max(0, player.handCount - 1) });
         addLog(`BAIXOU: ${cardData.name} no Banco.`, 'INFO', pIndex);
     } 
-    // --- LÓGICA DE EVOLUÇÃO ---
+    // --- LÓGICA DE EVOLUÇÃO (ATUALIZADA COM RARE CANDY) ---
     else if (destination === 'EVOLVE_ACTIVE' || destination === 'EVOLVE_BENCH') {
         // Identifica o alvo da evolução
         const targetPokemon = destination === 'EVOLVE_ACTIVE' ? player.activePokemon : player.benchPokemon[evolveTargetIndex];
         
+        // --- NOVO: VERIFICAÇÃO DE RARE CANDY ---
+        // Permite se o botão estiver ligado, for Stage 2 e o alvo for Stage 0
+        const isRareCandyAction = player.allowRareCandy && cardData.stage === 2 && targetPokemon.stage === 0;
+
         // --- REGRA 2: NOME DA EVOLUÇÃO ---
-        // Verifica se o Pokémon atual é o pré-requisito correto (Ex: Charmander -> Charmeleon)
-        if (cardData.evolvesFrom !== targetPokemon.name) {
+        // Se NÃO for Rare Candy, o nome precisa bater. Se FOR Rare Candy, ignora o nome (mas exige Stage 0 -> Stage 2)
+        if (cardData.evolvesFrom !== targetPokemon.name && !isRareCandyAction) {
             addLog(`EVOLUÇÃO INVÁLIDA: ${cardData.name} evolui de ${cardData.evolvesFrom}, mas o alvo é ${targetPokemon.name}.`, 'CRIT', pIndex);
             return;
         }
@@ -543,13 +548,32 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
         const newPokemonStats = { ...cardData, attachedEnergy: oldEnergies, attachedTool: oldTool, damage: oldDamage };
         
         if (destination === 'EVOLVE_ACTIVE') {
-            updatePlayer(pIndex, { activePokemon: newPokemonStats, activeCondition: CONDITIONS.NONE, handCount: Math.max(0, player.handCount - 1) });
-            addLog(`EVOLUIU: ${oldName} para ${cardData.name} (Ativo).`, 'SUCCESS', pIndex);
+            updatePlayer(pIndex, { 
+                activePokemon: newPokemonStats, 
+                activeCondition: CONDITIONS.NONE, 
+                handCount: Math.max(0, player.handCount - 1),
+                allowRareCandy: false // Desliga o modo automaticamente após usar
+            });
+
+            if (isRareCandyAction) {
+                addLog(`🍬 RARE CANDY: ${oldName} evoluiu direto para ${cardData.name} (Ativo).`, 'SUCCESS', pIndex);
+            } else {
+                addLog(`EVOLUIU: ${oldName} para ${cardData.name} (Ativo).`, 'SUCCESS', pIndex);
+            }
         } else {
             const newBench = [...player.benchPokemon];
             newBench[evolveTargetIndex] = newPokemonStats;
-            updatePlayer(pIndex, { benchPokemon: newBench, handCount: Math.max(0, player.handCount - 1) });
-            addLog(`EVOLUIU: ${oldName} para ${cardData.name} (Banco).`, 'SUCCESS', pIndex);
+            updatePlayer(pIndex, { 
+                benchPokemon: newBench, 
+                handCount: Math.max(0, player.handCount - 1),
+                allowRareCandy: false // Desliga o modo automaticamente após usar
+            });
+
+            if (isRareCandyAction) {
+                addLog(`🍬 RARE CANDY: ${oldName} evoluiu direto para ${cardData.name} (Banco).`, 'SUCCESS', pIndex);
+            } else {
+                addLog(`EVOLUIU: ${oldName} para ${cardData.name} (Banco).`, 'SUCCESS', pIndex);
+            }
         }
     }
     
@@ -1132,6 +1156,17 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
                           {currentPlayer.allowUnlimitedEnergy ? "Energia: Ilimitada" : "Energia: 1 p/ Turno"}
                       </Button>
                       <Button variant="secondary" className="text-xs" icon={Download} onClick={downloadLog}>Exportar .txt</Button>
+                      <Button 
+                        variant={currentPlayer.allowRareCandy ? "warning" : "ghost"} 
+                        className={`border text-[10px] ${currentPlayer.allowRareCandy ? 'bg-blue-100 text-blue-800 border-blue-300' : ''}`}
+                        onClick={() => {
+                            updatePlayer(gameState.currentPlayerIndex, { allowRareCandy: !currentPlayer.allowRareCandy });
+                            addLog(`${currentPlayer.allowRareCandy ? 'DESATIVOU' : 'ATIVOU'} modo Rare Candy (Pular Estágio).`, 'RULE', gameState.currentPlayerIndex);
+                        }}
+                      >
+                        <Sparkles size={14} className={currentPlayer.allowRareCandy ? "text-blue-600" : "text-gray-400"}/>
+                        {currentPlayer.allowRareCandy ? "Rare Candy: ON" : "Rare Candy: OFF"}
+                      </Button>
                   </div>
               </Card>
           </div>
