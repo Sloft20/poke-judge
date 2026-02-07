@@ -16,6 +16,7 @@ import { PHASES, CONDITIONS, TOOLS, ENERGY_TYPES, RULES_DB } from './data/consta
 import PokemonCard from './components/PokemonCard';
 import { Card, Button, Badge } from './components/UI';
 import GameLobby from './components/GameLobby';
+import PrizeZone from './components/PrizeZone';
 
 
 
@@ -1066,23 +1067,109 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
 
   // --- RENDERIZADORES ---
   const renderBench = (pIndex) => { const p = players[pIndex]; const slots = []; p.benchPokemon.forEach((poke, idx) => { slots.push( <div key={`bench-${idx}`} className="relative group"> <div onClick={() => handleExistingCardClick(pIndex, 'BENCH', idx)}> <PokemonCard card={poke} small={true} /> </div> </div> ); }); for(let i=p.benchCount; i<5; i++) { slots.push( <div key={`empty-${i}`} className="w-24 h-36 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-white/20 cursor-pointer hover:bg-white/40 transition-colors group" onClick={() => setShowDeckModal({ deckId: p.deckArchetype, pIndex, target: 'BENCH' })}> <PlusCircle className="text-gray-300 group-hover:text-gray-400" size={24}/> </div> ); } return <div className="flex gap-2 mt-2 overflow-x-auto pb-2 min-h-[170px]">{slots}</div>; };
-  const renderPlayerSide = (pIndex) => { const p = players[pIndex]; const isCurrent = gameState.currentPlayerIndex === pIndex; const isSetup = gameState.phase === PHASES.SETUP; const deckInfo = DECKS[p.deckArchetype]; return ( <Card className={`border-l-4 ${isCurrent ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-300'} mb-4 relative transition-all duration-300 ${pIndex === 0 ? 'bg-slate-50' : 'bg-red-50'}`}> <div className="flex justify-between items-start mb-4"> <div> <h2 className={`text-xl font-bold flex items-center gap-2 ${isCurrent ? 'text-blue-600' : 'text-gray-600'}`}> <User size={20} /> {p.name} {isCurrent && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">TURNO ATIVO</span>} </h2> <div className="mt-1 flex gap-2 items-center"> <Badge className={deckInfo.color}>{deckInfo.name}</Badge> <button onClick={() => setShowDeckModal({ deckId: p.deckArchetype, pIndex, target: null })} className="text-xs text-blue-600 flex items-center hover:underline bg-white/50 px-2 py-0.5 rounded border border-blue-200"> <ImageIcon size={12} className="mr-1"/> Ver Cartas </button> </div> </div> <div className="flex gap-2"> <div className="text-center p-2 bg-white rounded shadow-sm"><div className="text-xs text-gray-500">Prêmios</div><div className="text-xl font-bold text-red-600">{p.prizes}</div></div> <div className="text-center p-2 bg-white rounded shadow-sm"><div className="text-xs text-gray-500">Mão</div><div className="font-mono">{p.handCount}</div></div> </div> </div> <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"> <div className="bg-white/60 p-3 rounded border border-gray-200 flex flex-col items-center justify-center min-h-[320px]"> <p className="text-xs text-gray-500 uppercase font-bold mb-2 w-full text-left">Pokémon Ativo</p> {p.activePokemon ? ( <div className="relative"> <div onClick={() => handleExistingCardClick(pIndex, 'ACTIVE')}><PokemonCard card={{...p.activePokemon, activeCondition: p.activeCondition, isPoisoned: p.isPoisoned, isBurned: p.isBurned}} /></div> <div className="absolute -bottom-10 left-0 right-0 p-2 bg-white rounded border shadow-lg z-20 flex gap-2 justify-center"> {/* STATUS CONTROLS */} <select className={`w-1/2 text-[10px] rounded border p-1 font-bold ${p.activeCondition !== CONDITIONS.NONE ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-50'}`} value={p.activeCondition} onChange={(e) => updateStatus(pIndex, {activeCondition: e.target.value})}> {Object.values(CONDITIONS).map(c => <option key={c} value={c}>{c}</option>)} </select> <button className={`p-1 rounded border ${p.isPoisoned ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-400'}`} onClick={() => updateStatus(pIndex, {isPoisoned: !p.isPoisoned})} title="Veneno"><Skull size={14}/></button> <button className={`p-1 rounded border ${p.isBurned ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-400'}`} onClick={() => updateStatus(pIndex, {isBurned: !p.isBurned})} title="Queimadura"><Flame size={14}/></button> </div> </div> ) : ( <div className="w-48 h-72 border-2 border-dashed border-red-300 rounded-lg flex flex-col items-center justify-center bg-white/40 text-red-400 p-4 text-center cursor-pointer hover:bg-white/80 transition-colors" onClick={() => setShowDeckModal({ deckId: p.deckArchetype, pIndex, target: 'ACTIVE' })}> <PlusCircle size={32} className="mb-2 opacity-50"/> <span className="font-bold text-sm">Adicionar Ativo</span> </div> )} </div> <div className="flex flex-col gap-2"> <div className="bg-white/60 p-3 rounded border border-gray-200 flex-1 overflow-x-auto"> <div className="flex justify-between items-center mb-1"><p className="text-xs text-gray-500 uppercase font-bold">Banco ({p.benchCount}/5)</p></div> {renderBench(pIndex)} </div> <div className="bg-white/60 p-3 rounded border border-gray-200 text-sm space-y-1"> <div className="flex justify-between"><span>Energia Manual:</span>{p.energyAttachedThisTurn ? <CheckCircle size={16} className="text-green-500"/> : <span className="text-gray-400">-</span>}</div> <div className="flex justify-between"><span>Apoiador:</span>{p.supporterPlayedThisTurn ? <CheckCircle size={16} className="text-green-500"/> : <span className="text-gray-400">-</span>}</div> <div className="flex justify-between"><span>Recuou:</span>{p.retreatedThisTurn ? <CheckCircle size={16} className="text-green-500"/> : <span className="text-gray-400">-</span>}</div> </div> </div> </div> {isSetup ? ( <div className="flex gap-2"><Button variant="secondary" onClick={() => handleMulligan(pIndex)}>Registrar Mulligan ({p.mulligans})</Button></div> ) : ( <div className="grid grid-cols-2 md:grid-cols-4 gap-2"> <Button variant="ghost" className="border bg-white" disabled={!isCurrent || gameState.phase !== PHASES.ACTION} onClick={playItem}>Jogar Item</Button> <Button variant="ghost" className="border bg-white" disabled={!isCurrent || gameState.phase !== PHASES.ACTION} onClick={playSupporter}>Apoiador</Button> <Button variant="ghost" className="border bg-white" disabled={!isCurrent || gameState.phase !== PHASES.ACTION || p.benchCount >= 5} onClick={() => setShowDeckModal({ deckId: p.deckArchetype, pIndex, target: 'BENCH' })}>+ Básico</Button> <Button variant="ghost" className="border bg-white" disabled={!isCurrent || gameState.phase !== PHASES.ACTION} onClick={retreat}>Recuar</Button> <Button variant="danger" className="col-span-2 text-xs" icon={Sword} disabled={!isCurrent || gameState.phase !== PHASES.ACTION} onClick={openAttackModal}>Fase de Ataque</Button> <Button variant="warning" className="col-span-2 text-xs" disabled={p.prizes <= 0} onClick={() => setShowPrizeModal(true)}>Pegar Prêmios</Button> <Button variant="secondary" className="col-span-2 text-xs md:col-span-4 mt-1 bg-red-100 hover:bg-red-200 text-red-800 border-red-200" onClick={() => reportKnockout(pIndex)}><Skull size={14} className="mr-1"/> Registrar Nocaute</Button> </div> )} </Card> ); };
+  const renderPlayerSide = (pIndex) => { 
+        const p = players[pIndex]; 
+        const isCurrent = gameState.currentPlayerIndex === pIndex; 
+        const isSetup = gameState.phase === PHASES.SETUP; 
+        const deckInfo = DECKS[p.deckArchetype]; 
+        
+        return ( 
+            <Card className={`border-l-4 ${isCurrent ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-300'} mb-4 relative transition-all duration-300 ${pIndex === 0 ? 'bg-slate-50' : 'bg-red-50'}`}> 
+                <div className="flex justify-between items-start mb-4"> 
+                    <div> 
+                        <h2 className={`text-xl font-bold flex items-center gap-2 ${isCurrent ? 'text-blue-600' : 'text-gray-600'}`}> 
+                            <User size={20} /> {p.name} {isCurrent && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">TURNO ATIVO</span>} 
+                        </h2> 
+                        <div className="mt-1 flex gap-2 items-center"> 
+                            <Badge className={deckInfo.color}>{deckInfo.name}</Badge> 
+                            <button onClick={() => setShowDeckModal({ deckId: p.deckArchetype, pIndex, target: null })} className="text-xs text-blue-600 flex items-center hover:underline bg-white/50 px-2 py-0.5 rounded border border-blue-200"> 
+                                <ImageIcon size={12} className="mr-1"/> Ver Cartas 
+                            </button> 
+                        </div> 
+                    </div> 
+                    
+                    <div className="flex gap-2"> 
+                        {/* --- SUBSTITUIÇÃO DO PASSO 2 (PRÊMIOS VISUAIS) --- */}
+                        <div className="flex flex-col items-center bg-white p-2 rounded shadow-sm min-w-[70px]">
+                            <div className="text-xs text-gray-500 uppercase font-bold mb-1">Prêmios</div>
+                            <div onClick={() => isCurrent ? setShowPrizeModal(true) : null} className={isCurrent ? 'cursor-pointer hover:scale-105 transition-transform' : ''}>
+                                <PrizeZone count={p.prizes} compact={true} />
+                            </div>
+                        </div>
+                        {/* ------------------------------------------------ */}
 
-  if (gameState.phase === PHASES.LOBBY) {
-      return (
-        <>
-          <GameLobby 
-            players={players} 
-            onUpdatePlayer={updatePlayer} 
-            onStartGame={handleStartGameFromLobby} 
-            onShowRanking={() => setShowRanking(true)} 
-          />
-          
-          {/* O MODAL PRECISA ESTAR AQUI TAMBÉM PARA APARECER NO LOBBY */}
-          {showRanking && <RankingModal onClose={() => setShowRanking(false)} />}
-        </>
-      );
-  }
+                        <div className="text-center p-2 bg-white rounded shadow-sm min-w-[60px] flex flex-col justify-center">
+                            <div className="text-xs text-gray-500">Mão</div>
+                            <div className="font-mono text-xl">{p.handCount}</div>
+                        </div> 
+                    </div> 
+                </div> 
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"> 
+                    <div className="bg-white/60 p-3 rounded border border-gray-200 flex flex-col items-center justify-center min-h-[320px]"> 
+                        <p className="text-xs text-gray-500 uppercase font-bold mb-2 w-full text-left">Pokémon Ativo</p> 
+                        {p.activePokemon ? ( 
+                            <div className="relative"> 
+                                <div onClick={() => handleExistingCardClick(pIndex, 'ACTIVE')}><PokemonCard card={{...p.activePokemon, activeCondition: p.activeCondition, isPoisoned: p.isPoisoned, isBurned: p.isBurned}} /></div> 
+                                <div className="absolute -bottom-10 left-0 right-0 p-2 bg-white rounded border shadow-lg z-20 flex gap-2 justify-center"> 
+                                    {/* STATUS CONTROLS */} 
+                                    <select className={`w-1/2 text-[10px] rounded border p-1 font-bold ${p.activeCondition !== CONDITIONS.NONE ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-50'}`} value={p.activeCondition} onChange={(e) => updateStatus(pIndex, {activeCondition: e.target.value})}> 
+                                        {Object.values(CONDITIONS).map(c => <option key={c} value={c}>{c}</option>)} 
+                                    </select> 
+                                    <button className={`p-1 rounded border ${p.isPoisoned ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-400'}`} onClick={() => updateStatus(pIndex, {isPoisoned: !p.isPoisoned})} title="Veneno"><Skull size={14}/></button> 
+                                    <button className={`p-1 rounded border ${p.isBurned ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-400'}`} onClick={() => updateStatus(pIndex, {isBurned: !p.isBurned})} title="Queimadura"><Flame size={14}/></button> 
+                                </div> 
+                            </div> 
+                        ) : ( 
+                            <div className="w-48 h-72 border-2 border-dashed border-red-300 rounded-lg flex flex-col items-center justify-center bg-white/40 text-red-400 p-4 text-center cursor-pointer hover:bg-white/80 transition-colors" onClick={() => setShowDeckModal({ deckId: p.deckArchetype, pIndex, target: 'ACTIVE' })}> 
+                                <PlusCircle size={32} className="mb-2 opacity-50"/> 
+                                <span className="font-bold text-sm">Adicionar Ativo</span> 
+                            </div> 
+                        )} 
+                    </div> 
+                    <div className="flex flex-col gap-2"> 
+                        <div className="bg-white/60 p-3 rounded border border-gray-200 flex-1 overflow-x-auto"> 
+                            <div className="flex justify-between items-center mb-1"><p className="text-xs text-gray-500 uppercase font-bold">Banco ({p.benchCount}/5)</p></div> 
+                            {renderBench(pIndex)} 
+                        </div> 
+                        <div className="bg-white/60 p-3 rounded border border-gray-200 text-sm space-y-1"> 
+                            <div className="flex justify-between"><span>Energia Manual:</span>{p.energyAttachedThisTurn ? <CheckCircle size={16} className="text-green-500"/> : <span className="text-gray-400">-</span>}</div> 
+                            <div className="flex justify-between"><span>Apoiador:</span>{p.supporterPlayedThisTurn ? <CheckCircle size={16} className="text-green-500"/> : <span className="text-gray-400">-</span>}</div> 
+                            <div className="flex justify-between"><span>Recuou:</span>{p.retreatedThisTurn ? <CheckCircle size={16} className="text-green-500"/> : <span className="text-gray-400">-</span>}</div> 
+                        </div> 
+                    </div> 
+                </div> 
+                {isSetup ? ( 
+                    <div className="flex gap-2"><Button variant="secondary" onClick={() => handleMulligan(pIndex)}>Registrar Mulligan ({p.mulligans})</Button></div> 
+                ) : ( 
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2"> 
+                        <Button variant="ghost" className="border bg-white" disabled={!isCurrent || gameState.phase !== PHASES.ACTION} onClick={playItem}>Jogar Item</Button> 
+                        <Button variant="ghost" className="border bg-white" disabled={!isCurrent || gameState.phase !== PHASES.ACTION} onClick={playSupporter}>Apoiador</Button> 
+                        <Button variant="ghost" className="border bg-white" disabled={!isCurrent || gameState.phase !== PHASES.ACTION || p.benchCount >= 5} onClick={() => setShowDeckModal({ deckId: p.deckArchetype, pIndex, target: 'BENCH' })}>+ Básico</Button> 
+                        <Button variant="ghost" className="border bg-white" disabled={!isCurrent || gameState.phase !== PHASES.ACTION} onClick={retreat}>Recuar</Button> 
+                        <Button variant="danger" className="col-span-2 text-xs" icon={Sword} disabled={!isCurrent || gameState.phase !== PHASES.ACTION} onClick={openAttackModal}>Fase de Ataque</Button> 
+                        <Button variant="warning" className="col-span-2 text-xs" disabled={p.prizes <= 0} onClick={() => setShowPrizeModal(true)}>Pegar Prêmios</Button> 
+                        <Button variant="secondary" className="col-span-2 text-xs md:col-span-4 mt-1 bg-red-100 hover:bg-red-200 text-red-800 border-red-200" onClick={() => reportKnockout(pIndex)}><Skull size={14} className="mr-1"/> Registrar Nocaute</Button> 
+                    </div> 
+                )} 
+            </Card> 
+        ); 
+    };
+    if (gameState.phase === PHASES.LOBBY) {
+        return (
+            <>
+            <GameLobby 
+                players={players} 
+                onUpdatePlayer={updatePlayer} 
+                onStartGame={handleStartGameFromLobby} 
+                onShowRanking={() => setShowRanking(true)} 
+            />
+            
+            {/* O MODAL PRECISA ESTAR AQUI TAMBÉM PARA APARECER NO LOBBY */}
+            {showRanking && <RankingModal onClose={() => setShowRanking(false)} />}
+            </>
+        );
+    }
 
   return (
   <div className="min-h-screen bg-gray-50 text-gray-800 p-4 font-sans relative">
@@ -1412,28 +1499,45 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
         </div>
     )}
 
+    {/* --- MODAL VISUAL DE PRÊMIOS --- */}
     {showPrizeModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-sm">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-lg text-yellow-600 flex items-center gap-2"><Gift/> Pegar Prêmios</h3>
-                    <button onClick={() => setShowPrizeModal(false)}><X/></button>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-in fade-in">
+            <div className="bg-white/10 p-8 rounded-3xl shadow-2xl border border-white/20 text-center max-w-2xl w-full">
+                <div className="flex justify-between items-center mb-8">
+                    <h3 className="text-3xl font-black text-white italic uppercase tracking-widest flex items-center gap-3">
+                        <Gift className="text-yellow-400 animate-bounce" size={32}/> 
+                        Pegar Prêmio
+                    </h3>
+                    <button onClick={() => setShowPrizeModal(false)} className="bg-white/20 p-2 rounded-full hover:bg-red-500 hover:text-white transition-colors text-white">
+                        <X size={24}/>
+                    </button>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                    {[1, 2, 3].map(qty => (
-                        <Button 
-                            key={qty} 
-                            variant="warning" 
-                            onClick={() => { takePrize(qty); setShowPrizeModal(false); }}
-                            disabled={currentPlayer.prizes < qty}
-                            className="flex flex-col h-16"
-                        >
-                            <span className="text-xl font-bold">{qty}</span>
-                            <span className="text-xs font-normal">{qty > 1 ? 'Prêmios' : 'Prêmio'}</span>
-                        </Button>
-                    ))}
+                
+                <p className="text-gray-300 mb-6 text-lg">
+                    Você tem <span className="font-bold text-white text-2xl">{currentPlayer.prizes}</span> prêmios restantes.
+                    <br/>Clique em uma carta para pegá-la!
+                </p>
+
+                {/* Renderiza as cartas grandes lado a lado */}
+                <div className="flex justify-center">
+                    <PrizeZone 
+                        count={currentPlayer.prizes} 
+                        compact={false} // Modo expandido!
+                        onClick={() => { 
+                            takePrize(1); // Clicar = Pegar 1 prêmio
+                            // Se quiser pegar mais, o usuário clica de novo depois, ou fechamos o modal se for o comportamento padrão
+                            // Para UX melhor: Se pegou 1, avisa e fecha se só precisava de 1.
+                            // Mas como TCG às vezes pega 2, vamos manter aberto ou fechar? 
+                            // Vamos manter aberto rapidinho ou fechar. Simplicidade: Pega 1 e fecha.
+                            setShowPrizeModal(false); 
+                        }} 
+                    />
                 </div>
-            </Card>
+                
+                <div className="mt-8 text-sm text-gray-400">
+                    (Se precisar pegar 2 prêmios, abra este menu novamente)
+                </div>
+            </div>
         </div>
     )}
 
