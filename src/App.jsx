@@ -1564,46 +1564,179 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
         </div>
     )}
 
-    {/* --- MODALS (SEMPRE DISPONÍVEIS) --- */}
+    {/* --- MODAL DE AÇÕES (VISUAL "DASHBOARD" MODERNO) --- */}
     {selectedCardAction && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-sm">
-                <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-lg">{selectedCardAction.card.name}</h3><button onClick={() => setSelectedCardAction(null)}><X/></button></div>
-                <div className="space-y-2">
-                      <div className="bg-orange-50 p-2 rounded border border-orange-200 mb-2">
-                          <p className="text-xs font-bold text-orange-800 mb-1 uppercase">Ajuste de Juiz (Dano)</p>
-                          <div className="flex justify-between items-center">
-                              <button onClick={() => handleManualDamage(-10)} className="p-1 bg-white border rounded hover:bg-gray-50"><Minus size={16}/></button>
-                              <span className="font-mono font-bold">{selectedCardAction.card.damage || 0}</span>
-                              <button onClick={() => handleManualDamage(10)} className="p-1 bg-white border rounded hover:bg-gray-50"><Plus size={16}/></button>
-                          </div>
-                      </div>
-                      
-                      {selectedCardAction.card.attachedEnergy && selectedCardAction.card.attachedEnergy.length > 0 && (
-                          <div className="bg-blue-50 p-2 rounded border border-blue-200 mb-2">
-                              <p className="text-xs font-bold text-blue-800 mb-1 uppercase">Remover Energia</p>
-                              <div className="flex flex-wrap gap-1">
-                                  {selectedCardAction.card.attachedEnergy.map((e, idx) => {
-                                      const EIcon = ENERGY_TYPES[e]?.icon || PlusCircle;
-                                      return (
-                                          <button key={idx} onClick={() => handleRemoveEnergy(idx)} className="relative group p-1 bg-white rounded border hover:bg-red-100">
-                                              <EIcon size={16}/>
-                                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-red-500/50 rounded text-white"><X size={12}/></div>
-                                          </button>
-                                      )
-                                  })}
-                              </div>
-                          </div>
-                      )}
-
-                      {selectedCardAction.card.attacks && selectedCardAction.card.attacks.filter(atk => atk.cost[0] === 'Ability').map((ability, idx) => (<Button key={`ab-${idx}`} variant="warning" className="w-full mb-2 border border-yellow-600 text-yellow-900" icon={Sparkles} onClick={() => useAbility(ability.name, selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>Usar Habilidade: {ability.name}</Button>))}
-                      <Button variant="ghost" className="w-full border border-blue-200 bg-blue-50 text-blue-700" icon={Zap} onClick={() => requestEnergyAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>Ligar Energia</Button>
-                      <Button variant="ghost" className="w-full border border-purple-200 bg-purple-50 text-purple-700" icon={Briefcase} onClick={() => requestToolAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>Ligar Ferramenta</Button>
-                      <Button variant="primary" className="w-full" icon={GitMerge} onClick={() => requestEvolution(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>Evoluir</Button>
-                      {!players[selectedCardAction.pIndex].activePokemon && selectedCardAction.location === 'BENCH' && (<Button variant="success" className="w-full" icon={ChevronsUp} onClick={() => promoteFromBench(selectedCardAction.index, selectedCardAction.pIndex)}>Promover para Ativo</Button>)}
-                      <Button variant="secondary" className="w-full" onClick={() => setSelectedCardAction(null)}>Cancelar</Button>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+            {/* Container Principal */}
+            <div className="bg-white dark:bg-gray-900 w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col md:flex-row overflow-hidden border border-gray-200 dark:border-gray-800">
+                
+                {/* COLUNA DA ESQUERDA: VISUALIZAÇÃO DA CARTA */}
+                <div className="bg-slate-100 dark:bg-slate-950 p-8 flex flex-col items-center justify-center md:w-1/3 border-r border-gray-200 relative group">
+                    <div className="transform transition-transform hover:scale-105 duration-300 shadow-2xl rounded-xl">
+                        <PokemonCard card={selectedCardAction.card} />
+                    </div>
+                    {/* Botão Fechar Mobile (só aparece em telas pequenas) */}
+                    <button 
+                        onClick={() => setSelectedCardAction(null)} 
+                        className="absolute top-4 left-4 md:hidden p-2 bg-white rounded-full shadow-lg text-gray-500"
+                    >
+                        <X size={20}/>
+                    </button>
                 </div>
-            </Card>
+
+                {/* COLUNA DA DIREITA: PAINEL DE CONTROLE */}
+                <div className="flex-1 flex flex-col h-full bg-white">
+                    {/* Cabeçalho do Painel */}
+                    <div className="p-6 border-b border-gray-100 flex justify-between items-start bg-white z-10">
+                        <div>
+                            <h3 className="text-3xl font-black text-gray-800 tracking-tighter italic uppercase mb-1">
+                                {selectedCardAction.card.name}
+                            </h3>
+                            <div className="flex items-center gap-2 text-xs font-bold font-mono uppercase tracking-widest text-gray-400">
+                                <span className={`w-2 h-2 rounded-full ${selectedCardAction.location === 'ACTIVE' ? 'bg-green-500 animate-pulse' : 'bg-blue-400'}`}></span>
+                                {selectedCardAction.location === 'ACTIVE' ? 'Posição: Ativo' : `Posição: Banco ${selectedCardAction.index + 1}`}
+                                <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-500">Turno {selectedCardAction.card.turnPlayed}</span>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => setSelectedCardAction(null)} 
+                            className="hidden md:block p-2 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors text-gray-300"
+                        >
+                            <X size={28}/>
+                        </button>
+                    </div>
+
+                    {/* Conteúdo Rolável */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                        
+                        {/* 1. SEÇÃO DE DANO (AJUSTE DE JUIZ) */}
+                        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                            <div className="flex justify-between items-center mb-3">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                    <Shield size={14}/> Contador de Dano
+                                </h4>
+                                <span className="text-[10px] text-slate-400 font-mono">HP Máx: {selectedCardAction.card.hp}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4 bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+                                <button onClick={() => handleManualDamage(-10)} className="w-12 h-12 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
+                                    <Minus size={24}/>
+                                </button>
+                                <div className="text-center">
+                                    <span className={`text-4xl font-black ${selectedCardAction.card.damage > 0 ? 'text-red-500' : 'text-slate-300'}`}>
+                                        {selectedCardAction.card.damage || 0}
+                                    </span>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Dano Atual</p>
+                                </div>
+                                <button onClick={() => handleManualDamage(10)} className="w-12 h-12 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 transition-colors">
+                                    <Plus size={24}/>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 2. SEÇÃO DE ENERGIAS LIGADAS */}
+                        <div>
+                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                <Zap size={14}/> Energias Ligadas
+                            </h4>
+                            {selectedCardAction.card.attachedEnergy && selectedCardAction.card.attachedEnergy.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {selectedCardAction.card.attachedEnergy.map((e, idx) => {
+                                        const EInfo = ENERGY_TYPES[e] || { icon: Circle, color: 'bg-gray-400', text: 'text-white' };
+                                        const EIcon = EInfo.icon;
+                                        return (
+                                            <div key={idx} className={`relative group pl-2 pr-8 py-2 rounded-lg border flex items-center gap-2 shadow-sm transition-all hover:shadow-md ${EInfo.color} bg-opacity-10 border-gray-200`}>
+                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${EInfo.color} ${EInfo.text} shadow-sm`}>
+                                                    <EIcon size={14}/>
+                                                </div>
+                                                <span className="text-xs font-bold text-gray-700">{EInfo.name}</span>
+                                                <button 
+                                                    onClick={() => handleRemoveEnergy(idx)}
+                                                    className="absolute right-1 top-1 bottom-1 w-6 bg-white/50 hover:bg-red-500 hover:text-white rounded text-gray-400 flex items-center justify-center transition-colors"
+                                                    title="Remover Energia"
+                                                >
+                                                    <X size={14}/>
+                                                </button>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="text-sm text-gray-400 italic bg-gray-50 p-3 rounded-lg border border-dashed border-gray-200 text-center">
+                                    Nenhuma energia ligada.
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 3. AÇÕES RÁPIDAS (GRID DE BOTÕES) */}
+                        <div>
+                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                <PlayCircle size={14}/> Ações Disponíveis
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {/* Habilidades (Destaque Especial) */}
+                                {selectedCardAction.card.attacks && selectedCardAction.card.attacks.filter(atk => atk.cost[0] === 'Ability').map((ability, idx) => (
+                                    <button 
+                                        key={`ab-${idx}`} 
+                                        onClick={() => useAbility(ability.name, selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}
+                                        className="col-span-1 md:col-span-2 p-4 bg-gradient-to-r from-amber-50 to-yellow-50 border border-yellow-200 rounded-xl flex items-center justify-between hover:shadow-md hover:border-yellow-400 transition-all group text-left"
+                                    >
+                                        <div>
+                                            <span className="text-xs font-bold text-yellow-600 uppercase tracking-wider block mb-1">Habilidade</span>
+                                            <span className="font-bold text-gray-800 group-hover:text-yellow-700 transition-colors">{ability.name}</span>
+                                        </div>
+                                        <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 group-hover:scale-110 transition-transform">
+                                            <Sparkles size={20}/>
+                                        </div>
+                                    </button>
+                                ))}
+
+                                {/* Botões Padrão */}
+                                <Button 
+                                    variant="ghost" 
+                                    className="h-14 border border-gray-200 bg-gray-50 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 justify-start px-4"
+                                    onClick={() => requestEnergyAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}
+                                >
+                                    <Zap className="mr-3 text-gray-400" size={20}/> Ligar Energia
+                                </Button>
+
+                                <Button 
+                                    variant="ghost" 
+                                    className="h-14 border border-gray-200 bg-gray-50 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-600 justify-start px-4"
+                                    onClick={() => requestToolAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}
+                                >
+                                    <Briefcase className="mr-3 text-gray-400" size={20}/> Ligar Ferramenta
+                                </Button>
+
+                                <Button 
+                                    variant="ghost" 
+                                    className="h-14 border border-gray-200 bg-gray-50 hover:bg-green-50 hover:border-green-300 hover:text-green-600 justify-start px-4" 
+                                    onClick={() => requestEvolution(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}
+                                >
+                                    <GitMerge className="mr-3 text-gray-400" size={20}/> Evoluir Pokémon
+                                </Button>
+
+                                {/* Botão de Promover (Só aparece se estiver no Banco e não tiver Ativo) */}
+                                {!players[selectedCardAction.pIndex].activePokemon && selectedCardAction.location === 'BENCH' && (
+                                    <Button 
+                                        variant="success" 
+                                        className="h-14 col-span-1 md:col-span-2 justify-center shadow-lg shadow-green-200" 
+                                        onClick={() => promoteFromBench(selectedCardAction.index, selectedCardAction.pIndex)}
+                                    >
+                                        <ChevronsUp className="mr-2" size={20}/> Promover para Ativo
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Rodapé do Painel */}
+                    <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                        <Button variant="secondary" onClick={() => setSelectedCardAction(null)}>
+                            Fechar Painel
+                        </Button>
+                    </div>
+                </div>
+            </div>
         </div>
     )}
 
