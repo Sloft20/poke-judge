@@ -225,6 +225,15 @@ const RankingModal = ({ onClose }) => {
       </div>
     );
 };
+// Função auxiliar para embaralhar (Fisher-Yates Shuffle)
+const shuffleDeck = (array) => {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+};
 
 // --- 7. APLICAÇÃO PRINCIPAL ---
 
@@ -251,8 +260,8 @@ export default function PokeJudgePro() {
       name: 'Jogador 1',
       deckArchetype: 'CHARIZARD', 
       prizes: 6,
-      deckCount: 60,
-      handCount: 7,
+      deck: [],
+      hand: [],
       benchCount: 0, 
       activePokemon: null, 
       benchPokemon: [], 
@@ -271,8 +280,8 @@ export default function PokeJudgePro() {
       name: 'Jogador 2',
       deckArchetype: 'DRAGAPULT', 
       prizes: 6,
-      deckCount: 60,
-      handCount: 7,
+      deck: [],
+      hand: [],
       benchCount: 0, 
       activePokemon: null, 
       benchPokemon: [], 
@@ -350,13 +359,46 @@ export default function PokeJudgePro() {
   };
 
   const handleStartGameFromLobby = () => {
-      setGameState(prev => ({
-          ...prev,
-          phase: PHASES.SETUP
+      // 1. Preparar os Decks
+      const newPlayers = players.map(p => {
+          // Pega a lista de cartas do arquétipo escolhido
+          const originalCards = DECKS[p.deckArchetype]?.cards || [];
+          
+          // O seu deck.js atual tem poucas cartas (ex: 5). 
+          // Para simular um deck de 60, vamos duplicar as cartas até encher.
+          let fullDeck = [];
+          while (fullDeck.length < 60) {
+              fullDeck = [...fullDeck, ...originalCards];
+          }
+          fullDeck = fullDeck.slice(0, 60); // Garante 60 cartas exatas
+          
+          // Embaralha
+          const shuffledDeck = shuffleDeck(fullDeck);
+          
+          // Compra as 7 primeiras (Mão Inicial)
+          const initialHand = shuffledDeck.splice(0, 7);
+          
+          return {
+              ...p,
+              deck: shuffledDeck, // O que sobrou (53 cartas)
+              hand: initialHand,  // As 7 cartas na mão
+              deckCount: shuffledDeck.length, // Mantemos o contador para compatibilidade visual
+              handCount: initialHand.length   // Mantemos o contador para compatibilidade visual
+          };
+      });
+
+      setPlayers(newPlayers);
+      
+      setGameState(prev => ({ 
+          ...prev, 
+          phase: PHASES.SETUP 
       }));
       setGameTimer(0);
-      addLog(`Mesa configurada. Jogadores: ${players[0].name} vs ${players[1].name}`, 'INFO');
-      addLog(`Fase de Preparação Iniciada.`, 'INFO');
+      
+      // Logs de sistema
+      addLog(`Mesa configurada. Decks embaralhados (60 cartas).`, 'INFO');
+      addLog(`${newPlayers[0].name} comprou 7 cartas.`, 'INFO');
+      addLog(`${newPlayers[1].name} comprou 7 cartas.`, 'INFO');
   };
 
   const saveMatchResult = async (winnerIndex) => {
