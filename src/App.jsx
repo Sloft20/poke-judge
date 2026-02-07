@@ -1,4 +1,3 @@
-alert("VERSÃO 3.0 - COM IMAGENS"); // Alerta para confirmar atualização
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Shield, Sword, RefreshCw, AlertTriangle, BookOpen, 
@@ -14,8 +13,6 @@ import {
 import { supabase } from './supabaseClient'; // ADICIONE ESTA LINHA AQUI
 import { DECKS } from './data/decks'; 
 
-console.log("--- DEBUG CARREGAMENTO ---");
-console.log("Decks carregados:", DECKS);
 // --- 2. CONSTANTES E TIPOS ---
 
 const PHASES = {
@@ -195,30 +192,20 @@ const HPBar = ({ current, max }) => {
 
 // --- COMPONENTE POKEMON CARD (REDESENHADO) ---
 const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) => {
-  // 1. PROTEÇÃO CONTRA CRASH
-  
-  // ADICIONE ESTAS 3 LINHAS DE DEBUG:
-  if (card && card.name.includes("Charizard")) {
-      console.log("--- DEBUG CHARIZARD ---");
-      console.log("Tem imagem nova?", card.image);
-      console.log("Tem imagem velha?", card.images?.small);
-      console.log("Card completo:", card);
-  }
-
-  
-  // ... o resto continua igual ...
+  // 1. Proteção básica
   if (!card) return null;
 
   const TypeIcon = ENERGY_TYPES[card.type]?.icon || Circle;
   const cardBackground = ENERGY_TYPES[card.type]?.gradient || 'bg-gray-300';
   const typeText = ENERGY_TYPES[card.type]?.text || 'text-black';
   
-  // 2. ESSA É A LINHA QUE O GIT APAGOU E QUE FAZ A IMAGEM APARECER:
+  // 2. Lógica inteligente de imagem
   const imageUrl = card.image || card.images?.small;
 
   let maxHP = card.hp || 0;
   let retreatCost = card.retreat || 0;
   
+  // Processa ferramentas (Tools)
   if (card.attachedTool) {
       if (card.attachedTool.type === 'hp' && card.attachedTool.condition(card)) {
           maxHP += card.attachedTool.value;
@@ -264,22 +251,18 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
         </div>
       </div>
       
-      {/* 3. ÁREA DA IMAGEM BLINDADA */}
-        {/* ÁREA DE TESTE VISUAL */}
+      {/* 3. ÁREA DA IMAGEM (Limpa) */}
       <div className={`relative mx-2 mt-0.5 mb-0.5 border-2 border-yellow-200/50 shadow-inner bg-white/90 overflow-hidden flex items-center justify-center ${small ? 'h-12' : 'h-28'}`}>
-            
-            {/* Debug na tela: Mostra o link se existir */}
-            <span className="absolute z-50 text-[8px] bg-white text-red-600 font-bold top-0 left-0">
-            {card.image ? "TEM LINK" : "SEM LINK"}
-            </span>
-
-            {imageUrl ? (
-                <img src={imageUrl} alt={card.name} className="w-full h-full object-cover z-0" />
-            ) : (
-                <TypeIcon size={small ? 24 : 60} className={`opacity-80 drop-shadow-md text-${card.imgColor || 'gray'}-600`} />
-            )}
-            
- 
+         
+         {imageUrl ? (
+             <img 
+                src={imageUrl} 
+                alt={card.name} 
+                className="w-full h-full object-cover z-0" 
+             />
+         ) : (
+             <TypeIcon size={small ? 24 : 60} className={`opacity-80 drop-shadow-md text-${card.imgColor || 'gray'}-600`} />
+         )}
 
          {card.attachedTool && (
              <div className="absolute top-1 right-1 bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-md flex items-center gap-1 z-10 border border-white" title={card.attachedTool.effect}>
@@ -307,7 +290,7 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
           <HPBar current={currentHP} max={maxHP} />
       </div>
 
-      {/* 4. ATAQUES PROTEGIDOS (Evita erro de slice) */}
+      {/* Ataques */}
       <div className="bg-white/40 flex-1 flex flex-col overflow-hidden text-gray-900 mx-1 mb-1 rounded-sm p-1">
           {!small && (
               <div className="flex-1 space-y-1 overflow-y-auto px-1 py-1 custom-scrollbar">
