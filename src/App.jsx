@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { supabase } from './supabaseClient'; // ADICIONE ESTA LINHA AQUI
 import { DECKS } from './data/decks';
+console.log("IMPORT DO ARQUIVO:", DECKS);
 // --- 2. CONSTANTES E TIPOS ---
 
 const PHASES = {
