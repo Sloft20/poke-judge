@@ -1,3 +1,4 @@
+alert("O SITE ESTÁ VIVO!");
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Shield, Sword, RefreshCw, AlertTriangle, BookOpen, 
@@ -262,18 +263,21 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
       </div>
       
       {/* 3. ÁREA DA IMAGEM BLINDADA */}
+        {/* ÁREA DE TESTE VISUAL */}
       <div className={`relative mx-2 mt-0.5 mb-0.5 border-2 border-yellow-200/50 shadow-inner bg-white/90 overflow-hidden flex items-center justify-center ${small ? 'h-12' : 'h-28'}`}>
-         
-         {/* Se tiver imagem, mostra a imagem. Se não, mostra o ícone. */}
-         {imageUrl ? (
-             <img 
-                src={imageUrl} 
-                alt={card.name} 
-                className="w-full h-full object-cover z-0" 
-             />
-         ) : (
-             <TypeIcon size={small ? 24 : 60} className={`opacity-80 drop-shadow-md text-${card.imgColor || 'gray'}-600`} />
-         )}
+            
+            {/* Debug na tela: Mostra o link se existir */}
+            <span className="absolute z-50 text-[8px] bg-white text-red-600 font-bold top-0 left-0">
+            {card.image ? "TEM LINK" : "SEM LINK"}
+            </span>
+
+            {imageUrl ? (
+                <img src={imageUrl} alt={card.name} className="w-full h-full object-cover z-0" />
+            ) : (
+                <TypeIcon size={small ? 24 : 60} className={`opacity-80 drop-shadow-md text-${card.imgColor || 'gray'}-600`} />
+            )}
+            
+ 
 
          {card.attachedTool && (
              <div className="absolute top-1 right-1 bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-md flex items-center gap-1 z-10 border border-white" title={card.attachedTool.effect}>
