@@ -889,8 +889,11 @@ export default function PokeJudgePro() {
 
   // --- LÓGICA DE CARTAS E TABULEIRO --- (Mantida)
   // ... (placePokemon, requestEvolution, promoteFromBench, etc... - Igual anterior) ...
-  const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.currentPlayerIndex, evolveTargetIndex = null) => {
+  // Substitua a função placePokemon antiga por esta NOVA VERSÃO COM REGRAS
+const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.currentPlayerIndex, evolveTargetIndex = null) => {
     const player = players[pIndex];
+    
+    // Criação do objeto da carta
     const cardData = { 
         ...(card || { name: 'Desconhecido', type: 'Colorless', hp: '???', imgColor: 'gray', retreat: 1, isGeneric: true, stage: 0 }), 
         turnPlayed: gameState.turnCount, 
@@ -900,41 +903,62 @@ export default function PokeJudgePro() {
         abilitiesUsedThisTurn: [] 
     };
 
+    // --- REGRA 1: BÁSICOS ---
+    // Só pode baixar diretamente se for Básico (Stage 0)
+    if ((destination === 'ACTIVE' || destination === 'BENCH') && cardData.stage !== 0) {
+        addLog(`JOGADA ILEGAL: ${cardData.name} é Estágio ${cardData.stage} e não pode ser baixado direto.`, 'CRIT', pIndex);
+        // Toca um som de erro se quiser, ou só retorna
+        return;
+    }
+
     if (destination === 'ACTIVE') {
-        if (player.activePokemon) { addLog(`Erro: Já existe um Pokémon Ativo.`, 'WARN', pIndex); return; }
+        if (player.activePokemon) { 
+            addLog(`Erro: Já existe um Pokémon Ativo.`, 'WARN', pIndex); 
+            return; 
+        }
         updatePlayer(pIndex, { activePokemon: cardData, activeCondition: CONDITIONS.NONE, handCount: Math.max(0, player.handCount - 1) });
         addLog(`BAIXOU: ${cardData.name} como Ativo.`, 'INFO', pIndex);
     } 
     else if (destination === 'BENCH') {
-        if (player.benchCount >= 5) { addLog(`Erro: Banco cheio.`, 'CRIT', pIndex); return; }
+        if (player.benchCount >= 5) { 
+            addLog(`Erro: Banco cheio.`, 'CRIT', pIndex); 
+            return; 
+        }
         updatePlayer(pIndex, { benchPokemon: [...player.benchPokemon, cardData], benchCount: player.benchCount + 1, handCount: Math.max(0, player.handCount - 1) });
         addLog(`BAIXOU: ${cardData.name} no Banco.`, 'INFO', pIndex);
     } 
-    else if (destination === 'EVOLVE_ACTIVE') {
-        const oldName = player.activePokemon.name; // Nome anterior
-        const oldEnergies = player.activePokemon.attachedEnergy || []; 
-        const oldTool = player.activePokemon.attachedTool; 
-        const oldDamage = player.activePokemon.damage || 0;
+    // --- LÓGICA DE EVOLUÇÃO ---
+    else if (destination === 'EVOLVE_ACTIVE' || destination === 'EVOLVE_BENCH') {
+        // Identifica o alvo da evolução
+        const targetPokemon = destination === 'EVOLVE_ACTIVE' ? player.activePokemon : player.benchPokemon[evolveTargetIndex];
         
-        const newActive = { ...cardData, attachedEnergy: oldEnergies, attachedTool: oldTool, damage: oldDamage };
-        updatePlayer(pIndex, { activePokemon: newActive, activeCondition: CONDITIONS.NONE, handCount: Math.max(0, player.handCount - 1) });
+        // --- REGRA 2: NOME DA EVOLUÇÃO ---
+        // Verifica se o Pokémon atual é o pré-requisito correto (Ex: Charmander -> Charmeleon)
+        if (cardData.evolvesFrom !== targetPokemon.name) {
+            addLog(`EVOLUÇÃO INVÁLIDA: ${cardData.name} evolui de ${cardData.evolvesFrom}, mas o alvo é ${targetPokemon.name}.`, 'CRIT', pIndex);
+            return;
+        }
+
+        const oldName = targetPokemon.name;
+        const oldEnergies = targetPokemon.attachedEnergy || []; 
+        const oldTool = targetPokemon.attachedTool; 
+        const oldDamage = targetPokemon.damage || 0;
         
-        // Log específico com nomes
-        addLog(`EVOLUIU: ${oldName} para ${cardData.name} (Ativo).`, 'SUCCESS', pIndex);
-    } 
-    else if (destination === 'EVOLVE_BENCH') {
-        const newBench = [...player.benchPokemon];
-        const oldName = newBench[evolveTargetIndex].name; // Nome anterior
-        const oldEnergies = newBench[evolveTargetIndex].attachedEnergy || []; 
-        const oldTool = newBench[evolveTargetIndex].attachedTool; 
-        const oldDamage = newBench[evolveTargetIndex].damage || 0;
+        // Mantém danos e energias, mas atualiza HP Máximo e Ataques
+        const newPokemonStats = { ...cardData, attachedEnergy: oldEnergies, attachedTool: oldTool, damage: oldDamage };
         
-        newBench[evolveTargetIndex] = { ...cardData, attachedEnergy: oldEnergies, attachedTool: oldTool, damage: oldDamage };
-        updatePlayer(pIndex, { benchPokemon: newBench, handCount: Math.max(0, player.handCount - 1) });
-        
-        // Log específico com nomes
-        addLog(`EVOLUIU: ${oldName} para ${cardData.name} (Banco).`, 'SUCCESS', pIndex);
+        if (destination === 'EVOLVE_ACTIVE') {
+            updatePlayer(pIndex, { activePokemon: newPokemonStats, activeCondition: CONDITIONS.NONE, handCount: Math.max(0, player.handCount - 1) });
+            addLog(`EVOLUIU: ${oldName} para ${cardData.name} (Ativo).`, 'SUCCESS', pIndex);
+        } else {
+            const newBench = [...player.benchPokemon];
+            newBench[evolveTargetIndex] = newPokemonStats;
+            updatePlayer(pIndex, { benchPokemon: newBench, handCount: Math.max(0, player.handCount - 1) });
+            addLog(`EVOLUIU: ${oldName} para ${cardData.name} (Banco).`, 'SUCCESS', pIndex);
+        }
     }
+    
+    // Fecha o modal após o sucesso
     setShowDeckModal(null); 
 };
   const requestEvolution = (pIndex, location, index = null) => {
