@@ -1,7 +1,7 @@
 // src/components/PokemonCard.jsx
 import React from 'react';
-import { Circle, Briefcase, PlusCircle, Star } from 'lucide-react';
-import { ENERGY_TYPES } from '../data/constants'; // Importando do arquivo que criamos antes!
+import { Circle, Briefcase, PlusCircle, Star, Skull, Flame, Moon, Zap, EyeOff } from 'lucide-react'; // Ícones novos
+import { ENERGY_TYPES, CONDITIONS } from '../data/constants';
 
 // Pequeno componente auxiliar (Barra de Vida)
 const HPBar = ({ current, max }) => {
@@ -25,14 +25,11 @@ const HPBar = ({ current, max }) => {
 
 // Componente Principal
 const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) => {
-  // 1. Proteção básica
   if (!card) return null;
 
   const TypeIcon = ENERGY_TYPES[card.type]?.icon || Circle;
   const cardBackground = ENERGY_TYPES[card.type]?.gradient || 'bg-gray-300';
   const typeText = ENERGY_TYPES[card.type]?.text || 'text-black';
-  
-  // 2. Lógica inteligente de imagem
   const imageUrl = card.image || card.images?.small;
 
   let maxHP = card.hp || 0;
@@ -54,14 +51,53 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
   const isEx = card.name?.toLowerCase().includes('ex') || card.name?.toLowerCase().includes(' v');
   const borderClass = isEx ? 'border-gray-400 ring-2 ring-gray-300' : 'border-yellow-400 ring-2 ring-yellow-400';
 
+  // --- LÓGICA VISUAL DE STATUS ---
+  const isPoisoned = card.isPoisoned;
+  const isBurned = card.isBurned;
+  const condition = card.activeCondition || CONDITIONS.NONE;
+
+  // Define rotação para Sono ou Paralisia
+  let rotateClass = '';
+  if (condition === CONDITIONS.ASLEEP) rotateClass = '-rotate-90 grayscale brightness-90 transition-all duration-500'; // Vira de lado
+  if (condition === CONDITIONS.PARALYZED) rotateClass = 'rotate-90 brightness-110 saturate-150 transition-all duration-500'; // Vira pro outro lado
+
   return (
     <div 
       onClick={onClick}
-      className={`relative ${small ? 'w-24 h-36' : 'w-52 h-80'} rounded-xl overflow-hidden shadow-lg border-4 ${borderClass} flex flex-col transform transition-transform duration-300 ${actions || onClick ? '' : 'hover:scale-105'} ${onClick ? 'cursor-pointer hover:ring-2 hover:ring-blue-500' : 'cursor-default'} group ${cardBackground} ${className}`}
+      className={`relative ${small ? 'w-24 h-36' : 'w-52 h-80'} rounded-xl overflow-hidden shadow-lg border-4 ${borderClass} flex flex-col transform transition-transform duration-300 ${actions || onClick ? '' : 'hover:scale-105'} ${onClick ? 'cursor-pointer hover:ring-2 hover:ring-blue-500' : 'cursor-default'} group ${cardBackground} ${className} ${rotateClass}`}
     >
       
+      {/* 1. MARCADORES DE STATUS (TOKENS) - APARECEM EM CIMA DA CARTA */}
+      <div className="absolute top-8 left-0 right-0 z-20 flex justify-center gap-2 pointer-events-none">
+          {/* Marcador de Veneno */}
+          {isPoisoned && (
+              <div className="w-8 h-8 bg-purple-600 rounded-full border-2 border-white shadow-lg flex items-center justify-center animate-bounce">
+                  <Skull className="text-white w-5 h-5" />
+              </div>
+          )}
+          {/* Marcador de Queimadura */}
+          {isBurned && (
+              <div className="w-8 h-8 bg-red-600 rounded-full border-2 border-white shadow-lg flex items-center justify-center animate-pulse">
+                  <Flame className="text-white w-5 h-5" />
+              </div>
+          )}
+          {/* Marcador de Confusão */}
+          {condition === CONDITIONS.CONFUSED && (
+              <div className="w-8 h-8 bg-pink-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center animate-spin-slow">
+                  <EyeOff className="text-white w-5 h-5" />
+              </div>
+          )}
+      </div>
+
+      {/* Overlay de Sono (Zzz) */}
+      {condition === CONDITIONS.ASLEEP && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+              <span className="text-4xl font-black text-white drop-shadow-md animate-pulse">Zzz...</span>
+          </div>
+      )}
+
       {actions && (
-          <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20 p-2 pointer-events-none">
+          <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-30 p-2 pointer-events-none">
               <div className="pointer-events-auto w-full flex flex-col gap-2">
                    {actions}
               </div>
@@ -84,7 +120,7 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
         </div>
       </div>
       
-      {/* 3. ÁREA DA IMAGEM (Limpa) */}
+      {/* 3. ÁREA DA IMAGEM */}
       <div className={`relative mx-2 mt-0.5 mb-0.5 border-2 border-yellow-200/50 shadow-inner bg-white/90 overflow-hidden flex items-center justify-center ${small ? 'h-12' : 'h-28'}`}>
          
          {imageUrl ? (
