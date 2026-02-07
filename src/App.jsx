@@ -12,64 +12,12 @@ import {
 } from 'lucide-react';
 import { supabase } from './supabaseClient'; // ADICIONE ESTA LINHA AQUI
 import { DECKS } from './data/decks'; 
-
-// --- 2. CONSTANTES E TIPOS ---
-
-const PHASES = {
-  LOBBY: 'LOBBY', 
-  SETUP: 'SETUP',
-  START_TURN: 'INÍCIO DO TURNO',
-  DRAW: 'COMPRA',
-  ACTION: 'AÇÕES (MAIN)',
-  ATTACK: 'ATAQUE',
-  CHECKUP: 'CHECKUP/ENTRE TURNOS',
-  GAME_OVER: 'FIM DE JOGO'
-};
-
-const CONDITIONS = {
-  NONE: 'Nenhuma',
-  ASLEEP: 'Adormecido (Sleep)',
-  BURNED: 'Queimado (Burned)',
-  CONFUSED: 'Confuso (Confused)',
-  PARALYZED: 'Paralisado (Paralyzed)',
-  POISONED: 'Envenenado (Poisoned)'
-};
-
-const TOOLS = [
-    { id: 'bravery_charm', name: 'Bravery Charm', effect: 'HP+50 (Básicos)', type: 'hp', value: 50, condition: (card) => card.stage === 0 },
-    { id: 'heros_cape', name: 'Hero\'s Cape (Ace)', effect: 'HP+100', type: 'hp', value: 100, condition: () => true },
-    { id: 'rescue_board', name: 'Rescue Board', effect: 'Recuo -1', type: 'retreat', value: -1, condition: () => true },
-    { id: 'heavy_baton', name: 'Heavy Baton', effect: 'Retém Energia ao morrer', type: 'effect', value: 0, condition: () => true },
-    { id: 'maximum_belt', name: 'Maximum Belt (Ace)', effect: '+50 Dano em ex', type: 'damage', value: 50, condition: () => true },
-    { id: 'defiance_band', name: 'Defiance Band', effect: '+30 Dano se atrás', type: 'damage', value: 30, condition: () => true },
-    { id: 'tm_evo', name: 'TM: Evolution', effect: 'Ataque: Evolução', type: 'attack', value: 0, condition: () => true },
-    { id: 'tm_devo', name: 'TM: Devolution', effect: 'Ataque: Devolução', type: 'attack', value: 0, condition: () => true },
-];
-
-// Configuração atualizada com SEUS ÍCONES NOVOS
-const ENERGY_TYPES = {
-  Fire: { name: 'Fogo', color: 'bg-red-500', gradient: 'bg-gradient-to-br from-red-400 to-red-600', icon: Flame, text: 'text-white' },
-  Water: { name: 'Água', color: 'bg-blue-500', gradient: 'bg-gradient-to-br from-blue-400 to-blue-600', icon: Droplets, text: 'text-white' },
-  Grass: { name: 'Planta', color: 'bg-green-600', gradient: 'bg-gradient-to-br from-green-400 to-green-700', icon: Leaf, text: 'text-white' },
-  Lightning: { name: 'Elétrico', color: 'bg-yellow-400', gradient: 'bg-gradient-to-br from-yellow-300 to-yellow-500', icon: Zap, text: 'text-black' },
-  Psychic: { name: 'Psíquico', color: 'bg-purple-600', gradient: 'bg-gradient-to-br from-purple-400 to-purple-700', icon: Eye, text: 'text-white' },
-  Fighting: { name: 'Luta', color: 'bg-orange-700', gradient: 'bg-gradient-to-br from-orange-600 to-orange-800', icon: Dumbbell, text: 'text-white' },
-  Darkness: { name: 'Escuridão', color: 'bg-slate-800', gradient: 'bg-gradient-to-br from-slate-700 to-slate-900', icon: Moon, text: 'text-white' },
-  Metal: { name: 'Metal', color: 'bg-gray-400', gradient: 'bg-gradient-to-br from-gray-300 to-gray-500', icon: Bolt, text: 'text-black' },
-  Dragon: { name: 'Dragão', color: 'bg-yellow-600', gradient: 'bg-gradient-to-br from-yellow-600 to-amber-700', icon: Origami, text: 'text-white' },
-  Colorless: { name: 'Incolor', color: 'bg-gray-200', gradient: 'bg-gradient-to-br from-gray-100 to-gray-300', icon: Star, text: 'text-black' },
-};
+import { PHASES, CONDITIONS, TOOLS, ENERGY_TYPES, RULES_DB } from './data/constants';
+import PokemonCard from './components/PokemonCard';
+import { Card, Button, Badge } from './components/UI';
+import GameLobby from './components/GameLobby';
 
 
-
-const RULES_DB = [
-  { id: 1, title: 'Evolução', text: 'Você não pode evoluir um Pokémon no turno em que ele foi baixado (Turno de "Enjoo"). Além disso, o Jogador 1 não pode evoluir no primeiro turno da partida. (Livro de Regras, p. 16)' },
-  { id: 2, title: 'Energia Manual', text: 'Um jogador só pode ligar 1 carta de Energia da sua mão a 1 dos seus Pokémon por turno. (Livro de Regras, p. 12)' },
-  { id: 3, title: 'Apoiador (Supporter)', text: 'Você só pode jogar 1 carta de Apoiador por turno. (Livro de Regras, p. 14)' },
-  { id: 4, title: 'Recuar', text: 'Para recuar, você deve descartar energia igual ao Custo de Recuo do Pokémon. (Livro de Regras, p. 13)' },
-  { id: 5, title: 'Fraqueza e Resistência', text: 'Se o atacante for do tipo da Fraqueza do Defensor, o dano é x2. Se for Resistência, é -30.' },
-  { id: 6, title: 'Checkup', text: 'Entre turnos: Veneno põe 1 contador (10). Queimadura põe 2 contadores (20) e joga moeda. Sono joga moeda. Paralisia cura se o turno do jogador afetado acabou.' }
-];
 
 // --- 4. FUNÇÕES UTILITÁRIAS ---
 
@@ -136,360 +84,7 @@ const calculateStats = () => {
   return { deckStats, playerStats };
 };
 
-// --- 5. COMPONENTES AUXILIARES ---
 
-const Card = ({ children, className = "" }) => (
-  <div className={`bg-white rounded-lg shadow-md p-4 ${className}`}>
-    {children}
-  </div>
-);
-
-const Button = ({ onClick, disabled, variant = 'primary', icon: Icon, children, className = '' }) => {
-  const baseStyle = "flex items-center justify-center gap-2 px-4 py-2 rounded font-medium transition-all text-sm uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed";
-  const variants = {
-    primary: "bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400",
-    secondary: "bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200",
-    danger: "bg-red-600 hover:bg-red-700 text-white",
-    success: "bg-green-600 hover:bg-green-700 text-white",
-    warning: "bg-yellow-500 hover:bg-yellow-600 text-white",
-    ghost: "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
-  };
-
-  return (
-    <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${variants[variant]} ${className}`}>
-      {Icon && <Icon size={16} />}
-      {children}
-    </button>
-  );
-};
-
-const Badge = ({ children, className = '' }) => {
-  return (
-    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${className}`}>
-      {children}
-    </span>
-  );
-};
-
-const HPBar = ({ current, max }) => {
-    const percentage = Math.max(0, Math.min(100, (current / max) * 100));
-    let colorClass = 'bg-green-500';
-    if (percentage < 50) colorClass = 'bg-yellow-500';
-    if (percentage < 20) colorClass = 'bg-red-600 animate-pulse';
-
-    return (
-        <div className="w-full h-3 bg-gray-200 rounded-full mt-1 overflow-hidden border border-gray-400 relative">
-            <div 
-                className={`h-full transition-all duration-500 ease-out ${colorClass}`} 
-                style={{ width: `${percentage}%` }}
-            />
-            <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-black drop-shadow-sm">
-                {current}/{max}
-            </div>
-        </div>
-    );
-};
-
-// --- COMPONENTE POKEMON CARD (REDESENHADO) ---
-const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) => {
-  // 1. Proteção básica
-  if (!card) return null;
-
-  const TypeIcon = ENERGY_TYPES[card.type]?.icon || Circle;
-  const cardBackground = ENERGY_TYPES[card.type]?.gradient || 'bg-gray-300';
-  const typeText = ENERGY_TYPES[card.type]?.text || 'text-black';
-  
-  // 2. Lógica inteligente de imagem
-  const imageUrl = card.image || card.images?.small;
-
-  let maxHP = card.hp || 0;
-  let retreatCost = card.retreat || 0;
-  
-  // Processa ferramentas (Tools)
-  if (card.attachedTool) {
-      if (card.attachedTool.type === 'hp' && card.attachedTool.condition(card)) {
-          maxHP += card.attachedTool.value;
-      }
-      if (card.attachedTool.type === 'retreat') {
-          retreatCost = Math.max(0, retreatCost + card.attachedTool.value);
-      }
-  }
-
-  const currentDamage = card.damage || 0;
-  const currentHP = Math.max(0, maxHP - currentDamage);
-  
-  const isEx = card.name?.toLowerCase().includes('ex') || card.name?.toLowerCase().includes(' v');
-  const borderClass = isEx ? 'border-gray-400 ring-2 ring-gray-300' : 'border-yellow-400 ring-2 ring-yellow-400';
-
-  return (
-    <div 
-      onClick={onClick}
-      className={`relative ${small ? 'w-24 h-36' : 'w-52 h-80'} rounded-xl overflow-hidden shadow-lg border-4 ${borderClass} flex flex-col transform transition-transform duration-300 ${actions || onClick ? '' : 'hover:scale-105'} ${onClick ? 'cursor-pointer hover:ring-2 hover:ring-blue-500' : 'cursor-default'} group ${cardBackground} ${className}`}
-    >
-      
-      {actions && (
-          <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20 p-2 pointer-events-none">
-              <div className="pointer-events-auto w-full flex flex-col gap-2">
-                   {actions}
-              </div>
-          </div>
-      )}
-
-      {/* Header */}
-      <div className={`flex justify-between items-center px-2 py-1 ${typeText} text-[10px] font-bold z-10`}>
-        <div className="flex flex-col leading-tight">
-            <span className={`truncate ${small ? 'max-w-[50px] text-[9px]' : 'max-w-[80px] text-xs'} font-bold ${isEx ? 'italic' : ''}`}>{card.name}</span>
-            {card.stage > 0 && (
-                <span className={`inline-block mt-0.5 bg-white/40 px-1 rounded text-[6px] uppercase font-bold w-fit border border-white/50 text-black`}>
-                   Estágio {card.stage}
-                </span>
-            )}
-        </div>
-        <div className="flex items-center gap-1">
-             <span className={`${small ? 'text-[8px]' : 'text-xs'} font-black`}>HP{maxHP}</span>
-             <TypeIcon size={small ? 14 : 18} />
-        </div>
-      </div>
-      
-      {/* 3. ÁREA DA IMAGEM (Limpa) */}
-      <div className={`relative mx-2 mt-0.5 mb-0.5 border-2 border-yellow-200/50 shadow-inner bg-white/90 overflow-hidden flex items-center justify-center ${small ? 'h-12' : 'h-28'}`}>
-         
-         {imageUrl ? (
-             <img 
-                src={imageUrl} 
-                alt={card.name} 
-                className="w-full h-full object-cover z-0" 
-             />
-         ) : (
-             <TypeIcon size={small ? 24 : 60} className={`opacity-80 drop-shadow-md text-${card.imgColor || 'gray'}-600`} />
-         )}
-
-         {card.attachedTool && (
-             <div className="absolute top-1 right-1 bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-md flex items-center gap-1 z-10 border border-white" title={card.attachedTool.effect}>
-                 <Briefcase size={8} />
-                 {!small && card.attachedTool.name.split(' ')[0]}
-             </div>
-         )}
-
-         <div className="absolute bottom-1 right-1 flex flex-wrap-reverse gap-0.5 justify-end max-w-[80%] z-10">
-             {(card.attachedEnergy || []).map((energyType, idx) => {
-                 const EIcon = ENERGY_TYPES[energyType]?.icon || PlusCircle;
-                 const EColor = ENERGY_TYPES[energyType]?.color || 'bg-gray-400';
-                 const EText = ENERGY_TYPES[energyType]?.text || 'text-white';
-                 return (
-                     <div key={idx} className={`${small ? 'w-3 h-3 text-[8px]' : 'w-4 h-4 text-[10px]'} ${EColor} rounded-full flex items-center justify-center ${EText} border border-white/20 shadow-sm`} title={energyType}>
-                         <EIcon size={8} />
-                     </div>
-                 );
-             })}
-         </div>
-      </div>
-
-      {/* HP Bar */}
-      <div className={`px-2 pb-0.5 ${small ? 'h-2' : ''}`}>
-          <HPBar current={currentHP} max={maxHP} />
-      </div>
-
-      {/* Ataques */}
-      <div className="bg-white/40 flex-1 flex flex-col overflow-hidden text-gray-900 mx-1 mb-1 rounded-sm p-1">
-          {!small && (
-              <div className="flex-1 space-y-1 overflow-y-auto px-1 py-1 custom-scrollbar">
-                  {(card.attacks || []).slice(0, 3).map((atk, i) => (
-                      <div key={i} className="flex flex-col text-[10px] border-b border-gray-300 last:border-0 pb-1 mb-0.5">
-                          <div className="flex justify-between items-center mb-0.5">
-                              <div className="flex gap-0.5">
-                                  {(atk.cost || []).map((c, idx) => {
-                                      if(c === 'Ability') return <span key={idx} className="text-[8px] font-bold text-red-600 uppercase tracking-tighter">Habilidade</span>;
-                                      const EIcon = ENERGY_TYPES[c]?.icon || Circle;
-                                      const EColor = ENERGY_TYPES[c]?.color || 'bg-gray-400';
-                                      const EText = ENERGY_TYPES[c]?.text || 'text-white';
-                                      return (
-                                          <div key={idx} className={`w-3.5 h-3.5 ${EColor} rounded-full flex items-center justify-center ${EText} shadow-sm`}>
-                                              <EIcon size={6} />
-                                          </div>
-                                      );
-                                  })}
-                              </div>
-                              <span className="font-black text-black text-xs">{atk.damage}</span>
-                          </div>
-                          <span className="text-gray-800 font-bold truncate leading-tight text-[9px]">{atk.name}</span>
-                      </div>
-                  ))}
-              </div>
-          )}
-          
-          {small && (card.attacks || [])[0] && (
-              <div className="flex-1 flex flex-col justify-center text-center p-0.5 space-y-0.5">
-                  {(card.attacks || []).slice(0,2).map((atk, i) => (
-                      <div key={i} className="flex items-center gap-1 border-b border-gray-100 last:border-0 pb-0.5">
-                           <div className="flex gap-0.5 shrink-0">
-                                  {(atk.cost || []).slice(0,2).map((c, idx) => {
-                                      if(c === 'Ability') return <span key={idx} className="text-[5px] font-bold text-red-600 uppercase">HAB</span>;
-                                      const EIcon = ENERGY_TYPES[c]?.icon || Circle;
-                                      const EColor = ENERGY_TYPES[c]?.color || 'bg-gray-400';
-                                      return (
-                                          <div key={idx} className={`w-2.5 h-2.5 ${EColor} rounded-full flex items-center justify-center text-[6px] text-white`}>
-                                              <EIcon size={4} />
-                                          </div>
-                                      );
-                                  })}
-                           </div>
-                           <span className="text-[7px] text-gray-600 font-bold leading-none truncate w-full">{atk.name}</span>
-                      </div>
-                  ))}
-              </div>
-          )}
-      </div>
-
-      {/* Footer */}
-      <div className={`bg-gray-100 p-0.5 border-t border-gray-300 text-gray-600 flex justify-between items-center px-1 rounded-b-lg ${small ? 'h-4 text-[6px]' : 'h-6 text-[8px]'}`}>
-          <div className="flex items-center gap-0.5">
-              <span className="uppercase text-gray-400">Fraq.</span>
-              {card.weakness ? (
-                  <div className={`${small ? 'w-2.5 h-2.5 text-[6px]' : 'w-3 h-3 text-[8px]'} ${ENERGY_TYPES[card.weakness]?.color} rounded-full flex items-center justify-center text-white`}>
-                      {React.createElement(ENERGY_TYPES[card.weakness]?.icon, { size: 6 })}
-                  </div>
-              ) : <span>-</span>}
-          </div>
-          
-          <div className="flex items-center gap-0.5">
-              <span className="uppercase text-gray-400">Recuo</span>
-              <div className="flex gap-0.5">
-                  {[...Array(retreatCost)].map((_, i) => (
-                      <div key={i} className={`${small ? 'w-2 h-2 text-[5px]' : 'w-2.5 h-2.5 text-[6px]'} rounded-full bg-gray-300 flex items-center justify-center`}>
-                          <Star size={4} className="text-white"/>
-                      </div>
-                  ))}
-                  {retreatCost === 0 && <span className="font-bold">-</span>}
-              </div>
-          </div>
-      </div>
-    </div>
-  );
-};
-
-// --- 6. COMPONENTES DE TELA (LOBBY & RANKING) ---
-
-// Adicione o onShowRanking aqui dentro!
-const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking }) => {
-    return (
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
-            <Card className="w-full max-w-4xl p-8 bg-white dark:bg-gray-800 shadow-xl rounded-2xl">
-                <div className="text-center mb-10">
-                    <div className="flex justify-center mb-4">
-                        <div className="p-4 bg-gray-100 rounded-full border border-gray-200 shadow-lg">
-                             <Shield className="text-blue-600 w-12 h-12" />
-                        </div>
-                    </div>
-                    <h1 className="text-5xl font-black tracking-tighter uppercase italic text-gray-800 dark:text-white mb-2 drop-shadow-sm">
-                        PokéJudge <span className="text-blue-500">Pro</span>
-                    </h1>
-                    <p className="text-gray-500 font-mono tracking-wide text-sm">Sistema de Arbitragem Competitiva</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                    {/* Jogador 1 */}
-                    <div className="space-y-5 p-6 bg-blue-50 rounded-xl border border-blue-100 shadow-sm">
-                        <div className="flex items-center gap-3 mb-2 text-blue-600 border-b border-blue-200 pb-3">
-                            <User size={24} />
-                            <h2 className="text-xl font-bold uppercase tracking-wider">Jogador 1</h2>
-                        </div>
-                        
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nickname</label>
-                            <input 
-                                type="text" 
-                                value={players[0].name}
-                                onChange={(e) => onUpdatePlayer(0, { name: e.target.value })}
-                                className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400"
-                                placeholder="Nome do Jogador"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Deck Selecionado</label>
-                            <select 
-                                value={players[0].deckArchetype}
-                                onChange={(e) => onUpdatePlayer(0, { deckArchetype: e.target.value })}
-                                className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                            >
-                                {Object.entries(DECKS).map(([key, val]) => (
-                                    <option key={key} value={key}>{val.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        
-                        <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200 flex flex-col items-center">
-                            <h3 className="font-bold text-xs text-gray-400 mb-3 uppercase tracking-widest">Deck Preview</h3>
-                            {DECKS[players[0].deckArchetype].cards[0] && (
-                                <div className="transform scale-90 hover:scale-100 transition-transform duration-300">
-                                    <PokemonCard card={DECKS[players[0].deckArchetype].cards[0]} small={true} />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Jogador 2 */}
-                    <div className="space-y-5 p-6 bg-red-50 rounded-xl border border-red-100 shadow-sm">
-                        <div className="flex items-center gap-3 mb-2 text-red-600 border-b border-red-200 pb-3">
-                            <User size={24} />
-                            <h2 className="text-xl font-bold uppercase tracking-wider">Jogador 2</h2>
-                        </div>
-                        
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nickname</label>
-                            <input 
-                                type="text" 
-                                value={players[1].name}
-                                onChange={(e) => onUpdatePlayer(1, { name: e.target.value })}
-                                className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-800 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all placeholder-gray-400"
-                                placeholder="Nome do Jogador"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Deck Selecionado</label>
-                            <select 
-                                value={players[1].deckArchetype}
-                                onChange={(e) => onUpdatePlayer(1, { deckArchetype: e.target.value })}
-                                className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-800 focus:ring-2 focus:ring-red-500 outline-none transition-all"
-                            >
-                                {Object.entries(DECKS).map(([key, val]) => (
-                                    <option key={key} value={key}>{val.name}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200 flex flex-col items-center">
-                            <h3 className="font-bold text-xs text-gray-400 mb-3 uppercase tracking-widest">Deck Preview</h3>
-                            {DECKS[players[1].deckArchetype].cards[0] && (
-                                <div className="transform scale-90 hover:scale-100 transition-transform duration-300">
-                                    <PokemonCard card={DECKS[players[1].deckArchetype].cards[0]} small={true} />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                <button 
-                    onClick={onStartGame}
-                    className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xl uppercase tracking-widest shadow-lg shadow-blue-200 transform transition hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 border border-blue-500"
-                >
-                    <Play size={28} fill="currentColor" />
-                    Iniciar Partida
-                </button>
-                
-                <button
-                    onClick={onShowRanking}
-                    className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xl uppercase tracking-widest shadow-lg shadow-blue-200 transform transition hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 border border-blue-500"
-                >
-                    <Trophy size={28} className="text-yellow-300" /> {/* Yellow Trophy */}
-                    Ranking
-                </button>
-            </Card>
-        </div>
-    );
-};
 
 const RankingModal = ({ onClose }) => {
     const [tab, setTab] = useState('decks');
@@ -1883,16 +1478,79 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
       </div>
     )}
 
+    {/* --- MODAL DE ATAQUE (VISUAL DE BATALHA) --- */}
     {showAttackModal && (
-      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-           <Card className="w-full max-w-md">
-              <div className="flex justify-between items-center mb-4 border-b pb-2"><h3 className="text-xl font-bold flex items-center gap-2"><Sword className="text-red-600"/> Declarar Ataque</h3><button onClick={() => setShowAttackModal(false)}><X/></button></div>
-              <div className="space-y-3">
-                  {currentPlayer.activePokemon.attacks.filter(atk => atk.cost[0] !== 'Ability').map((atk, idx) => {
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in zoom-in duration-200">
+           <Card className="w-full max-w-lg border-none shadow-2xl bg-gradient-to-b from-gray-900 to-gray-800 text-white overflow-hidden">
+              
+              {/* Cabeçalho de Batalha */}
+              <div className="flex justify-between items-center p-4 bg-red-600 shadow-md">
+                 <h3 className="text-xl font-black italic uppercase flex items-center gap-2">
+                    <Sword className="text-white animate-pulse"/> 
+                    Fase de Batalha
+                 </h3>
+                 <button onClick={() => setShowAttackModal(false)} className="hover:bg-red-700 p-1 rounded transition-colors"><X/></button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                 <div className="text-center mb-4">
+                    <p className="text-gray-400 text-xs uppercase tracking-widest mb-1">Atacante</p>
+                    <h2 className="text-2xl font-bold">{currentPlayer.activePokemon.name}</h2>
+                 </div>
+
+                 <div className="space-y-3">
+                     {currentPlayer.activePokemon.attacks.filter(atk => atk.cost[0] !== 'Ability').map((atk, idx) => {
                           const canAfford = checkEnergyCost(atk.cost, currentPlayer.activePokemon.attachedEnergy || []);
-                          return (<button key={idx} disabled={!canAfford} onClick={() => confirmAttack(atk)} className={`w-full p-3 rounded-lg border-2 flex justify-between items-center transition-all ${canAfford ? 'border-red-500 bg-red-50 hover:bg-red-100 cursor-pointer' : 'border-gray-200 bg-gray-100 opacity-60 cursor-not-allowed'}`}><div className="flex flex-col items-start"><span className={`font-bold ${canAfford ? 'text-red-800' : 'text-gray-500'}`}>{atk.name}</span><div className="flex gap-1 mt-1">{atk.cost.map((c, i) => { const EColor = ENERGY_TYPES[c]?.color || 'bg-gray-400'; return <div key={i} className={`w-3 h-3 ${EColor} rounded-full`}></div>})}</div></div><span className="text-xl font-black">{atk.damage}</span></button>);
-                      })
-                  }
+                          
+                          return (
+                            <button 
+                                key={idx} 
+                                disabled={!canAfford} 
+                                onClick={() => confirmAttack(atk)} 
+                                className={`
+                                    w-full p-4 rounded-xl border-l-8 flex justify-between items-center transition-all group relative overflow-hidden
+                                    ${canAfford 
+                                        ? 'bg-white text-gray-800 border-red-500 hover:bg-gray-50 hover:translate-x-1 shadow-lg' 
+                                        : 'bg-gray-700 text-gray-500 border-gray-600 opacity-50 cursor-not-allowed grayscale'}
+                                `}
+                            >
+                                {/* Fundo sutil animado ao passar o mouse */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-red-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"/>
+
+                                <div className="flex flex-col items-start z-10">
+                                    <span className={`font-black text-lg uppercase tracking-tight ${canAfford ? 'text-gray-800' : 'text-gray-500'}`}>
+                                        {atk.name}
+                                    </span>
+                                    
+                                    {/* Bolinhas de Energia Coloridas */}
+                                    <div className="flex gap-1 mt-1.5">
+                                        {atk.cost.map((c, i) => { 
+                                            // Usa as cores reais do constants.js
+                                            const typeInfo = ENERGY_TYPES[c] || { color: 'bg-gray-400' }; 
+                                            return (
+                                                <div key={i} className={`w-4 h-4 rounded-full ${typeInfo.color} shadow-sm border border-black/10`} title={c}></div>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+
+                                <div className="z-10 flex flex-col items-end">
+                                    <span className={`text-3xl font-black ${canAfford ? 'text-red-600' : 'text-gray-600'}`}>
+                                        {atk.damage}
+                                    </span>
+                                    {atk.damage && <span className="text-[10px] font-bold uppercase text-gray-400">Dano</span>}
+                                </div>
+                            </button>
+                          );
+                     })
+                 }
+                 
+                 {currentPlayer.activePokemon.attacks.filter(atk => atk.cost[0] !== 'Ability').length === 0 && (
+                     <div className="text-center p-8 border-2 border-dashed border-gray-600 rounded-xl text-gray-500">
+                        Este Pokémon não possui ataques válidos.
+                     </div>
+                 )}
+                 </div>
               </div>
            </Card>
       </div>
