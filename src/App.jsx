@@ -310,6 +310,60 @@ export default function PokeJudgePro() {
   const [distributionModal, setDistributionModal] = useState(null);
   const [selectedCardAction, setSelectedCardAction] = useState(null); 
   const [searchRule, setSearchRule] = useState('');
+  // --- SISTEMA DE DESFAZER (UNDO) ---
+  const [history, setHistory] = useState([]);
+
+  // Função auxiliar para restaurar ferramentas (objetos complexos)
+  const rehydrateTools = (playerList) => {
+      const fixPokemon = (poke) => {
+          // Se tiver ferramenta, reconecta a lógica dela (função condition)
+          if (poke && poke.attachedTool && !poke.attachedTool.condition) {
+              const originalTool = TOOLS.find(t => t.id === poke.attachedTool.id);
+              if (originalTool) return { ...poke, attachedTool: originalTool };
+          }
+          return poke;
+      };
+
+      return playerList.map(p => ({
+          ...p,
+          activePokemon: fixPokemon(p.activePokemon),
+          benchPokemon: p.benchPokemon.map(fixPokemon)
+      }));
+  };
+
+  const saveGameHistory = () => {
+      setHistory(prev => {
+          // Salva uma cópia profunda (Deep Copy) do estado atual
+          const newHistory = [...prev, {
+              players: JSON.parse(JSON.stringify(players)), 
+              gameState: JSON.parse(JSON.stringify(gameState))
+          }];
+          // Limita a 10 passos para não travar o navegador
+          if (newHistory.length > 10) return newHistory.slice(1);
+          return newHistory;
+      });
+  };
+
+  const handleUndo = () => {
+      if (history.length === 0) {
+          addLog("Nada para desfazer.", 'WARN');
+          return;
+      }
+      
+      // Pega o último estado salvo
+      const lastState = history[history.length - 1];
+      
+      // Restaura Jogadores (reconectando lógica das ferramentas)
+      setPlayers(rehydrateTools(lastState.players));
+      
+      // Restaura o Estado do Jogo (Fase, Turno, etc)
+      setGameState(lastState.gameState);
+      
+      // Remove esse estado da pilha
+      setHistory(prev => prev.slice(0, -1)); 
+      
+      addLog("↺ Ação desfeita! Voltando no tempo...", 'SUCCESS');
+  };
   
   const logsContainerRef = useRef(null);
 
@@ -531,6 +585,7 @@ export default function PokeJudgePro() {
   // ... (placePokemon, requestEvolution, promoteFromBench, etc... - Igual anterior) ...
   // Substitua a função placePokemon antiga por esta NOVA VERSÃO COM REGRAS
 const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.currentPlayerIndex, evolveTargetIndex = null) => {
+    saveGameHistory();
     const player = players[pIndex];
     
     // Criação do objeto da carta
@@ -653,6 +708,7 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
       setSelectedCardAction(null); 
   };
   const confirmAttachEnergy = (energyType) => {
+    saveGameHistory();
     if (!showEnergyModal) return; const { pIndex, location, index } = showEnergyModal; const p = players[pIndex];
     let eKey = 'Colorless'; Object.entries(ENERGY_TYPES).forEach(([key, val]) => { if(val.name === energyType.name) eKey = key; });
     if (location === 'ACTIVE') { updatePlayer(pIndex, { activePokemon: { ...p.activePokemon, attachedEnergy: [...(p.activePokemon.attachedEnergy || []), eKey] }, energyAttachedThisTurn: true, handCount: Math.max(0, p.handCount - 1) }); addLog(`Ligou Energia ao Ativo.`, 'INFO', pIndex); } 
@@ -684,6 +740,7 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
   };
 
   const handleManualDamage = (amount) => {
+    saveGameHistory();
     const { pIndex, location, index, card } = selectedCardAction;
     const currentDmg = card.damage || 0;
     const newDmg = Math.max(0, currentDmg + amount);
@@ -885,6 +942,7 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
     } 
 };
   const finalizeAttack = () => { 
+    saveGameHistory();
     const finalDamage = damageConfirmation.actualDamage; 
     const attack = damageConfirmation.attackRef; 
     const attackerName = damageConfirmation.attackerName; // Recuperado do estado
@@ -1801,5 +1859,19 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
     
     {/* --- O RANKING GLOBAL AGORA PODE SER VISTO NO LOBBY OU NO JOGO --- */}
     {showRanking && <RankingModal onClose={() => setShowRanking(false)} />}
+        
+    {/* --- BOTÃO FLUTUANTE DE DESFAZER (UNDO) --- */}
+    {history.length > 0 && gameState.phase !== PHASES.LOBBY && (
+        <div className="fixed bottom-6 left-6 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
+            <button 
+                onClick={handleUndo}
+                className="flex items-center gap-2 bg-gray-900 text-white px-5 py-3 rounded-full shadow-2xl border border-gray-700 hover:bg-gray-800 hover:scale-105 active:scale-95 transition-all group"
+                title="Desfazer última ação"
+            >
+                <RotateCcw size={20} className="text-yellow-400 group-hover:-rotate-180 transition-transform duration-500"/>
+                <span className="font-bold text-xs uppercase tracking-widest">Desfazer</span>
+            </button>
+        </div>
+    )}
   </div>
 ); };
