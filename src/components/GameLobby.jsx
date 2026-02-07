@@ -5,7 +5,7 @@ import { Card } from './UI'; // Importando do arquivo novo
 import PokemonCard from './PokemonCard'; // Importando o card que movemos antes
 import { DECKS } from '../data/decks'; // Importando os dados
 
-const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking }) => {
+const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking, availableDecks, onManageDecks }) => {
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
             <Card className="w-full max-w-4xl p-8 bg-white dark:bg-gray-800 shadow-xl rounded-2xl">
