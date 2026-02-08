@@ -315,7 +315,7 @@ export default function PokeJudgePro() {
   const [history, setHistory] = useState([]);
   // --- GERENCIADOR DE DECKS (SUPABASE) ---
   const [showDeckManager, setShowDeckManager] = useState(false);
-  const [availableDecks, setAvailableDecks] = useState({}); // Começa com os padrões do arquivo
+  const [availableDecks, setAvailableDecks] = useState(DECKS); // Começa com os padrões do arquivo
 
   // Função que vai no Banco e busca os decks novos
   const fetchDecksFromSupabase = async () => {
