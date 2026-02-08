@@ -17,6 +17,7 @@ import PokemonCard from './components/PokemonCard';
 import { Card, Button, Badge } from './components/UI';
 import GameLobby from './components/GameLobby';
 import PrizeZone from './components/PrizeZone';
+import DeckManager from './components/DeckManager';
 
 
 
