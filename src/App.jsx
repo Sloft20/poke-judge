@@ -318,38 +318,51 @@ export default function PokeJudgePro() {
   const [availableDecks, setAvailableDecks] = useState({}); // Começa vazio
 
   // Função que vai no Banco e busca os decks novos
+// --- FUNÇÃO DE BUSCA ROBUSTA (Busca Separada) ---
   const fetchDecksFromSupabase = async () => {
       try {
-          const { data, error } = await supabase
+          // 1. Busca todos os Decks
+          const { data: decksData, error: decksError } = await supabase
               .from('decks')
-              .select(`
-                  id, name, color,cards (*)`); // O (*) traz as cartas juntas
+              .select('*');
           
-          if (error) throw error;
+          if (decksError) throw decksError;
 
-          if (data) {
-              // Transforma a lista do banco no formato que o jogo entende (Objeto)
+          // 2. Busca todas as Cartas (Separadamente)
+          const { data: cardsData, error: cardsError } = await supabase
+              .from('cards')
+              .select('*');
+
+          if (cardsError) throw cardsError;
+
+          if (decksData && cardsData) {
               const dbDecks = {};
-              data.forEach(deck => {
+
+              // Primeiro, cria os objetos dos decks
+              decksData.forEach(deck => {
                   dbDecks[deck.id] = {
+                      id: deck.id, // Importante manter o ID
                       name: deck.name,
                       color: deck.color || 'bg-gray-500',
-                      cards: deck.cards || []
+                      cards: [] // Começa vazio
                   };
               });
+
+              // Depois, distribui as cartas para seus respectivos decks
+              cardsData.forEach(card => {
+                  if (dbDecks[card.deck_id]) {
+                      dbDecks[card.deck_id].cards.push(card);
+                  }
+              });
               
-              // Junta os decks oficiais (DECKS) com os do banco (dbDecks)
-              setAvailableDecks(dbDecks); // <--- USE ESTA (SÓ O BANCO)
+              console.log("Decks carregados:", dbDecks); // Para debug
+              setAvailableDecks(dbDecks);
           }
       } catch (error) {
-          console.error("Erro ao carregar decks:", error);
+          console.error("Erro CRÍTICO ao carregar decks:", error);
+          alert("Erro ao conectar no banco. Verifique o console.");
       }
   };
-
-  // Carrega os decks assim que o site abre
-  useEffect(() => {
-      fetchDecksFromSupabase();
-  }, []);
   // --- FUNÇÃO DE MIGRAÇÃO (USAR UMA VEZ) ---
   const migrateDecksToSupabase = async () => {
       if (!window.confirm("Posso copiar os decks locais para o Banco de Dados agora?")) return;
