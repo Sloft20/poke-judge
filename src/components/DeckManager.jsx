@@ -4,23 +4,28 @@ import { supabase } from '../supabaseClient';
 import { ENERGY_TYPES } from '../data/constants';
 
 const DeckManager = ({ decks, onClose, onUpdate }) => {
-    // NÃO USAMOS MAIS deckList LOCAL. Usamos 'decks' direto das props.
-    // Isso garante que o que você vê é EXATAMENTE o que o App tem.
-    
     const [selectedDeckId, setSelectedDeckId] = useState(null);
     const [loading, setLoading] = useState(false);
     
-    // Controle específico para o input de nome do deck (para poder digitar sem travar)
+    // Controle para edição do nome do deck
     const [editingDeckName, setEditingDeckName] = useState('');
 
-    // Atualiza o nome local quando muda de deck
+    // --- A CORREÇÃO MÁGICA ---
+    // Assim que a janela abre, forçamos o App a buscar os dados no Supabase.
+    // Isso resolve o problema de ter que clicar em "Novo Deck" para aparecer a lista.
     useEffect(() => {
-        if (selectedDeckId && decks[selectedDeckId]) {
+        onUpdate(); 
+    }, []); 
+    // -------------------------
+
+    // Atualiza o nome local quando muda de deck selecionado
+    useEffect(() => {
+        if (selectedDeckId && decks && decks[selectedDeckId]) {
             setEditingDeckName(decks[selectedDeckId].name);
         }
     }, [selectedDeckId, decks]);
 
-    // Estado do Formulário da Carta
+    // Estado do Formulário
     const INITIAL_FORM = {
         id: null,
         name: '', 
@@ -46,16 +51,15 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
         const { error } = await supabase.from('decks').insert([newDeck]);
         
         if (!error) {
-            await onUpdate(); // Atualiza o App principal
+            await onUpdate(); 
             setSelectedDeckId(id);
         }
         setLoading(false);
     };
 
-    // Salva o nome do deck quando o usuário termina de digitar (onBlur) ou aperta Enter
     const handleSaveDeckName = async () => {
         if (!selectedDeckId || !editingDeckName) return;
-        if (decks[selectedDeckId].name === editingDeckName) return; // Não mudou nada
+        if (decks[selectedDeckId].name === editingDeckName) return;
 
         setLoading(true);
         await supabase.from('decks').update({ name: editingDeckName }).eq('id', selectedDeckId);
@@ -149,7 +153,7 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
         if (error) {
             alert('Erro ao salvar: ' + error.message);
         } else {
-            await onUpdate(); // <--- Força o App a buscar tudo de novo
+            await onUpdate(); // Atualiza a lista
             handleResetForm();
         }
         setLoading(false);
@@ -166,7 +170,7 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
 
     const updateField = (field, value) => setFormData({ ...formData, [field]: value });
 
-    // Garante que decks não seja null/undefined
+    // Garante que decks não seja null/undefined para evitar erros
     const safeDecks = decks || {};
 
     return (
@@ -175,28 +179,33 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
                 
                 {loading && (
                     <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-yellow-400 text-black px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2 animate-pulse shadow-lg">
-                        <Loader2 size={14} className="animate-spin"/> Sincronizando...
+                        <Loader2 size={14} className="animate-spin"/> Carregando...
                     </div>
                 )}
 
-                {/* COLUNA 1: LISTA DE DECKS (Lendo direto das Props) */}
+                {/* COLUNA 1: LISTA DE DECKS */}
                 <div className="w-64 bg-gray-100 border-r border-gray-300 flex flex-col">
                     <div className="p-4 border-b bg-gray-200 flex justify-between items-center">
                         <h2 className="font-black text-gray-700 text-sm uppercase">Decks</h2>
                         <button onClick={handleCreateDeck} className="bg-blue-600 text-white p-1 rounded hover:bg-blue-700"><Plus size={16}/></button>
                     </div>
                     <div className="overflow-y-auto flex-1 p-2 space-y-1">
-                        {Object.entries(safeDecks).map(([id, deck]) => (
-                            <div key={id} 
-                                onClick={() => { setSelectedDeckId(id); handleResetForm(); }}
-                                className={`p-2 rounded cursor-pointer flex justify-between items-center group ${selectedDeckId === id ? 'bg-white border-l-4 border-blue-500 shadow-sm' : 'hover:bg-gray-200'}`}
-                            >
-                                <span className="font-bold text-sm truncate w-32 text-gray-800">{deck.name}</span>
-                                <button onClick={(e) => { e.stopPropagation(); handleDeleteDeck(id); }} className="text-gray-400 hover:text-red-600"><Trash2 size={14}/></button>
+                        {/* Se decks estiver carregando ainda, mostramos algo? */}
+                        {Object.entries(safeDecks).length === 0 ? (
+                            <div className="p-4 text-center text-xs text-gray-400 flex flex-col items-center">
+                                <span className="mb-2">Carregando decks...</span>
+                                <Loader2 size={16} className="animate-spin text-blue-500"/>
                             </div>
-                        ))}
-                        {Object.keys(safeDecks).length === 0 && (
-                            <div className="p-4 text-center text-xs text-gray-400">Nenhum deck encontrado. Crie um!</div>
+                        ) : (
+                            Object.entries(safeDecks).map(([id, deck]) => (
+                                <div key={id} 
+                                    onClick={() => { setSelectedDeckId(id); handleResetForm(); }}
+                                    className={`p-2 rounded cursor-pointer flex justify-between items-center group ${selectedDeckId === id ? 'bg-white border-l-4 border-blue-500 shadow-sm' : 'hover:bg-gray-200'}`}
+                                >
+                                    <span className="font-bold text-sm truncate w-32 text-gray-800">{deck.name}</span>
+                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteDeck(id); }} className="text-gray-400 hover:text-red-600"><Trash2 size={14}/></button>
+                                </div>
+                            ))
                         )}
                     </div>
                     <button onClick={onClose} className="p-3 bg-gray-800 text-white font-bold hover:bg-gray-900 flex items-center justify-center gap-2"><X size={16}/> Sair</button>
@@ -207,13 +216,12 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
                     {selectedDeckId && safeDecks[selectedDeckId] ? (
                         <>
                             <div className="p-3 bg-white border-b shadow-sm">
-                                {/* Input de Nome do Deck com Save no Blur */}
                                 <input 
                                     className="text-xl font-black bg-transparent border-none outline-none text-gray-800 w-full placeholder-gray-300 focus:ring-2 ring-blue-100 rounded px-2"
                                     value={editingDeckName}
                                     onChange={(e) => setEditingDeckName(e.target.value)}
-                                    onBlur={handleSaveDeckName} // Salva ao clicar fora
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSaveDeckName()} // Salva ao dar Enter
+                                    onBlur={handleSaveDeckName}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSaveDeckName()}
                                     placeholder="Nome do Deck..."
                                 />
                             </div>
@@ -237,13 +245,12 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
                                         <button onClick={(e) => { e.stopPropagation(); handleDeleteCard(card.id); }} className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100"><Trash2 size={10}/></button>
                                     </div>
                                 ))}
-                                {(safeDecks[selectedDeckId].cards || []).length === 0 && (
-                                    <div className="col-span-3 text-center text-gray-400 text-xs py-10">Este deck está vazio. Adicione cartas ao lado.</div>
-                                )}
                             </div>
                         </>
                     ) : (
-                        <div className="flex-1 flex items-center justify-center text-gray-400 font-bold">Selecione ou Crie um Deck na Esquerda</div>
+                        <div className="flex-1 flex items-center justify-center text-gray-400 font-bold">
+                            {Object.entries(safeDecks).length === 0 ? "Carregando..." : "Selecione um Deck na Esquerda"}
+                        </div>
                     )}
                 </div>
 
@@ -261,7 +268,7 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
                     </div>
 
                     <div className="p-4 space-y-4">
-                        {/* FORMULÁRIO - DADOS BÁSICOS */}
+                        {/* DADOS BÁSICOS */}
                         <div className="space-y-2">
                             <label className="text-xs font-bold text-gray-400 uppercase">Dados Básicos</label>
                             <input className="w-full border p-2 rounded text-sm" placeholder="Nome (ex: Charizard)" value={formData.name} onChange={e => updateField('name', e.target.value)} />
@@ -272,7 +279,7 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
                                     {Object.keys(ENERGY_TYPES).map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                             </div>
-
+                            
                             <div className="grid grid-cols-2 gap-2">
                                 <select className="border p-2 rounded text-sm" value={formData.stage} onChange={e => updateField('stage', e.target.value)}>
                                     <option value="0">Básico</option>
@@ -307,7 +314,6 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
                         {/* ATAQUES */}
                         <div className="space-y-3 pt-2 border-t">
                             <label className="text-xs font-bold text-gray-400 uppercase">Ataques</label>
-                            
                             <div className="bg-gray-50 p-2 rounded border border-gray-200">
                                 <input className="w-full text-xs font-bold bg-transparent mb-1 outline-none" placeholder="Nome do Ataque 1" value={formData.attack1_name} onChange={e => updateField('attack1_name', e.target.value)} />
                                 <div className="flex gap-2">
@@ -315,7 +321,6 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
                                     <input type="number" className="w-1/2 p-1 text-xs border rounded" placeholder="Custo" value={formData.attack1_cost} onChange={e => updateField('attack1_cost', e.target.value)} />
                                 </div>
                             </div>
-
                             <div className="bg-gray-50 p-2 rounded border border-gray-200">
                                 <input className="w-full text-xs font-bold bg-transparent mb-1 outline-none" placeholder="Nome do Ataque 2" value={formData.attack2_name} onChange={e => updateField('attack2_name', e.target.value)} />
                                 <div className="flex gap-2">
