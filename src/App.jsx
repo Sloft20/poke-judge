@@ -315,7 +315,7 @@ export default function PokeJudgePro() {
   const [history, setHistory] = useState([]);
   // --- GERENCIADOR DE DECKS (SUPABASE) ---
   const [showDeckManager, setShowDeckManager] = useState(false);
-  const [availableDecks, setAvailableDecks] = useState(DECKS); // Começa com os padrões do arquivo
+  const [availableDecks, setAvailableDecks] = useState({}); // Começa com os padrões do arquivo
 
   // Função que vai no Banco e busca os decks novos
   const fetchDecksFromSupabase = async () => {
@@ -323,9 +323,7 @@ export default function PokeJudgePro() {
           const { data, error } = await supabase
               .from('decks')
               .select(`
-                  id, name, color,
-                  cards (*)
-              `); // O (*) traz as cartas juntas
+                  id, name, color,cards (*)`); // O (*) traz as cartas juntas
           
           if (error) throw error;
 
@@ -352,6 +350,51 @@ export default function PokeJudgePro() {
   useEffect(() => {
       fetchDecksFromSupabase();
   }, []);
+  // --- FUNÇÃO DE MIGRAÇÃO (USAR UMA VEZ) ---
+  const migrateDecksToSupabase = async () => {
+      if (!window.confirm("Isso vai copiar os decks locais para o Banco de Dados. Continuar?")) return;
+      
+      addLog("Iniciando migração...", "INFO");
+
+      // Itera sobre cada deck do arquivo local
+      for (const [key, deck] of Object.entries(DECKS)) {
+          // 1. Tenta criar o Deck no Banco
+          // Usamos 'upsert' para atualizar se já existir ou criar se não existir
+          const { error: deckError } = await supabase
+              .from('decks')
+              .upsert([{ id: key, name: deck.name, color: deck.color || 'bg-gray-500' }]);
+
+          if (deckError) {
+              console.error(`Erro ao migrar deck ${deck.name}:`, deckError);
+              continue;
+          }
+
+          // 2. Prepara as cartas
+          const cardsToInsert = deck.cards.map(c => ({
+              deck_id: key,
+              name: c.name,
+              type: c.type,
+              hp: c.hp,
+              stage: c.stage,
+              image: c.image || '',
+              retreat: c.retreat || 1,
+              attacks: c.attacks || [] // O Supabase salva o JSON automaticamente
+          }));
+
+          // 3. Insere as cartas (Apaga as antigas desse deck antes para não duplicar se rodar 2x)
+          await supabase.from('cards').delete().eq('deck_id', key);
+          const { error: cardError } = await supabase.from('cards').insert(cardsToInsert);
+
+          if (cardError) {
+              console.error(`Erro nas cartas de ${deck.name}:`, cardError);
+          } else {
+              addLog(`✅ Deck migrado: ${deck.name}`, "SUCCESS");
+          }
+      }
+      
+      alert("Migração Finalizada! Agora seus decks estão na nuvem.");
+      fetchDecksFromSupabase(); // Recarrega a lista
+  };
 
   // Função auxiliar para restaurar ferramentas (objetos complexos)
   const rehydrateTools = (playerList) => {
@@ -1321,10 +1364,15 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
               <Shield className="text-blue-600" size={32} />
               <div>
                 <h1 className="text-2xl font-black tracking-tighter uppercase italic text-white">PokéJudge Pro</h1>
+                
+                <p className="text-xs text-slate-400 font-mono">Assistente de Arbitragem v2.5</p>
                 <button onClick={() => setShowDeckManager(true)} className="mb-6 text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 w-full underline">
                     <Edit3 size={12}/> Gerenciar Decks (Supabase)
                 </button>
-                <p className="text-xs text-slate-400 font-mono">Assistente de Arbitragem v2.5</p>
+                {/* BOTÃO TEMPORÁRIO DE MIGRAÇÃO */}
+                <button onClick={migrateDecksToSupabase} className="fixed top-4 right-4 bg-purple-600 text-white px-4 py-2 rounded shadow-lg z-50 text-xs font-bold">
+                    ⚡ Migrar Decks para Nuvem
+                </button>
               </div>
           </div>
           <div className="flex items-center gap-4">
