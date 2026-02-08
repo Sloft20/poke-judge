@@ -321,42 +321,45 @@ export default function PokeJudgePro() {
 // --- FUNÇÃO DE BUSCA ROBUSTA (Busca Separada) ---
   // --- FUNÇÃO DE BUSCA SEGURA (Versão Simplificada) ---
   const fetchDecksFromSupabase = async () => {
-      console.log("🔄 Buscando dados do Supabase...");
+      console.log("🔍 Iniciando busca no Banco...");
 
-      // 1. Busca os Decks
-      const { data: decks, error: deckError } = await supabase
-          .from('decks')
-          .select('*');
+      // 1. Busca TUDO de decks e TUDO de cartas
+      const { data: decksData, error: decksError } = await supabase.from('decks').select('*');
+      const { data: cardsData, error: cardsError } = await supabase.from('cards').select('*');
 
-      // 2. Busca as Cartas
-      const { data: cards, error: cardError } = await supabase
-          .from('cards')
-          .select('*');
+      if (decksError) console.error("Erro Decks:", decksError);
+      if (cardsError) console.error("Erro Cartas:", cardsError);
 
-      // Se der erro, avisa no console
-      if (deckError) console.error("❌ Erro ao buscar Decks:", deckError);
-      if (cardError) console.error("❌ Erro ao buscar Cartas:", cardError);
+      const dbDecks = {};
 
-      // Se veio dados, vamos montar
-      if (decks) {
-          const dbDecks = {};
-
-          decks.forEach(deck => {
-              // Para cada deck, encontramos as cartas dele manualmente
-              // Isso evita erros de conexão do banco
-              const deckCards = cards ? cards.filter(c => c.deck_id === deck.id) : [];
-
-              dbDecks[deck.id] = {
-                  id: deck.id,
-                  name: deck.name,
-                  color: deck.color || 'bg-gray-500',
-                  cards: deckCards // Coloca as cartas encontradas aqui
-              };
+      // 2. Monta os Decks que existem no banco
+      if (decksData) {
+          decksData.forEach(d => {
+              dbDecks[d.id] = { ...d, cards: [] };
           });
-
-          console.log("✅ Decks Montados com Sucesso:", dbDecks);
-          setAvailableDecks(dbDecks);
       }
+
+      // 3. Distribui as cartas (e cria deck de emergência se o pai não existir)
+      if (cardsData) {
+          cardsData.forEach(c => {
+              // Se o deck existe, adiciona a carta
+              if (dbDecks[c.deck_id]) {
+                  dbDecks[c.deck_id].cards.push(c);
+              } 
+              // SE NÃO EXISTE (Carta Órfã), cria um deck temporário para ela aparecer!
+              else {
+                  if (!dbDecks['ORFAOS']) {
+                      dbDecks['ORFAOS'] = { id: 'ORFAOS', name: '⚠️ Cartas Sem Deck', color: 'bg-red-500', cards: [] };
+                  }
+                  dbDecks['ORFAOS'].cards.push(c);
+              }
+          });
+      }
+
+      console.log("📦 Decks Montados:", dbDecks);
+      
+      // Se estiver vazio, usa um objeto vazio para não quebrar a tela
+      setAvailableDecks(Object.keys(dbDecks).length > 0 ? dbDecks : {});
   };
   // --- FUNÇÃO DE MIGRAÇÃO (USAR UMA VEZ) ---
   const migrateDecksToSupabase = async () => {
