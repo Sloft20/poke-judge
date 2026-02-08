@@ -1,14 +1,15 @@
 // src/components/GameLobby.jsx
 import React from 'react';
+// ADICIONEI O 'Edit3' AQUI EMBAIXO QUE FALTAVA NO SEU PRINT:
 import { Shield, User, Play, Trophy, Edit3 } from 'lucide-react'; 
 import { Card } from './UI'; 
 import PokemonCard from './PokemonCard'; 
 import { DECKS } from '../data/decks'; 
 
-// ATENÇÃO: A variável 'onManageDecks' está aqui nos parênteses
+// AQUI: O nome deve ser exatamente 'onManageDecks' (sem 'd' no Manage)
 const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking, availableDecks, onManageDecks }) => {
     
-    // Proteção para não quebrar se os decks não carregarem
+    // Garante que não quebre se os decks ainda não carregaram
     const deckList = availableDecks || DECKS;
 
     return (
@@ -25,9 +26,11 @@ const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking, availa
                     </h1>
                     <p className="text-gray-500 font-mono tracking-wide text-sm">Sistema de Arbitragem Competitiva</p>
                     
-                    {/* BOTÃO DE GERENCIAR DECKS */}
-                    {/* O erro estava aqui antes. Agora está usando 'onManageDecks' igual lá em cima */}
-                    <button onClick={onManageDecks} className="mt-4 mb-6 text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 w-full underline cursor-pointer">
+                    {/* Botão de Gerenciar Decks */}
+                    <button 
+                        onClick={onManageDecks} 
+                        className="mt-4 mb-6 text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 w-full underline cursor-pointer"
+                    >
                         <Edit3 size={12}/> Gerenciar Decks (Supabase)
                     </button>
                 </div>
