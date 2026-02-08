@@ -1,24 +1,26 @@
-import React, { useState, useEffect } from 'react'; // <--- Importei useEffect aqui
-import { Trash2, Plus, Save, X, Image as ImageIcon, Loader2, Edit2, RotateCcw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Trash2, Plus, Save, X, Loader2, Edit2, RotateCcw } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { ENERGY_TYPES } from '../data/constants';
 
 const DeckManager = ({ decks, onClose, onUpdate }) => {
-    // Inicializa com o que veio ou objeto vazio para não quebrar
-    const [deckList, setDeckList] = useState(decks || {});
+    // NÃO USAMOS MAIS deckList LOCAL. Usamos 'decks' direto das props.
+    // Isso garante que o que você vê é EXATAMENTE o que o App tem.
+    
     const [selectedDeckId, setSelectedDeckId] = useState(null);
     const [loading, setLoading] = useState(false);
     
-    // --- CORREÇÃO PRINCIPAL: Sincroniza a lista automaticamente ---
-    // Isso resolve o problema da tela branca ao abrir o gerenciador
+    // Controle específico para o input de nome do deck (para poder digitar sem travar)
+    const [editingDeckName, setEditingDeckName] = useState('');
+
+    // Atualiza o nome local quando muda de deck
     useEffect(() => {
-        if (decks) {
-            setDeckList(decks);
+        if (selectedDeckId && decks[selectedDeckId]) {
+            setEditingDeckName(decks[selectedDeckId].name);
         }
-    }, [decks]);
-    // -------------------------------------------------------------
-    
-    // Estado do Formulário
+    }, [selectedDeckId, decks]);
+
+    // Estado do Formulário da Carta
     const INITIAL_FORM = {
         id: null,
         name: '', 
@@ -39,33 +41,35 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
     const handleCreateDeck = async () => {
         const id = `DECK_${Date.now()}`;
         const newDeck = { id, name: 'Novo Deck', color: 'bg-gray-500' };
+        
         setLoading(true);
         const { error } = await supabase.from('decks').insert([newDeck]);
         
         if (!error) {
-            await onUpdate(); // Espera atualizar lá fora
+            await onUpdate(); // Atualiza o App principal
             setSelectedDeckId(id);
         }
         setLoading(false);
     };
 
-    const handleUpdateDeckName = async (id, newName) => {
-        // Atualiza visualmente na hora (otimismo)
-        setDeckList({ ...deckList, [id]: { ...deckList[id], name: newName } });
-        // Salva no banco
-        await supabase.from('decks').update({ name: newName }).eq('id', id);
-        // Garante sincronia
-        onUpdate();
+    // Salva o nome do deck quando o usuário termina de digitar (onBlur) ou aperta Enter
+    const handleSaveDeckName = async () => {
+        if (!selectedDeckId || !editingDeckName) return;
+        if (decks[selectedDeckId].name === editingDeckName) return; // Não mudou nada
+
+        setLoading(true);
+        await supabase.from('decks').update({ name: editingDeckName }).eq('id', selectedDeckId);
+        await onUpdate();
+        setLoading(false);
     };
 
     const handleDeleteDeck = async (id) => {
         if (!window.confirm('Apagar este deck e todas as cartas dele?')) return;
         setLoading(true);
-        // Apaga cartas primeiro para evitar erro de chave estrangeira
         await supabase.from('cards').delete().eq('deck_id', id);
         await supabase.from('decks').delete().eq('id', id);
         
-        await onUpdate(); // Recarrega tudo
+        await onUpdate();
         if (selectedDeckId === id) setSelectedDeckId(null);
         setLoading(false);
     };
@@ -145,7 +149,7 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
         if (error) {
             alert('Erro ao salvar: ' + error.message);
         } else {
-            await onUpdate(); // <--- O PULO DO GATO: Espera atualizar o App
+            await onUpdate(); // <--- Força o App a buscar tudo de novo
             handleResetForm();
         }
         setLoading(false);
@@ -162,24 +166,27 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
 
     const updateField = (field, value) => setFormData({ ...formData, [field]: value });
 
+    // Garante que decks não seja null/undefined
+    const safeDecks = decks || {};
+
     return (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
             <div className="bg-white rounded-xl w-full max-w-6xl h-[95vh] flex overflow-hidden shadow-2xl relative">
                 
                 {loading && (
                     <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-yellow-400 text-black px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2 animate-pulse shadow-lg">
-                        <Loader2 size={14} className="animate-spin"/> Sincronizando com Banco...
+                        <Loader2 size={14} className="animate-spin"/> Sincronizando...
                     </div>
                 )}
 
-                {/* COLUNA 1: LISTA DE DECKS */}
+                {/* COLUNA 1: LISTA DE DECKS (Lendo direto das Props) */}
                 <div className="w-64 bg-gray-100 border-r border-gray-300 flex flex-col">
                     <div className="p-4 border-b bg-gray-200 flex justify-between items-center">
                         <h2 className="font-black text-gray-700 text-sm uppercase">Decks</h2>
                         <button onClick={handleCreateDeck} className="bg-blue-600 text-white p-1 rounded hover:bg-blue-700"><Plus size={16}/></button>
                     </div>
                     <div className="overflow-y-auto flex-1 p-2 space-y-1">
-                        {deckList && Object.entries(deckList).map(([id, deck]) => (
+                        {Object.entries(safeDecks).map(([id, deck]) => (
                             <div key={id} 
                                 onClick={() => { setSelectedDeckId(id); handleResetForm(); }}
                                 className={`p-2 rounded cursor-pointer flex justify-between items-center group ${selectedDeckId === id ? 'bg-white border-l-4 border-blue-500 shadow-sm' : 'hover:bg-gray-200'}`}
@@ -188,24 +195,30 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
                                 <button onClick={(e) => { e.stopPropagation(); handleDeleteDeck(id); }} className="text-gray-400 hover:text-red-600"><Trash2 size={14}/></button>
                             </div>
                         ))}
+                        {Object.keys(safeDecks).length === 0 && (
+                            <div className="p-4 text-center text-xs text-gray-400">Nenhum deck encontrado. Crie um!</div>
+                        )}
                     </div>
                     <button onClick={onClose} className="p-3 bg-gray-800 text-white font-bold hover:bg-gray-900 flex items-center justify-center gap-2"><X size={16}/> Sair</button>
                 </div>
 
                 {/* COLUNA 2: VISUALIZAÇÃO DAS CARTAS */}
                 <div className="flex-1 bg-slate-50 flex flex-col border-r border-gray-200">
-                    {selectedDeckId && deckList[selectedDeckId] ? (
+                    {selectedDeckId && safeDecks[selectedDeckId] ? (
                         <>
                             <div className="p-3 bg-white border-b shadow-sm">
+                                {/* Input de Nome do Deck com Save no Blur */}
                                 <input 
-                                    className="text-xl font-black bg-transparent border-none outline-none text-gray-800 w-full placeholder-gray-300"
-                                    value={deckList[selectedDeckId].name}
-                                    onChange={(e) => handleUpdateDeckName(selectedDeckId, e.target.value)}
+                                    className="text-xl font-black bg-transparent border-none outline-none text-gray-800 w-full placeholder-gray-300 focus:ring-2 ring-blue-100 rounded px-2"
+                                    value={editingDeckName}
+                                    onChange={(e) => setEditingDeckName(e.target.value)}
+                                    onBlur={handleSaveDeckName} // Salva ao clicar fora
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSaveDeckName()} // Salva ao dar Enter
                                     placeholder="Nome do Deck..."
                                 />
                             </div>
                             <div className="flex-1 overflow-y-auto p-4 grid grid-cols-3 xl:grid-cols-4 gap-3 content-start">
-                                {(deckList[selectedDeckId].cards || []).map((card) => (
+                                {(safeDecks[selectedDeckId].cards || []).map((card) => (
                                     <div 
                                         key={card.id} 
                                         onClick={() => handleEditCard(card)}
@@ -224,6 +237,9 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
                                         <button onClick={(e) => { e.stopPropagation(); handleDeleteCard(card.id); }} className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100"><Trash2 size={10}/></button>
                                     </div>
                                 ))}
+                                {(safeDecks[selectedDeckId].cards || []).length === 0 && (
+                                    <div className="col-span-3 text-center text-gray-400 text-xs py-10">Este deck está vazio. Adicione cartas ao lado.</div>
+                                )}
                             </div>
                         </>
                     ) : (
@@ -245,7 +261,7 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
                     </div>
 
                     <div className="p-4 space-y-4">
-                        {/* DADOS BÁSICOS */}
+                        {/* FORMULÁRIO - DADOS BÁSICOS */}
                         <div className="space-y-2">
                             <label className="text-xs font-bold text-gray-400 uppercase">Dados Básicos</label>
                             <input className="w-full border p-2 rounded text-sm" placeholder="Nome (ex: Charizard)" value={formData.name} onChange={e => updateField('name', e.target.value)} />
@@ -269,7 +285,7 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
 
                         {/* STATUS */}
                         <div className="space-y-2 pt-2 border-t">
-                            <label className="text-xs font-bold text-gray-400 uppercase">Status de Batalha</label>
+                            <label className="text-xs font-bold text-gray-400 uppercase">Status</label>
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
                                     <label className="text-[10px] text-gray-500">Fraqueza</label>
@@ -301,7 +317,7 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
                             </div>
 
                             <div className="bg-gray-50 p-2 rounded border border-gray-200">
-                                <input className="w-full text-xs font-bold bg-transparent mb-1 outline-none" placeholder="Nome do Ataque 2 (Opcional)" value={formData.attack2_name} onChange={e => updateField('attack2_name', e.target.value)} />
+                                <input className="w-full text-xs font-bold bg-transparent mb-1 outline-none" placeholder="Nome do Ataque 2" value={formData.attack2_name} onChange={e => updateField('attack2_name', e.target.value)} />
                                 <div className="flex gap-2">
                                     <input type="number" className="w-1/2 p-1 text-xs border rounded" placeholder="Dano" value={formData.attack2_damage} onChange={e => updateField('attack2_damage', e.target.value)} />
                                     <input type="number" className="w-1/2 p-1 text-xs border rounded" placeholder="Custo" value={formData.attack2_cost} onChange={e => updateField('attack2_cost', e.target.value)} />
