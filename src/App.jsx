@@ -319,48 +319,43 @@ export default function PokeJudgePro() {
 
   // Função que vai no Banco e busca os decks novos
 // --- FUNÇÃO DE BUSCA ROBUSTA (Busca Separada) ---
+  // --- FUNÇÃO DE BUSCA SEGURA (Versão Simplificada) ---
   const fetchDecksFromSupabase = async () => {
-      try {
-          // 1. Busca todos os Decks
-          const { data: decksData, error: decksError } = await supabase
-              .from('decks')
-              .select('*');
-          
-          if (decksError) throw decksError;
+      console.log("🔄 Buscando dados do Supabase...");
 
-          // 2. Busca todas as Cartas (Separadamente)
-          const { data: cardsData, error: cardsError } = await supabase
-              .from('cards')
-              .select('*');
+      // 1. Busca os Decks
+      const { data: decks, error: deckError } = await supabase
+          .from('decks')
+          .select('*');
 
-          if (cardsError) throw cardsError;
+      // 2. Busca as Cartas
+      const { data: cards, error: cardError } = await supabase
+          .from('cards')
+          .select('*');
 
-          if (decksData && cardsData) {
-              const dbDecks = {};
+      // Se der erro, avisa no console
+      if (deckError) console.error("❌ Erro ao buscar Decks:", deckError);
+      if (cardError) console.error("❌ Erro ao buscar Cartas:", cardError);
 
-              // Primeiro, cria os objetos dos decks
-              decksData.forEach(deck => {
-                  dbDecks[deck.id] = {
-                      id: deck.id, // Importante manter o ID
-                      name: deck.name,
-                      color: deck.color || 'bg-gray-500',
-                      cards: [] // Começa vazio
-                  };
-              });
+      // Se veio dados, vamos montar
+      if (decks) {
+          const dbDecks = {};
 
-              // Depois, distribui as cartas para seus respectivos decks
-              cardsData.forEach(card => {
-                  if (dbDecks[card.deck_id]) {
-                      dbDecks[card.deck_id].cards.push(card);
-                  }
-              });
-              
-              console.log("Decks carregados:", dbDecks); // Para debug
-              setAvailableDecks(dbDecks);
-          }
-      } catch (error) {
-          console.error("Erro CRÍTICO ao carregar decks:", error);
-          alert("Erro ao conectar no banco. Verifique o console.");
+          decks.forEach(deck => {
+              // Para cada deck, encontramos as cartas dele manualmente
+              // Isso evita erros de conexão do banco
+              const deckCards = cards ? cards.filter(c => c.deck_id === deck.id) : [];
+
+              dbDecks[deck.id] = {
+                  id: deck.id,
+                  name: deck.name,
+                  color: deck.color || 'bg-gray-500',
+                  cards: deckCards // Coloca as cartas encontradas aqui
+              };
+          });
+
+          console.log("✅ Decks Montados com Sucesso:", dbDecks);
+          setAvailableDecks(dbDecks);
       }
   };
   // --- FUNÇÃO DE MIGRAÇÃO (USAR UMA VEZ) ---
