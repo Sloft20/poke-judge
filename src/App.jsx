@@ -352,24 +352,25 @@ export default function PokeJudgePro() {
   }, []);
   // --- FUNÇÃO DE MIGRAÇÃO (USAR UMA VEZ) ---
   const migrateDecksToSupabase = async () => {
-      if (!window.confirm("Isso vai copiar os decks locais para o Banco de Dados. Continuar?")) return;
+      if (!window.confirm("Posso copiar os decks locais para o Banco de Dados agora?")) return;
       
-      addLog("Iniciando migração...", "INFO");
-
-      // Itera sobre cada deck do arquivo local
+      console.log("🚀 Iniciando migração...");
+      
+      // 1. Itera sobre cada deck do arquivo local
       for (const [key, deck] of Object.entries(DECKS)) {
-          // 1. Tenta criar o Deck no Banco
-          // Usamos 'upsert' para atualizar se já existir ou criar se não existir
+          console.log(`Processando deck: ${deck.name}...`);
+
+          // Salva o Deck
           const { error: deckError } = await supabase
               .from('decks')
               .upsert([{ id: key, name: deck.name, color: deck.color || 'bg-gray-500' }]);
 
           if (deckError) {
-              console.error(`Erro ao migrar deck ${deck.name}:`, deckError);
-              continue;
+              console.error(`Erro no deck ${deck.name}:`, deckError);
+              continue; // Pula se der erro
           }
 
-          // 2. Prepara as cartas
+          // Salva as Cartas
           const cardsToInsert = deck.cards.map(c => ({
               deck_id: key,
               name: c.name,
@@ -378,22 +379,19 @@ export default function PokeJudgePro() {
               stage: c.stage,
               image: c.image || '',
               retreat: c.retreat || 1,
-              attacks: c.attacks || [] // O Supabase salva o JSON automaticamente
+              attacks: c.attacks || []
           }));
 
-          // 3. Insere as cartas (Apaga as antigas desse deck antes para não duplicar se rodar 2x)
+          // Limpa cartas antigas desse deck para não duplicar
           await supabase.from('cards').delete().eq('deck_id', key);
+          
           const { error: cardError } = await supabase.from('cards').insert(cardsToInsert);
-
-          if (cardError) {
-              console.error(`Erro nas cartas de ${deck.name}:`, cardError);
-          } else {
-              addLog(`✅ Deck migrado: ${deck.name}`, "SUCCESS");
-          }
+          
+          if (cardError) console.error(`Erro nas cartas de ${deck.name}:`, cardError);
       }
       
-      alert("Migração Finalizada! Agora seus decks estão na nuvem.");
-      fetchDecksFromSupabase(); // Recarrega a lista
+      alert("✅ Migração Concluída! Verifique o Supabase.");
+      fetchDecksFromSupabase(); // Tenta puxar do banco para testar
   };
 
   // Função auxiliar para restaurar ferramentas (objetos complexos)
@@ -1368,6 +1366,9 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
                 <p className="text-xs text-slate-400 font-mono">Assistente de Arbitragem v2.5</p>
                 <button onClick={() => setShowDeckManager(true)} className="mb-6 text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 w-full underline">
                     <Edit3 size={12}/> Gerenciar Decks (Supabase)
+                </button>
+                <button onClick={migrateDecksToSupabase} className="fixed top-2 right-2 z-50 bg-green-600 text-white p-2 rounded shadow-lg font-bold">
+                🔄 Tentar Migrar de Novo
                 </button>
                 
               </div>
