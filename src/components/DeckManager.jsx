@@ -1,237 +1,330 @@
-// src/components/DeckManager.jsx
 import React, { useState } from 'react';
-import { Trash2, Plus, Save, X, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { supabase } from '../supabaseClient'; // Certifique-se que o caminho está certo
+import { Trash2, Plus, Save, X, Image as ImageIcon, Loader2, Edit2, RotateCcw } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 import { ENERGY_TYPES } from '../data/constants';
 
 const DeckManager = ({ decks, onClose, onUpdate }) => {
-    const [deckList, setDeckList] = useState(decks); // Estado local para UI instantânea
-    const [editingId, setEditingId] = useState(null);
+    const [deckList, setDeckList] = useState(decks);
+    const [selectedDeckId, setSelectedDeckId] = useState(null);
     const [loading, setLoading] = useState(false);
     
-    // Novo Card (Estado do formulário)
-    const [newCard, setNewCard] = useState({ name: '', hp: 60, type: 'Colorless', stage: 0, image: '' });
+    // Estado do Formulário (Serve tanto para Criar quanto para Editar)
+    const INITIAL_FORM = {
+        id: null, // Se tiver ID, é edição. Se null, é criação.
+        name: '', 
+        hp: 60, 
+        type: 'Colorless', 
+        stage: 0, 
+        image: '',
+        weakness: '',
+        resistance: '',
+        retreat: 1,
+        // Estrutura para editar 2 ataques
+        attack1_name: '', attack1_cost: 1, attack1_damage: 10,
+        attack2_name: '', attack2_cost: 2, attack2_damage: 30
+    };
+    
+    const [formData, setFormData] = useState(INITIAL_FORM);
 
-    // --- AÇÕES DO SUPABASE ---
-
-    // 1. Criar Deck Novo
+    // --- AÇÕES DE DECK ---
     const handleCreateDeck = async () => {
         const id = `DECK_${Date.now()}`;
         const newDeck = { id, name: 'Novo Deck', color: 'bg-gray-500' };
-
         setLoading(true);
         const { error } = await supabase.from('decks').insert([newDeck]);
         setLoading(false);
-
-        if (error) {
-            alert('Erro ao criar deck: ' + error.message);
-        } else {
-            // Atualiza localmente
-            setDeckList({ ...deckList, [id]: { ...newDeck, cards: [] } });
-            setEditingId(id);
-            onUpdate(); // Avisa o App para recarregar
-        }
-    };
-
-    // 2. Apagar Deck
-    const handleDeleteDeck = async (id) => {
-        if (!window.confirm('Tem certeza? Isso apagará todas as cartas deste deck.')) return;
-        
-        setLoading(true);
-        const { error } = await supabase.from('decks').delete().eq('id', id);
-        setLoading(false);
-
         if (!error) {
-            const newList = { ...deckList };
-            delete newList[id];
-            setDeckList(newList);
-            if (editingId === id) setEditingId(null);
+            setDeckList({ ...deckList, [id]: { ...newDeck, cards: [] } });
+            setSelectedDeckId(id);
             onUpdate();
         }
     };
 
-    // 3. Atualizar Nome do Deck
     const handleUpdateDeckName = async (id, newName) => {
-        // Atualiza visualmente na hora (Optimistic UI)
         setDeckList({ ...deckList, [id]: { ...deckList[id], name: newName } });
-
-        // Salva no banco (Debounce seria ideal, mas vamos simples)
         await supabase.from('decks').update({ name: newName }).eq('id', id);
         onUpdate();
     };
 
-    // 4. Adicionar Carta
-    const handleAddCard = async () => {
-        if (!editingId) return;
-        
-        const cardToAdd = {
-            deck_id: editingId,
-            name: newCard.name,
-            hp: newCard.hp,
-            type: newCard.type,
-            stage: newCard.stage,
-            image: newCard.image,
-            retreat: 1,
-            attacks: [{ name: 'Ataque Básico', cost: [newCard.type], damage: 10 }] // JSONB
+    const handleDeleteDeck = async (id) => {
+        if (!window.confirm('Apagar este deck e todas as cartas dele?')) return;
+        setLoading(true);
+        await supabase.from('decks').delete().eq('id', id);
+        const newList = { ...deckList };
+        delete newList[id];
+        setDeckList(newList);
+        if (selectedDeckId === id) setSelectedDeckId(null);
+        setLoading(false);
+        onUpdate();
+    };
+
+    // --- AÇÕES DE CARTA (NOVA LÓGICA) ---
+
+    // 1. Carregar carta para o formulário (Ao clicar na lista)
+    const handleEditCard = (card) => {
+        // Pega os ataques do JSON e espalha no form
+        const atk1 = card.attacks?.[0] || {};
+        const atk2 = card.attacks?.[1] || {};
+
+        setFormData({
+            id: card.id,
+            name: card.name,
+            hp: card.hp,
+            type: card.type,
+            stage: card.stage,
+            image: card.image || '',
+            weakness: card.weakness || '',
+            resistance: card.resistance || '',
+            retreat: card.retreat || 1,
+            // Ataques
+            attack1_name: atk1.name || '',
+            attack1_cost: atk1.cost ? atk1.cost.length : 1,
+            attack1_damage: atk1.damage || 0,
+            attack2_name: atk2.name || '',
+            attack2_cost: atk2.cost ? atk2.cost.length : 0,
+            attack2_damage: atk2.damage || 0,
+        });
+    };
+
+    // 2. Limpar formulário (Modo Criação)
+    const handleResetForm = () => {
+        setFormData(INITIAL_FORM);
+    };
+
+    // 3. Salvar (Criar ou Atualizar)
+    const handleSaveCard = async () => {
+        if (!selectedDeckId) return;
+
+        // Constrói o array de ataques baseado no tipo da carta
+        const attacks = [];
+        if (formData.attack1_name) {
+            attacks.push({
+                name: formData.attack1_name,
+                damage: parseInt(formData.attack1_damage),
+                cost: Array(parseInt(formData.attack1_cost)).fill(formData.type) // Custo simplificado (tudo da cor do pokemon)
+            });
+        }
+        if (formData.attack2_name) {
+            attacks.push({
+                name: formData.attack2_name,
+                damage: parseInt(formData.attack2_damage),
+                cost: Array(parseInt(formData.attack2_cost)).fill(formData.type)
+            });
+        }
+
+        const cardPayload = {
+            deck_id: selectedDeckId,
+            name: formData.name,
+            hp: parseInt(formData.hp),
+            type: formData.type,
+            stage: parseInt(formData.stage),
+            image: formData.image,
+            retreat: parseInt(formData.retreat),
+            weakness: formData.weakness,
+            resistance: formData.resistance,
+            attacks: attacks // Salva como JSON
         };
 
         setLoading(true);
-        const { data, error } = await supabase.from('cards').insert([cardToAdd]).select();
+        let error;
+
+        if (formData.id) {
+            // MODO EDIÇÃO: UPDATE
+            const { error: err } = await supabase.from('cards').update(cardPayload).eq('id', formData.id);
+            error = err;
+        } else {
+            // MODO CRIAÇÃO: INSERT
+            const { error: err } = await supabase.from('cards').insert([cardPayload]);
+            error = err;
+        }
+
         setLoading(false);
 
         if (error) {
-            alert('Erro ao salvar carta: ' + error.message);
-        } else if (data) {
-            // Adiciona na lista local
-            const createdCard = data[0];
-            const currentDeck = deckList[editingId];
-            setDeckList({
-                ...deckList,
-                [editingId]: { ...currentDeck, cards: [...(currentDeck.cards || []), createdCard] }
-            });
-            // Limpa form
-            setNewCard({ name: '', hp: 60, type: 'Colorless', stage: 0, image: '' });
-            onUpdate();
+            alert('Erro ao salvar: ' + error.message);
+        } else {
+            onUpdate(); // Recarrega tudo do banco
+            handleResetForm(); // Limpa form
         }
     };
 
-    // 5. Apagar Carta
-    const handleDeleteCard = async (cardId, indexInList) => {
-        if(!cardId) return; // Se for carta antiga sem ID do banco, complica
-
+    const handleDeleteCard = async (cardId) => {
+        if(!window.confirm("Apagar carta?")) return;
         setLoading(true);
-        const { error } = await supabase.from('cards').delete().eq('id', cardId);
+        await supabase.from('cards').delete().eq('id', cardId);
         setLoading(false);
-
-        if (!error) {
-            const currentDeck = deckList[editingId];
-            const newCards = currentDeck.cards.filter(c => c.id !== cardId);
-            setDeckList({
-                ...deckList,
-                [editingId]: { ...currentDeck, cards: newCards }
-            });
-            onUpdate();
-        }
+        onUpdate();
+        if (formData.id === cardId) handleResetForm();
     };
+
+    // Helper para atualizar campos do form
+    const updateField = (field, value) => setFormData({ ...formData, [field]: value });
 
     return (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl w-full max-w-5xl h-[90vh] flex overflow-hidden shadow-2xl relative">
+            <div className="bg-white rounded-xl w-full max-w-6xl h-[95vh] flex overflow-hidden shadow-2xl relative">
                 
                 {loading && (
-                    <div className="absolute top-2 right-2 z-50 bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 animate-pulse">
-                        <Loader2 size={12} className="animate-spin"/> Salvando...
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-yellow-400 text-black px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2 animate-pulse shadow-lg">
+                        <Loader2 size={14} className="animate-spin"/> Salvando...
                     </div>
                 )}
 
-                {/* COLUNA ESQUERDA: LISTA */}
-                <div className="w-1/3 bg-gray-100 border-r border-gray-300 flex flex-col">
+                {/* COLUNA 1: LISTA DE DECKS */}
+                <div className="w-64 bg-gray-100 border-r border-gray-300 flex flex-col">
                     <div className="p-4 border-b bg-gray-200 flex justify-between items-center">
-                        <h2 className="font-black text-gray-700 uppercase">Supabase Decks</h2>
-                        <button onClick={handleCreateDeck} className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700"><Plus size={20}/></button>
+                        <h2 className="font-black text-gray-700 text-sm uppercase">Decks</h2>
+                        <button onClick={handleCreateDeck} className="bg-blue-600 text-white p-1 rounded hover:bg-blue-700"><Plus size={16}/></button>
                     </div>
-                    <div className="overflow-y-auto flex-1 p-2 space-y-2">
+                    <div className="overflow-y-auto flex-1 p-2 space-y-1">
                         {Object.entries(deckList).map(([id, deck]) => (
                             <div key={id} 
-                                onClick={() => setEditingId(id)}
-                                className={`p-3 rounded-lg cursor-pointer flex justify-between items-center group transition-all ${editingId === id ? 'bg-blue-100 border-blue-500 border' : 'bg-white hover:bg-gray-50 border border-transparent'}`}
+                                onClick={() => { setSelectedDeckId(id); handleResetForm(); }}
+                                className={`p-2 rounded cursor-pointer flex justify-between items-center group ${selectedDeckId === id ? 'bg-white border-l-4 border-blue-500 shadow-sm' : 'hover:bg-gray-200'}`}
                             >
-                                <div>
-                                    <div className="font-bold text-gray-800">{deck.name}</div>
-                                    <div className="text-xs text-gray-500">{(deck.cards || []).length} cartas</div>
-                                </div>
-                                <button onClick={(e) => { e.stopPropagation(); handleDeleteDeck(id); }} className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Trash2 size={16}/>
-                                </button>
+                                <span className="font-bold text-sm truncate w-32">{deck.name}</span>
+                                <button onClick={(e) => { e.stopPropagation(); handleDeleteDeck(id); }} className="text-gray-400 hover:text-red-600"><Trash2 size={14}/></button>
                             </div>
                         ))}
                     </div>
-                    <div className="p-4 border-t bg-gray-50">
-                        <button onClick={onClose} className="w-full bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded font-bold flex items-center justify-center gap-2">
-                            <X size={18}/> Fechar
-                        </button>
-                    </div>
+                    <button onClick={onClose} className="p-3 bg-gray-800 text-white font-bold hover:bg-gray-900 flex items-center justify-center gap-2"><X size={16}/> Sair</button>
                 </div>
 
-                {/* COLUNA DIREITA: EDITOR */}
-                <div className="flex-1 flex flex-col bg-slate-50">
-                    {editingId && deckList[editingId] ? (
-                        <div className="flex-1 flex flex-col h-full">
-                            {/* Nome do Deck */}
-                            <div className="p-4 bg-white border-b shadow-sm">
+                {/* COLUNA 2: VISUALIZAÇÃO DAS CARTAS (GRID) */}
+                <div className="flex-1 bg-slate-50 flex flex-col border-r border-gray-200">
+                    {selectedDeckId ? (
+                        <>
+                            <div className="p-3 bg-white border-b shadow-sm">
                                 <input 
-                                    className="text-2xl font-black bg-transparent border-b-2 border-transparent hover:border-gray-300 focus:border-blue-500 outline-none text-gray-800 w-full"
-                                    value={deckList[editingId].name}
-                                    onChange={(e) => handleUpdateDeckName(editingId, e.target.value)}
-                                    placeholder="Nome do Deck"
+                                    className="text-xl font-black bg-transparent border-none outline-none text-gray-800 w-full placeholder-gray-300"
+                                    value={deckList[selectedDeckId]?.name || ''}
+                                    onChange={(e) => handleUpdateDeckName(selectedDeckId, e.target.value)}
+                                    placeholder="Nome do Deck..."
                                 />
                             </div>
-
-                            {/* Cards Grid */}
-                            <div className="flex-1 overflow-y-auto p-4">
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                    {(deckList[editingId].cards || []).map((card, idx) => (
-                                        <div key={card.id || idx} className="bg-white p-2 rounded border shadow-sm relative group hover:ring-2 ring-blue-400">
-                                            <div className="aspect-[2/3] bg-gray-200 rounded overflow-hidden mb-2 relative">
-                                                {card.image ? (
-                                                    <img src={card.image} className="w-full h-full object-cover"/>
-                                                ) : (
-                                                    <div className={`w-full h-full flex items-center justify-center ${ENERGY_TYPES[card.type]?.color || 'bg-gray-400'}`}>
-                                                        <span className="text-white font-bold text-xs">{card.type}</span>
-                                                    </div>
-                                                )}
-                                                <button onClick={() => handleDeleteCard(card.id, idx)} className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={12}/></button>
-                                            </div>
-                                            <div className="text-xs font-bold truncate">{card.name}</div>
-                                            <div className="text-[10px] text-gray-500">HP {card.hp}</div>
+                            <div className="flex-1 overflow-y-auto p-4 grid grid-cols-3 xl:grid-cols-4 gap-3 content-start">
+                                {(deckList[selectedDeckId]?.cards || []).map((card) => (
+                                    <div 
+                                        key={card.id} 
+                                        onClick={() => handleEditCard(card)}
+                                        className={`bg-white p-2 rounded border relative group hover:shadow-md transition-all cursor-pointer ${formData.id === card.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}
+                                    >
+                                        <div className="aspect-[2/3] bg-gray-200 rounded overflow-hidden mb-2 relative">
+                                            {card.image ? (
+                                                <img src={card.image} className="w-full h-full object-cover"/>
+                                            ) : (
+                                                <div className={`w-full h-full flex items-center justify-center ${ENERGY_TYPES[card.type]?.color || 'bg-gray-400'}`}>
+                                                    <span className="text-white font-bold text-xs">{card.type}</span>
+                                                </div>
+                                            )}
                                         </div>
-                                    ))}
+                                        <div className="text-xs font-bold truncate">{card.name}</div>
+                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteCard(card.id); }} className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100"><Trash2 size={10}/></button>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex-1 flex items-center justify-center text-gray-400">Selecione um deck</div>
+                    )}
+                </div>
+
+                {/* COLUNA 3: FORMULÁRIO DE EDIÇÃO (LADO DIREITO) */}
+                <div className="w-96 bg-white flex flex-col shadow-xl z-10 overflow-y-auto">
+                    <div className="p-4 border-b bg-gray-50 flex justify-between items-center sticky top-0 z-10">
+                        <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                            {formData.id ? <><Edit2 size={16} className="text-blue-600"/> Editar Carta</> : <><Plus size={16} className="text-green-600"/> Nova Carta</>}
+                        </h3>
+                        {formData.id && (
+                            <button onClick={handleResetForm} className="text-xs text-gray-500 flex items-center gap-1 hover:text-blue-600 border px-2 py-1 rounded">
+                                <RotateCcw size={10}/> Cancelar Edição
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="p-4 space-y-4">
+                        {/* --- DADOS BÁSICOS --- */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-400 uppercase">Dados Básicos</label>
+                            <input className="w-full border p-2 rounded text-sm" placeholder="Nome (ex: Charizard)" value={formData.name} onChange={e => updateField('name', e.target.value)} />
+                            
+                            <div className="grid grid-cols-2 gap-2">
+                                <input type="number" className="border p-2 rounded text-sm" placeholder="HP" value={formData.hp} onChange={e => updateField('hp', e.target.value)} />
+                                <select className="border p-2 rounded text-sm" value={formData.type} onChange={e => updateField('type', e.target.value)}>
+                                    {Object.keys(ENERGY_TYPES).map(t => <option key={t} value={t}>{t}</option>)}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                                <select className="border p-2 rounded text-sm" value={formData.stage} onChange={e => updateField('stage', e.target.value)}>
+                                    <option value="0">Básico</option>
+                                    <option value="1">Estágio 1</option>
+                                    <option value="2">Estágio 2</option>
+                                </select>
+                                <input type="number" className="border p-2 rounded text-sm" placeholder="Recuo (0-4)" value={formData.retreat} onChange={e => updateField('retreat', e.target.value)} />
+                            </div>
+                        </div>
+
+                        {/* --- FRAQUEZA E RESISTÊNCIA --- */}
+                        <div className="space-y-2 pt-2 border-t">
+                            <label className="text-xs font-bold text-gray-400 uppercase">Status de Batalha</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="text-[10px] text-gray-500">Fraqueza</label>
+                                    <select className="w-full border p-1 rounded text-xs" value={formData.weakness} onChange={e => updateField('weakness', e.target.value)}>
+                                        <option value="">Nenhuma</option>
+                                        {Object.keys(ENERGY_TYPES).map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] text-gray-500">Resistência</label>
+                                    <select className="w-full border p-1 rounded text-xs" value={formData.resistance} onChange={e => updateField('resistance', e.target.value)}>
+                                        <option value="">Nenhuma</option>
+                                        {Object.keys(ENERGY_TYPES).map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* --- ATAQUES --- */}
+                        <div className="space-y-3 pt-2 border-t">
+                            <label className="text-xs font-bold text-gray-400 uppercase">Ataques</label>
+                            
+                            {/* Ataque 1 */}
+                            <div className="bg-gray-50 p-2 rounded border border-gray-200">
+                                <input className="w-full text-xs font-bold bg-transparent mb-1 outline-none" placeholder="Nome do Ataque 1" value={formData.attack1_name} onChange={e => updateField('attack1_name', e.target.value)} />
+                                <div className="flex gap-2">
+                                    <input type="number" className="w-1/2 p-1 text-xs border rounded" placeholder="Dano" value={formData.attack1_damage} onChange={e => updateField('attack1_damage', e.target.value)} />
+                                    <input type="number" className="w-1/2 p-1 text-xs border rounded" placeholder="Qtd Energia" value={formData.attack1_cost} onChange={e => updateField('attack1_cost', e.target.value)} />
                                 </div>
                             </div>
 
-                            {/* Form Adicionar */}
-                            <div className="p-4 bg-white border-t border-gray-200 shadow-lg z-10">
-                                <h3 className="text-xs font-bold uppercase text-gray-500 mb-2">Adicionar Nova Carta ao Banco de Dados</h3>
-                                <div className="grid grid-cols-6 gap-2 items-end">
-                                    <div className="col-span-2">
-                                        <label className="text-[10px] font-bold text-gray-400">Nome</label>
-                                        <input type="text" className="w-full border rounded p-1.5 text-sm" placeholder="Ex: Pikachu" value={newCard.name} onChange={e => setNewCard({...newCard, name: e.target.value})} />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-bold text-gray-400">HP</label>
-                                        <input type="number" className="w-full border rounded p-1.5 text-sm" placeholder="60" value={newCard.hp} onChange={e => setNewCard({...newCard, hp: parseInt(e.target.value)})} />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-bold text-gray-400">Tipo</label>
-                                        <select className="w-full border rounded p-1.5 text-sm" value={newCard.type} onChange={e => setNewCard({...newCard, type: e.target.value})}>
-                                            {Object.keys(ENERGY_TYPES).map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-bold text-gray-400">Estágio</label>
-                                        <select className="w-full border rounded p-1.5 text-sm" value={newCard.stage} onChange={e => setNewCard({...newCard, stage: parseInt(e.target.value)})}>
-                                            <option value={0}>Básico</option>
-                                            <option value={1}>Estágio 1</option>
-                                            <option value={2}>Estágio 2</option>
-                                        </select>
-                                    </div>
-                                    <div className="col-span-1 flex justify-end">
-                                        <button onClick={handleAddCard} disabled={!newCard.name || loading} className="bg-blue-600 disabled:bg-gray-300 text-white p-2 rounded w-full flex justify-center hover:bg-blue-700 transition-colors">
-                                            {loading ? <Loader2 className="animate-spin" size={20}/> : <Plus size={20}/>}
-                                        </button>
-                                    </div>
-                                    <div className="col-span-6 mt-2">
-                                        <label className="text-[10px] font-bold text-gray-400 flex items-center gap-1"><ImageIcon size={10}/> URL da Imagem (Opcional)</label>
-                                        <input type="text" className="w-full border rounded p-1.5 text-xs text-gray-600 font-mono" placeholder="https://..." value={newCard.image} onChange={e => setNewCard({...newCard, image: e.target.value})} />
-                                    </div>
+                            {/* Ataque 2 */}
+                            <div className="bg-gray-50 p-2 rounded border border-gray-200">
+                                <input className="w-full text-xs font-bold bg-transparent mb-1 outline-none" placeholder="Nome do Ataque 2 (Opcional)" value={formData.attack2_name} onChange={e => updateField('attack2_name', e.target.value)} />
+                                <div className="flex gap-2">
+                                    <input type="number" className="w-1/2 p-1 text-xs border rounded" placeholder="Dano" value={formData.attack2_damage} onChange={e => updateField('attack2_damage', e.target.value)} />
+                                    <input type="number" className="w-1/2 p-1 text-xs border rounded" placeholder="Qtd Energia" value={formData.attack2_cost} onChange={e => updateField('attack2_cost', e.target.value)} />
                                 </div>
                             </div>
                         </div>
-                    ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
-                            <p>Selecione ou crie um deck.</p>
+
+                        {/* --- IMAGEM --- */}
+                        <div className="pt-2 border-t">
+                            <label className="text-xs font-bold text-gray-400 uppercase mb-1 block">URL da Imagem</label>
+                            <input className="w-full border p-2 rounded text-xs font-mono text-gray-600" placeholder="https://..." value={formData.image} onChange={e => updateField('image', e.target.value)} />
                         </div>
-                    )}
+                    </div>
+
+                    <div className="p-4 border-t bg-gray-50 mt-auto">
+                        <button 
+                            onClick={handleSaveCard} 
+                            disabled={!formData.name || loading || !selectedDeckId}
+                            className={`w-full py-3 rounded font-bold text-white flex items-center justify-center gap-2 ${formData.id ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} disabled:opacity-50`}
+                        >
+                            {loading ? <Loader2 className="animate-spin"/> : (formData.id ? <><Save size={18}/> Atualizar Carta</> : <><Plus size={18}/> Adicionar Carta</>)}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
