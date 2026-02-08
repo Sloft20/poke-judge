@@ -1,14 +1,14 @@
 // src/components/GameLobby.jsx
 import React from 'react';
-import { Shield, User, Play, Trophy, Edit3 } from 'lucide-react'; // Adicionei Edit3 aqui
+import { Shield, User, Play, Trophy, Edit3 } from 'lucide-react'; 
 import { Card } from './UI'; 
 import PokemonCard from './PokemonCard'; 
 import { DECKS } from '../data/decks'; 
 
-// ATENÇÃO AQUI: Recebendo 'onManageDecks' (sem 'd' extra)
+// ATENÇÃO: A variável 'onManageDecks' está aqui nos parênteses
 const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking, availableDecks, onManageDecks }) => {
     
-    // Garante que availableDecks não seja undefined para evitar crash
+    // Proteção para não quebrar se os decks não carregarem
     const deckList = availableDecks || DECKS;
 
     return (
@@ -25,7 +25,8 @@ const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking, availa
                     </h1>
                     <p className="text-gray-500 font-mono tracking-wide text-sm">Sistema de Arbitragem Competitiva</p>
                     
-                    {/* BOTÃO DE GERENCIAR DECKS (Usando a função correta) */}
+                    {/* BOTÃO DE GERENCIAR DECKS */}
+                    {/* O erro estava aqui antes. Agora está usando 'onManageDecks' igual lá em cima */}
                     <button onClick={onManageDecks} className="mt-4 mb-6 text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 w-full underline cursor-pointer">
                         <Edit3 size={12}/> Gerenciar Decks (Supabase)
                     </button>
