@@ -316,50 +316,53 @@ export default function PokeJudgePro() {
   // --- GERENCIADOR DE DECKS (SUPABASE) ---
   const [showDeckManager, setShowDeckManager] = useState(false);
   const [availableDecks, setAvailableDecks] = useState({}); // Começa vazio
+  // --- CARREGA OS DADOS ASSIM QUE O SITE ABRE ---
+  useEffect(() => {
+    fetchDecksFromSupabase();
+  }, []); // <--- Os colchetes vazios [] garantem que rode ao iniciar
 
   // Função que vai no Banco e busca os decks novos
 // --- FUNÇÃO DE BUSCA ROBUSTA (Busca Separada) ---
   // --- FUNÇÃO DE BUSCA SEGURA (Versão Simplificada) ---
   const fetchDecksFromSupabase = async () => {
-      console.log("🔍 Iniciando busca no Banco...");
+      // addLog("🔄 Sincronizando dados...", "INFO"); // Opcional se tiver log
+      console.log("🔄 Buscando Decks e Cartas...");
 
-      // 1. Busca TUDO de decks e TUDO de cartas
-      const { data: decksData, error: decksError } = await supabase.from('decks').select('*');
-      const { data: cardsData, error: cardsError } = await supabase.from('cards').select('*');
+      try {
+          // 1. Busca TUDO de novo (sem cache)
+          const { data: decksData } = await supabase.from('decks').select('*');
+          const { data: cardsData } = await supabase.from('cards').select('*');
 
-      if (decksError) console.error("Erro Decks:", decksError);
-      if (cardsError) console.error("Erro Cartas:", cardsError);
+          if (decksData && cardsData) {
+              const dbDecks = {};
 
-      const dbDecks = {};
+              // Monta a estrutura
+              decksData.forEach(d => {
+                  dbDecks[d.id] = { ...d, cards: [] };
+              });
 
-      // 2. Monta os Decks que existem no banco
-      if (decksData) {
-          decksData.forEach(d => {
-              dbDecks[d.id] = { ...d, cards: [] };
-          });
-      }
-
-      // 3. Distribui as cartas (e cria deck de emergência se o pai não existir)
-      if (cardsData) {
-          cardsData.forEach(c => {
-              // Se o deck existe, adiciona a carta
-              if (dbDecks[c.deck_id]) {
-                  dbDecks[c.deck_id].cards.push(c);
-              } 
-              // SE NÃO EXISTE (Carta Órfã), cria um deck temporário para ela aparecer!
-              else {
-                  if (!dbDecks['ORFAOS']) {
-                      dbDecks['ORFAOS'] = { id: 'ORFAOS', name: '⚠️ Cartas Sem Deck', color: 'bg-red-500', cards: [] };
+              cardsData.forEach(c => {
+                  if (dbDecks[c.deck_id]) {
+                      dbDecks[c.deck_id].cards.push(c);
                   }
-                  dbDecks['ORFAOS'].cards.push(c);
-              }
-          });
-      }
+              });
 
-      console.log("📦 Decks Montados:", dbDecks);
-      
-      // Se estiver vazio, usa um objeto vazio para não quebrar a tela
-      setAvailableDecks(Object.keys(dbDecks).length > 0 ? dbDecks : {});
+              // ATUALIZA O ESTADO DO APP
+              setAvailableDecks(dbDecks);
+              console.log("✅ Dados carregados no App:", Object.keys(dbDecks).length, "decks.");
+              
+              // --- CORREÇÃO DO "STATUS STALE" (MOCHILA VELHA) ---
+              // Se os jogadores já selecionaram decks, atualizamos a mão deles com a versão nova
+              setPlayers(prevPlayers => prevPlayers.map(p => {
+                  if (p.deckArchetype && dbDecks[p.deckArchetype]) {
+                      return { ...p, activeDeck: dbDecks[p.deckArchetype] }; // Força atualização
+                  }
+                  return p;
+              }));
+          }
+      } catch (error) {
+          console.error("Erro fatal na busca:", error);
+      }
   };
   // --- FUNÇÃO DE MIGRAÇÃO (USAR UMA VEZ) ---
   const migrateDecksToSupabase = async () => {
