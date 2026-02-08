@@ -1310,7 +1310,7 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
               <Shield className="text-blue-600" size={32} />
               <div>
                 <h1 className="text-2xl font-black tracking-tighter uppercase italic text-white">PokéJudge Pro</h1>
-                <button onClick={onManageDecks} className="mb-6 text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 w-full underline">
+                <button onClick={() => setShowDeckManager(true)} className="mb-6 text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 w-full underline">
                     <Edit3 size={12}/> Gerenciar Decks (Supabase)
                 </button>
                 <p className="text-xs text-slate-400 font-mono">Assistente de Arbitragem v2.5</p>
