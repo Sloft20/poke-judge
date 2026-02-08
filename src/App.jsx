@@ -339,7 +339,7 @@ export default function PokeJudgePro() {
               });
               
               // Junta os decks oficiais (DECKS) com os do banco (dbDecks)
-              setAvailableDecks({ ...DECKS, ...dbDecks });
+              setAvailableDecks({ dbDecks });
           }
       } catch (error) {
           console.error("Erro ao carregar decks:", error);
@@ -1369,10 +1369,7 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
                 <button onClick={() => setShowDeckManager(true)} className="mb-6 text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 w-full underline">
                     <Edit3 size={12}/> Gerenciar Decks (Supabase)
                 </button>
-                {/* BOTÃO TEMPORÁRIO DE MIGRAÇÃO */}
-                <button onClick={migrateDecksToSupabase} className="fixed top-4 right-4 bg-purple-600 text-white px-4 py-2 rounded shadow-lg z-50 text-xs font-bold">
-                    ⚡ Migrar Decks para Nuvem
-                </button>
+                
               </div>
           </div>
           <div className="flex items-center gap-4">
