@@ -1253,23 +1253,33 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
             </Card> 
         ); 
     };
-    if (gameState.phase === PHASES.LOBBY) {
-        return (
-            <>
-            <GameLobby 
-                players={players} 
-                onUpdatePlayer={updatePlayer} 
-                onStartGame={handleStartGameFromLobby} 
-                onShowRanking={() => setShowRanking(true)} 
-                availableDecks={availableDecks} 
-                onManageDecks={() => setShowDeckManager(true)}
+    // --- RENDERIZAÇÃO DO LOBBY (COM O GERENCIADOR JUNTO) ---
+  if (gameState.phase === PHASES.LOBBY) {
+    return (
+      <> {/* <--- Atenção: Adicionamos este fragmento para agrupar os dois */}
+        <GameLobby 
+          players={players} 
+          onUpdatePlayer={updatePlayer} 
+          onStartGame={handleStartGameFromLobby} 
+          onShowRanking={() => setShowRanking(true)}
+          availableDecks={availableDecks} 
+          onManageDecks={() => setShowDeckManager(true)}
+        />
+
+        {/* --- O GERENCIADOR PRECISA ESTAR AQUI TAMBÉM --- */}
+        {showDeckManager && (
+            <DeckManager 
+                decks={availableDecks} 
+                onClose={() => setShowDeckManager(false)}
+                onUpdate={fetchDecksFromSupabase}
             />
-            
-            {/* O MODAL PRECISA ESTAR AQUI TAMBÉM PARA APARECER NO LOBBY */}
-            {showRanking && <RankingModal onClose={() => setShowRanking(false)} />}
-            </>
-        );
-    }
+        )}
+        
+        {/* --- E O RANKING TAMBÉM (Se tiver) --- */}
+        {showRanking && <RankingModal onClose={() => setShowRanking(false)} />}
+      </> 
+    );
+  }
 
   return (
   <div className="min-h-screen bg-gray-50 text-gray-800 p-4 font-sans relative">
