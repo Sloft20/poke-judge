@@ -1,22 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { Trash2, Plus, Save, X, Loader2, Edit2, RotateCcw } from 'lucide-react';
+import React, { useState, useEffect } from 'react'; // <--- Importei useEffect aqui
+import { Trash2, Plus, Save, X, Image as ImageIcon, Loader2, Edit2, RotateCcw } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { ENERGY_TYPES } from '../data/constants';
 
 const DeckManager = ({ decks, onClose, onUpdate }) => {
-    // Estado local para gerenciar a UI
+    // Inicializa com o que veio ou objeto vazio para não quebrar
     const [deckList, setDeckList] = useState(decks || {});
     const [selectedDeckId, setSelectedDeckId] = useState(null);
     const [loading, setLoading] = useState(false);
     
-    // --- A MÁGICA: Sincroniza quando os dados chegam do Supabase ---
+    // --- CORREÇÃO PRINCIPAL: Sincroniza a lista automaticamente ---
+    // Isso resolve o problema da tela branca ao abrir o gerenciador
     useEffect(() => {
         if (decks) {
             setDeckList(decks);
         }
-    }, [decks]); 
-    // ---------------------------------------------------------------
-
+    }, [decks]);
+    // -------------------------------------------------------------
+    
+    // Estado do Formulário
     const INITIAL_FORM = {
         id: null,
         name: '', 
@@ -28,52 +30,51 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
         resistance: '',
         retreat: 1,
         attack1_name: '', attack1_cost: 1, attack1_damage: 10,
-        attack2_name: '', attack2_cost: 0, attack2_damage: 0
+        attack2_name: '', attack2_cost: 2, attack2_damage: 30
     };
     
     const [formData, setFormData] = useState(INITIAL_FORM);
 
-    // --- CRIAR NOVO DECK ---
+    // --- AÇÕES DE DECK ---
     const handleCreateDeck = async () => {
         const id = `DECK_${Date.now()}`;
         const newDeck = { id, name: 'Novo Deck', color: 'bg-gray-500' };
-        
         setLoading(true);
-        // 1. Salva no banco
         const { error } = await supabase.from('decks').insert([newDeck]);
         
         if (!error) {
-            // 2. Avisa o App para recarregar tudo do zero (garante sincronia)
-            await onUpdate();
+            await onUpdate(); // Espera atualizar lá fora
             setSelectedDeckId(id);
         }
         setLoading(false);
     };
 
     const handleUpdateDeckName = async (id, newName) => {
-        // Atualiza visualmente na hora
+        // Atualiza visualmente na hora (otimismo)
         setDeckList({ ...deckList, [id]: { ...deckList[id], name: newName } });
         // Salva no banco
         await supabase.from('decks').update({ name: newName }).eq('id', id);
-        // Sincroniza silenciosamente
+        // Garante sincronia
         onUpdate();
     };
 
     const handleDeleteDeck = async (id) => {
         if (!window.confirm('Apagar este deck e todas as cartas dele?')) return;
         setLoading(true);
-        await supabase.from('cards').delete().eq('deck_id', id); // Apaga cartas primeiro
-        await supabase.from('decks').delete().eq('id', id);      // Apaga o deck
-        await onUpdate(); // Recarrega
+        // Apaga cartas primeiro para evitar erro de chave estrangeira
+        await supabase.from('cards').delete().eq('deck_id', id);
+        await supabase.from('decks').delete().eq('id', id);
+        
+        await onUpdate(); // Recarrega tudo
         if (selectedDeckId === id) setSelectedDeckId(null);
         setLoading(false);
     };
 
-    // --- MANIPULAÇÃO DE CARTAS ---
+    // --- AÇÕES DE CARTA ---
 
     const handleEditCard = (card) => {
-        const atk1 = (card.attacks && card.attacks[0]) ? card.attacks[0] : {};
-        const atk2 = (card.attacks && card.attacks[1]) ? card.attacks[1] : {};
+        const atk1 = card.attacks?.[0] || {};
+        const atk2 = card.attacks?.[1] || {};
 
         setFormData({
             id: card.id,
@@ -94,6 +95,10 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
         });
     };
 
+    const handleResetForm = () => {
+        setFormData(INITIAL_FORM);
+    };
+
     const handleSaveCard = async () => {
         if (!selectedDeckId) return;
 
@@ -102,14 +107,14 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
             attacks.push({
                 name: formData.attack1_name,
                 damage: parseInt(formData.attack1_damage || 0),
-                cost: Array(parseInt(formData.attack1_cost)).fill(formData.type)
+                cost: Array(parseInt(formData.attack1_cost || 1)).fill(formData.type)
             });
         }
         if (formData.attack2_name) {
             attacks.push({
                 name: formData.attack2_name,
                 damage: parseInt(formData.attack2_damage || 0),
-                cost: Array(parseInt(formData.attack2_cost)).fill(formData.type)
+                cost: Array(parseInt(formData.attack2_cost || 1)).fill(formData.type)
             });
         }
 
@@ -140,9 +145,8 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
         if (error) {
             alert('Erro ao salvar: ' + error.message);
         } else {
-            // AQUI ESTÁ O SEGREDO: Espera o App atualizar os dados antes de liberar
-            await onUpdate(); 
-            setFormData(INITIAL_FORM); // Limpa o form
+            await onUpdate(); // <--- O PULO DO GATO: Espera atualizar o App
+            handleResetForm();
         }
         setLoading(false);
     };
@@ -153,6 +157,7 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
         await supabase.from('cards').delete().eq('id', cardId);
         await onUpdate();
         setLoading(false);
+        if (formData.id === cardId) handleResetForm();
     };
 
     const updateField = (field, value) => setFormData({ ...formData, [field]: value });
@@ -161,14 +166,13 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
             <div className="bg-white rounded-xl w-full max-w-6xl h-[95vh] flex overflow-hidden shadow-2xl relative">
                 
-                {/* Loader Global */}
                 {loading && (
                     <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-yellow-400 text-black px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2 animate-pulse shadow-lg">
-                        <Loader2 size={14} className="animate-spin"/> Salvando no Banco...
+                        <Loader2 size={14} className="animate-spin"/> Sincronizando com Banco...
                     </div>
                 )}
 
-                {/* COLUNA 1: DECKS */}
+                {/* COLUNA 1: LISTA DE DECKS */}
                 <div className="w-64 bg-gray-100 border-r border-gray-300 flex flex-col">
                     <div className="p-4 border-b bg-gray-200 flex justify-between items-center">
                         <h2 className="font-black text-gray-700 text-sm uppercase">Decks</h2>
@@ -177,7 +181,7 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
                     <div className="overflow-y-auto flex-1 p-2 space-y-1">
                         {deckList && Object.entries(deckList).map(([id, deck]) => (
                             <div key={id} 
-                                onClick={() => { setSelectedDeckId(id); setFormData(INITIAL_FORM); }}
+                                onClick={() => { setSelectedDeckId(id); handleResetForm(); }}
                                 className={`p-2 rounded cursor-pointer flex justify-between items-center group ${selectedDeckId === id ? 'bg-white border-l-4 border-blue-500 shadow-sm' : 'hover:bg-gray-200'}`}
                             >
                                 <span className="font-bold text-sm truncate w-32 text-gray-800">{deck.name}</span>
@@ -188,7 +192,7 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
                     <button onClick={onClose} className="p-3 bg-gray-800 text-white font-bold hover:bg-gray-900 flex items-center justify-center gap-2"><X size={16}/> Sair</button>
                 </div>
 
-                {/* COLUNA 2: CARTAS */}
+                {/* COLUNA 2: VISUALIZAÇÃO DAS CARTAS */}
                 <div className="flex-1 bg-slate-50 flex flex-col border-r border-gray-200">
                     {selectedDeckId && deckList[selectedDeckId] ? (
                         <>
@@ -197,81 +201,128 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
                                     className="text-xl font-black bg-transparent border-none outline-none text-gray-800 w-full placeholder-gray-300"
                                     value={deckList[selectedDeckId].name}
                                     onChange={(e) => handleUpdateDeckName(selectedDeckId, e.target.value)}
+                                    placeholder="Nome do Deck..."
                                 />
                             </div>
-                            <div className="flex-1 overflow-y-auto p-4 grid grid-cols-3 gap-3 content-start">
+                            <div className="flex-1 overflow-y-auto p-4 grid grid-cols-3 xl:grid-cols-4 gap-3 content-start">
                                 {(deckList[selectedDeckId].cards || []).map((card) => (
                                     <div 
                                         key={card.id} 
                                         onClick={() => handleEditCard(card)}
-                                        className={`bg-white p-2 rounded border relative group hover:shadow-md cursor-pointer ${formData.id === card.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}
+                                        className={`bg-white p-2 rounded border relative group hover:shadow-md transition-all cursor-pointer ${formData.id === card.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}
                                     >
-                                        <div className="text-xs font-bold text-gray-700 mb-1">{card.name}</div>
-                                        <div className="text-[10px] text-gray-500">HP {card.hp} | {card.type}</div>
+                                        <div className="aspect-[2/3] bg-gray-200 rounded overflow-hidden mb-2 relative">
+                                            {card.image ? (
+                                                <img src={card.image} className="w-full h-full object-cover" alt={card.name}/>
+                                            ) : (
+                                                <div className={`w-full h-full flex items-center justify-center ${ENERGY_TYPES[card.type]?.color || 'bg-gray-400'}`}>
+                                                    <span className="text-white font-bold text-xs">{card.type}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="text-xs font-bold truncate">{card.name}</div>
                                         <button onClick={(e) => { e.stopPropagation(); handleDeleteCard(card.id); }} className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100"><Trash2 size={10}/></button>
                                     </div>
                                 ))}
                             </div>
                         </>
                     ) : (
-                        <div className="flex-1 flex items-center justify-center text-gray-400 font-bold">Selecione um Deck na Esquerda</div>
+                        <div className="flex-1 flex items-center justify-center text-gray-400 font-bold">Selecione ou Crie um Deck na Esquerda</div>
                     )}
                 </div>
 
                 {/* COLUNA 3: FORMULÁRIO */}
-                <div className="w-80 bg-white flex flex-col shadow-xl overflow-y-auto">
+                <div className="w-96 bg-white flex flex-col shadow-xl z-10 overflow-y-auto">
                     <div className="p-4 border-b bg-gray-50 flex justify-between items-center sticky top-0 z-10">
-                        <h3 className="font-bold text-gray-700 text-xs uppercase flex items-center gap-2">
-                            {formData.id ? <><Edit2 size={14} className="text-blue-600"/> Editar Carta</> : <><Plus size={14} className="text-green-600"/> Nova Carta</>}
+                        <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                            {formData.id ? <><Edit2 size={16} className="text-blue-600"/> Editar Carta</> : <><Plus size={16} className="text-green-600"/> Nova Carta</>}
                         </h3>
                         {formData.id && (
-                            <button onClick={() => setFormData(INITIAL_FORM)} className="text-[10px] text-gray-500 border px-2 py-1 rounded hover:bg-gray-100 flex gap-1"><RotateCcw size={10}/> Cancelar</button>
+                            <button onClick={handleResetForm} className="text-xs text-gray-500 flex items-center gap-1 hover:text-blue-600 border px-2 py-1 rounded">
+                                <RotateCcw size={10}/> Cancelar
+                            </button>
                         )}
                     </div>
-                    
-                    <div className="p-4 space-y-3">
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase">Nome</label>
-                            <input className="w-full border p-2 rounded text-xs" value={formData.name} onChange={e => updateField('name', e.target.value)} placeholder="Ex: Pikachu" />
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-2">
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase">HP</label>
-                                <input type="number" className="w-full border p-2 rounded text-xs" value={formData.hp} onChange={e => updateField('hp', e.target.value)} />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase">Tipo</label>
-                                <select className="w-full border p-2 rounded text-xs" value={formData.type} onChange={e => updateField('type', e.target.value)}>
+
+                    <div className="p-4 space-y-4">
+                        {/* DADOS BÁSICOS */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-400 uppercase">Dados Básicos</label>
+                            <input className="w-full border p-2 rounded text-sm" placeholder="Nome (ex: Charizard)" value={formData.name} onChange={e => updateField('name', e.target.value)} />
+                            
+                            <div className="grid grid-cols-2 gap-2">
+                                <input type="number" className="border p-2 rounded text-sm" placeholder="HP" value={formData.hp} onChange={e => updateField('hp', e.target.value)} />
+                                <select className="border p-2 rounded text-sm" value={formData.type} onChange={e => updateField('type', e.target.value)}>
                                     {Object.keys(ENERGY_TYPES).map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                             </div>
-                        </div>
 
-                        {/* Ataques Simplificados */}
-                        <div className="pt-2 border-t space-y-2">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase">Ataque 1</label>
-                            <input className="w-full border p-1 rounded text-xs mb-1" placeholder="Nome" value={formData.attack1_name} onChange={e => updateField('attack1_name', e.target.value)} />
-                            <div className="flex gap-2">
-                                <input type="number" className="w-1/2 border p-1 rounded text-xs" placeholder="Dano" value={formData.attack1_damage} onChange={e => updateField('attack1_damage', e.target.value)} />
-                                <input type="number" className="w-1/2 border p-1 rounded text-xs" placeholder="Custo" value={formData.attack1_cost} onChange={e => updateField('attack1_cost', e.target.value)} />
+                            <div className="grid grid-cols-2 gap-2">
+                                <select className="border p-2 rounded text-sm" value={formData.stage} onChange={e => updateField('stage', e.target.value)}>
+                                    <option value="0">Básico</option>
+                                    <option value="1">Estágio 1</option>
+                                    <option value="2">Estágio 2</option>
+                                </select>
+                                <input type="number" className="border p-2 rounded text-sm" placeholder="Recuo" value={formData.retreat} onChange={e => updateField('retreat', e.target.value)} />
                             </div>
                         </div>
 
+                        {/* STATUS */}
+                        <div className="space-y-2 pt-2 border-t">
+                            <label className="text-xs font-bold text-gray-400 uppercase">Status de Batalha</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="text-[10px] text-gray-500">Fraqueza</label>
+                                    <select className="w-full border p-1 rounded text-xs" value={formData.weakness} onChange={e => updateField('weakness', e.target.value)}>
+                                        <option value="">Nenhuma</option>
+                                        {Object.keys(ENERGY_TYPES).map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] text-gray-500">Resistência</label>
+                                    <select className="w-full border p-1 rounded text-xs" value={formData.resistance} onChange={e => updateField('resistance', e.target.value)}>
+                                        <option value="">Nenhuma</option>
+                                        {Object.keys(ENERGY_TYPES).map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ATAQUES */}
+                        <div className="space-y-3 pt-2 border-t">
+                            <label className="text-xs font-bold text-gray-400 uppercase">Ataques</label>
+                            
+                            <div className="bg-gray-50 p-2 rounded border border-gray-200">
+                                <input className="w-full text-xs font-bold bg-transparent mb-1 outline-none" placeholder="Nome do Ataque 1" value={formData.attack1_name} onChange={e => updateField('attack1_name', e.target.value)} />
+                                <div className="flex gap-2">
+                                    <input type="number" className="w-1/2 p-1 text-xs border rounded" placeholder="Dano" value={formData.attack1_damage} onChange={e => updateField('attack1_damage', e.target.value)} />
+                                    <input type="number" className="w-1/2 p-1 text-xs border rounded" placeholder="Custo" value={formData.attack1_cost} onChange={e => updateField('attack1_cost', e.target.value)} />
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-50 p-2 rounded border border-gray-200">
+                                <input className="w-full text-xs font-bold bg-transparent mb-1 outline-none" placeholder="Nome do Ataque 2 (Opcional)" value={formData.attack2_name} onChange={e => updateField('attack2_name', e.target.value)} />
+                                <div className="flex gap-2">
+                                    <input type="number" className="w-1/2 p-1 text-xs border rounded" placeholder="Dano" value={formData.attack2_damage} onChange={e => updateField('attack2_damage', e.target.value)} />
+                                    <input type="number" className="w-1/2 p-1 text-xs border rounded" placeholder="Custo" value={formData.attack2_cost} onChange={e => updateField('attack2_cost', e.target.value)} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* IMAGEM */}
                         <div className="pt-2 border-t">
-                             <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Imagem (URL)</label>
-                             <input className="w-full border p-1 rounded text-[10px] font-mono" placeholder="https://..." value={formData.image} onChange={e => updateField('image', e.target.value)} />
+                            <label className="text-xs font-bold text-gray-400 uppercase mb-1 block">URL da Imagem</label>
+                            <input className="w-full border p-2 rounded text-xs font-mono text-gray-600" placeholder="https://..." value={formData.image} onChange={e => updateField('image', e.target.value)} />
                         </div>
                     </div>
 
-                    <div className="p-4 border-t mt-auto bg-gray-50">
+                    <div className="p-4 border-t bg-gray-50 mt-auto">
                         <button 
-                            onClick={handleSaveCard}
-                            disabled={!formData.name || !selectedDeckId || loading}
-                            className={`w-full py-2 rounded text-xs font-bold text-white uppercase tracking-wider flex items-center justify-center gap-2 ${formData.id ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} disabled:opacity-50`}
+                            onClick={handleSaveCard} 
+                            disabled={!formData.name || loading || !selectedDeckId}
+                            className={`w-full py-3 rounded font-bold text-white flex items-center justify-center gap-2 ${formData.id ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} disabled:opacity-50`}
                         >
-                            {loading ? <Loader2 className="animate-spin" size={14}/> : <Save size={14}/>}
-                            {formData.id ? 'Salvar Alterações' : 'Adicionar Carta'}
+                            {loading ? <Loader2 className="animate-spin"/> : (formData.id ? <><Save size={18}/> Salvar Alterações</> : <><Plus size={18}/> Adicionar Carta</>)}
                         </button>
                     </div>
                 </div>
