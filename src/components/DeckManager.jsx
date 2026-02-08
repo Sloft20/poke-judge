@@ -7,6 +7,9 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
     const [deckList, setDeckList] = useState(decks);
     const [selectedDeckId, setSelectedDeckId] = useState(null);
     const [loading, setLoading] = useState(false);
+    React.useEffect(() => {
+        setDeckList(decks);
+    }, [decks]);
     
     // Estado do Formulário (Serve tanto para Criar quanto para Editar)
     const INITIAL_FORM = {
@@ -25,6 +28,7 @@ const DeckManager = ({ decks, onClose, onUpdate }) => {
     };
     
     const [formData, setFormData] = useState(INITIAL_FORM);
+    
 
     // --- AÇÕES DE DECK ---
     const handleCreateDeck = async () => {
