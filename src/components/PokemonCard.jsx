@@ -1,6 +1,6 @@
 // src/components/PokemonCard.jsx
 import React from 'react';
-import { Circle, Briefcase, PlusCircle, Star, Skull, Flame, Moon, Zap, EyeOff } from 'lucide-react'; // Ícones novos
+import { Circle, Briefcase, PlusCircle, Star, Skull, Flame, EyeOff } from 'lucide-react'; 
 import { ENERGY_TYPES, CONDITIONS } from '../data/constants';
 
 // Pequeno componente auxiliar (Barra de Vida)
@@ -58,8 +58,8 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
 
   // Define rotação para Sono ou Paralisia
   let rotateClass = '';
-  if (condition === CONDITIONS.ASLEEP) rotateClass = '-rotate-90 grayscale brightness-90 transition-all duration-500'; // Vira de lado
-  if (condition === CONDITIONS.PARALYZED) rotateClass = 'rotate-90 brightness-110 saturate-150 transition-all duration-500'; // Vira pro outro lado
+  if (condition === CONDITIONS.ASLEEP) rotateClass = '-rotate-90 grayscale brightness-90 transition-all duration-500'; 
+  if (condition === CONDITIONS.PARALYZED) rotateClass = 'rotate-90 brightness-110 saturate-150 transition-all duration-500'; 
 
   return (
     <div 
@@ -67,21 +67,18 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
       className={`relative ${small ? 'w-24 h-36' : 'w-52 h-80'} rounded-xl overflow-hidden shadow-lg border-4 ${borderClass} flex flex-col transform transition-transform duration-300 ${actions || onClick ? '' : 'hover:scale-105'} ${onClick ? 'cursor-pointer hover:ring-2 hover:ring-blue-500' : 'cursor-default'} group ${cardBackground} ${className} ${rotateClass}`}
     >
       
-      {/* 1. MARCADORES DE STATUS (TOKENS) - APARECEM EM CIMA DA CARTA */}
+      {/* 1. MARCADORES DE STATUS (TOKENS) */}
       <div className="absolute top-8 left-0 right-0 z-20 flex justify-center gap-2 pointer-events-none">
-          {/* Marcador de Veneno */}
           {isPoisoned && (
               <div className="w-8 h-8 bg-purple-600 rounded-full border-2 border-white shadow-lg flex items-center justify-center animate-bounce">
                   <Skull className="text-white w-5 h-5" />
               </div>
           )}
-          {/* Marcador de Queimadura */}
           {isBurned && (
               <div className="w-8 h-8 bg-red-600 rounded-full border-2 border-white shadow-lg flex items-center justify-center animate-pulse">
                   <Flame className="text-white w-5 h-5" />
               </div>
           )}
-          {/* Marcador de Confusão */}
           {condition === CONDITIONS.CONFUSED && (
               <div className="w-8 h-8 bg-pink-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center animate-spin-slow">
                   <EyeOff className="text-white w-5 h-5" />
@@ -89,7 +86,7 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
           )}
       </div>
 
-      {/* Overlay de Sono (Zzz) */}
+      {/* Overlay de Sono */}
       {condition === CONDITIONS.ASLEEP && (
           <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
               <span className="text-4xl font-black text-white drop-shadow-md animate-pulse">Zzz...</span>
@@ -122,12 +119,11 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
       
       {/* 3. ÁREA DA IMAGEM */}
       <div className={`relative mx-2 mt-0.5 mb-0.5 border-2 border-yellow-200/50 shadow-inner bg-white/90 overflow-hidden flex items-center justify-center ${small ? 'h-12' : 'h-28'}`}>
-         
          {imageUrl ? (
              <img 
-                src={imageUrl} 
-                alt={card.name} 
-                className="w-full h-full object-cover z-0" 
+               src={imageUrl} 
+               alt={card.name} 
+               className="w-full h-full object-cover z-0" 
              />
          ) : (
              <TypeIcon size={small ? 24 : 60} className={`opacity-80 drop-shadow-md text-${card.imgColor || 'gray'}-600`} />
@@ -179,7 +175,7 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
                                       );
                                   })}
                               </div>
-                              <span className="font-black text-black text-xs">{atk.damage}</span>
+                              <span className="font-black text-black text-xs">{atk.damage > 0 ? atk.damage : ''}</span>
                           </div>
                           <span className="text-gray-800 font-bold truncate leading-tight text-[9px]">{atk.name}</span>
                       </div>
@@ -210,17 +206,30 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
           )}
       </div>
 
-      {/* Footer */}
+      {/* Footer (Fraqueza, Resistência, Recuo) */}
       <div className={`bg-gray-100 p-0.5 border-t border-gray-300 text-gray-600 flex justify-between items-center px-1 rounded-b-lg ${small ? 'h-4 text-[6px]' : 'h-6 text-[8px]'}`}>
+          
+          {/* Fraqueza */}
           <div className="flex items-center gap-0.5">
               <span className="uppercase text-gray-400">Fraq.</span>
               {card.weakness ? (
-                  <div className={`${small ? 'w-2.5 h-2.5 text-[6px]' : 'w-3 h-3 text-[8px]'} ${ENERGY_TYPES[card.weakness]?.color} rounded-full flex items-center justify-center text-white`}>
-                      {React.createElement(ENERGY_TYPES[card.weakness]?.icon, { size: 6 })}
+                  <div className={`${small ? 'w-2.5 h-2.5 text-[6px]' : 'w-3 h-3 text-[8px]'} ${ENERGY_TYPES[card.weakness]?.color || 'bg-gray-500'} rounded-full flex items-center justify-center text-white`}>
+                      {ENERGY_TYPES[card.weakness]?.icon ? React.createElement(ENERGY_TYPES[card.weakness]?.icon, { size: 6 }) : card.weakness[0]}
+                  </div>
+              ) : <span>-</span>}
+          </div>
+
+          {/* Resistência (NOVO) */}
+          <div className="flex items-center gap-0.5">
+              <span className="uppercase text-gray-400">Res.</span>
+              {card.resistance ? (
+                  <div className={`${small ? 'w-2.5 h-2.5 text-[6px]' : 'w-3 h-3 text-[8px]'} ${ENERGY_TYPES[card.resistance]?.color || 'bg-gray-500'} rounded-full flex items-center justify-center text-white`}>
+                      {ENERGY_TYPES[card.resistance]?.icon ? React.createElement(ENERGY_TYPES[card.resistance]?.icon, { size: 6 }) : card.resistance[0]}
                   </div>
               ) : <span>-</span>}
           </div>
           
+          {/* Recuo */}
           <div className="flex items-center gap-0.5">
               <span className="uppercase text-gray-400">Recuo</span>
               <div className="flex gap-0.5">
