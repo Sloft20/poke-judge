@@ -315,7 +315,7 @@ export default function PokeJudgePro() {
   const [history, setHistory] = useState([]);
   // --- GERENCIADOR DE DECKS (SUPABASE) ---
   const [showDeckManager, setShowDeckManager] = useState(false);
-  const [availableDecks, setAvailableDecks] = useState(DECKS); // Começa com os padrões do arquivo
+  const [availableDecks, setAvailableDecks] = useState({}); // Começa vazio
 
   // Função que vai no Banco e busca os decks novos
   const fetchDecksFromSupabase = async () => {
@@ -339,7 +339,7 @@ export default function PokeJudgePro() {
               });
               
               // Junta os decks oficiais (DECKS) com os do banco (dbDecks)
-              setAvailableDecks({ dbDecks });
+              setAvailableDecks(dbDecks); // <--- USE ESTA (SÓ O BANCO)
           }
       } catch (error) {
           console.error("Erro ao carregar decks:", error);
@@ -1367,9 +1367,7 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
                 <button onClick={() => setShowDeckManager(true)} className="mb-6 text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 w-full underline">
                     <Edit3 size={12}/> Gerenciar Decks (Supabase)
                 </button>
-                <button onClick={migrateDecksToSupabase} className="fixed top-2 right-2 z-50 bg-green-600 text-white p-2 rounded shadow-lg font-bold">
-                🔄 Tentar Migrar de Novo
-                </button>
+                
                 
               </div>
           </div>
