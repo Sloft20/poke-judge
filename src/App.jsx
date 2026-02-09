@@ -94,7 +94,7 @@ const RankingModal = ({ onClose }) => {
     const [matches, setMatches] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // 1. Busca os dados reais do Supabase
+    // 1. Busca os dados
     useEffect(() => {
         const fetchHistory = async () => {
             setLoading(true);
@@ -113,7 +113,7 @@ const RankingModal = ({ onClose }) => {
         fetchHistory();
     }, []);
 
-    // 2. Cálculo de Stats
+    // 2. Cálculos
     const calculateLiveStats = () => {
         const deckStats = {};
         const playerStats = {};
@@ -143,15 +143,23 @@ const RankingModal = ({ onClose }) => {
     const sortedDecks = Object.values(deckStats).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
     const sortedPlayers = Object.entries(playerStats).map(([name, stat]) => ({name, ...stat})).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
 
-    // --- COMPONENTE INTERNO: TERMINAL DE LOGS COLORIDO ---
+    // --- ÍCONES DE TROFÉU (RESTAURADOS) ---
+    const getRankIcon = (index) => {
+        if (index === 0) return <Trophy size={20} className="text-yellow-500 drop-shadow-sm" fill="currentColor"/>; // Ouro
+        if (index === 1) return <Trophy size={18} className="text-gray-400 drop-shadow-sm" fill="currentColor"/>;   // Prata
+        if (index === 2) return <Trophy size={16} className="text-orange-400 drop-shadow-sm" fill="currentColor"/>; // Bronze
+        return <span className="text-gray-400 font-mono font-bold text-sm">#{index + 1}</span>;
+    };
+
+    // --- COMPONENTE DE LOG (TERMINAL DARK COM TEXTO BRANCO) ---
     const LogTerminal = ({ logs }) => {
         if (!logs) return <div className="text-gray-500">Log vazio.</div>;
         
         return (
-            <div className="flex-1 overflow-y-auto p-4 font-mono text-xs leading-relaxed custom-scrollbar bg-[#0f172a]">
+            <div className="flex-1 overflow-y-auto p-4 font-mono text-xs leading-relaxed custom-scrollbar bg-[#0f172a] text-gray-100">
                 {logs.split('\n').map((line, i) => {
-                    // Lógica de Cores e Destaques
-                    let lineStyle = "text-gray-300"; // Cor padrão (branca/cinza claro)
+                    // Estilos de Destaque
+                    let lineStyle = "text-gray-300"; // Padrão Branco/Cinza
                     let icon = null;
 
                     if (line.includes('NOCAUTE') || line.includes('Nocauteado')) {
@@ -165,11 +173,8 @@ const RankingModal = ({ onClose }) => {
                         icon = "🏆 ";
                     } else if (line.includes('Turno')) {
                         lineStyle = "text-blue-400 font-bold mt-2 block border-t border-slate-700 pt-2";
-                    } else if (line.includes('CHECKUP')) {
-                        lineStyle = "text-purple-400 italic opacity-80";
                     }
 
-                    // Separa o Timestamp do texto (Ex: [15:30:00] Texto...)
                     const match = line.match(/^\[(.*?)\](.*)/);
                     if (match) {
                         return (
@@ -186,35 +191,33 @@ const RankingModal = ({ onClose }) => {
     };
 
     return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
           
-          {/* Card Principal DARK MODE */}
-          <Card className="w-full max-w-5xl h-[85vh] flex flex-col bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden text-white">
+          {/* --- CARD PRINCIPAL: TEMA CLARO (LIGHT) --- */}
+          <Card className="w-full max-w-4xl h-[85vh] flex flex-col bg-white border-none shadow-2xl rounded-2xl overflow-hidden">
               
-              {/* HEADER */}
-              <div className="bg-slate-950 p-6 flex justify-between items-center border-b border-slate-800">
-                  <div>
-                      <h2 className="text-2xl font-black flex items-center gap-3 uppercase tracking-tighter italic text-white">
-                          <Trophy className="text-yellow-500" size={32}/> 
-                          Ranking <span className="text-blue-500">Pro</span>
-                      </h2>
-                  </div>
-                  <button onClick={onClose} className="bg-slate-800 hover:bg-red-600 hover:text-white text-slate-400 p-2 rounded-full transition-all">
+              {/* Header Claro */}
+              <div className="bg-white p-6 flex justify-between items-center border-b border-gray-100">
+                  <h2 className="text-2xl font-black flex items-center gap-3 uppercase tracking-tighter text-gray-800">
+                      <Trophy className="text-yellow-500" size={32}/> 
+                      Ranking <span className="text-blue-600">Pro</span>
+                  </h2>
+                  <button onClick={onClose} className="text-gray-400 hover:text-red-500 transition-colors bg-gray-100 p-2 rounded-full">
                       <X size={24}/>
                   </button>
               </div>
               
-              {/* MENU DE ABAS */}
-              <div className="flex gap-1 p-2 bg-slate-950 border-b border-slate-800">
+              {/* Abas Claras */}
+              <div className="flex gap-2 p-4 bg-gray-50 border-b border-gray-200">
                   {['decks', 'players', 'history'].map(t => (
                       <button 
                           key={t}
                           onClick={() => setTab(t)} 
                           className={`
-                              flex-1 py-3 rounded-md text-sm font-bold uppercase tracking-wider transition-all
+                              flex-1 py-3 rounded-lg text-sm font-bold uppercase tracking-wider transition-all
                               ${tab === t 
-                                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' 
-                                  : 'bg-transparent text-slate-500 hover:bg-slate-800 hover:text-white'}
+                                  ? 'bg-white text-blue-600 shadow-sm border border-gray-200 translate-y-[-2px]' 
+                                  : 'bg-transparent text-gray-500 hover:bg-gray-200/50'}
                           `}
                       >
                           {t === 'decks' ? '🔥 Decks' : t === 'players' ? '👤 Jogadores' : '📜 Histórico'}
@@ -222,101 +225,108 @@ const RankingModal = ({ onClose }) => {
                   ))}
               </div>
 
-              {/* CONTEÚDO */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-900 p-4">
+              {/* Conteúdo (Tabelas Claras) */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar bg-white p-4">
                   {tab === 'history' ? (
-                      <div className="grid grid-cols-1 gap-2">
+                      <div className="space-y-3">
                           {loading ? (
                               <div className="flex justify-center p-10"><Loader2 className="animate-spin text-blue-500"/></div>
+                          ) : matches.length === 0 ? (
+                              <p className="text-center text-gray-400 mt-10">Sem histórico.</p>
                           ) : matches.map((m, idx) => (
-                              // CARD HISTÓRICO DARK
-                              <div key={idx} className="bg-slate-800 p-0 rounded-lg border border-slate-700 flex flex-col md:flex-row overflow-hidden group hover:border-blue-500 transition-colors">
-                                  <div className="bg-slate-950 p-3 flex flex-col justify-center items-center md:w-24 border-r border-slate-700">
-                                      <span className="text-xs font-bold text-slate-400">{new Date(m.created_at).toLocaleDateString()}</span>
-                                      <span className="text-[10px] font-mono text-slate-600">{new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                              // Card Histórico (Estilo Clean)
+                              <div key={idx} className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row overflow-hidden group">
+                                  <div className="bg-gray-50 p-4 w-32 flex flex-col justify-center items-center border-r border-gray-100">
+                                      <span className="text-xs font-bold text-gray-500">{new Date(m.created_at).toLocaleDateString()}</span>
+                                      <span className="text-[10px] text-gray-400">{new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
                                   </div>
-                                  <div className="flex-1 p-3 flex justify-between items-center">
-                                      <div className="flex-1 text-right">
-                                          <div className="font-bold text-white text-md flex items-center justify-end gap-2">
+                                  <div className="flex-1 p-4 flex justify-between items-center">
+                                      <div className="text-right flex-1">
+                                          <div className="font-bold text-gray-800 flex items-center justify-end gap-2">
                                               {m.winner_name} <Crown size={14} className="text-yellow-500"/>
                                           </div>
-                                          <div className="text-[10px] font-bold text-blue-400">{m.winner_deck}</div>
+                                          <div className="text-[10px] bg-green-100 text-green-700 px-2 rounded inline-block font-bold">{m.winner_deck}</div>
                                       </div>
-                                      <div className="mx-4 bg-slate-950 text-slate-500 text-[10px] font-black py-1 px-2 rounded italic">VS</div>
-                                      <div className="flex-1 text-left opacity-60">
-                                          <div className="font-bold text-slate-300 text-sm">{m.loser_name}</div>
-                                          <div className="text-[10px] text-slate-500">{m.loser_deck}</div>
+                                      <div className="mx-4 text-xs font-black text-gray-300">VS</div>
+                                      <div className="text-left flex-1 opacity-60">
+                                          <div className="font-bold text-gray-600">{m.loser_name}</div>
+                                          <div className="text-[10px] text-gray-500">{m.loser_deck}</div>
                                       </div>
                                   </div>
-                                  <button onClick={() => setSelectedMatchLogs(m.game_logs)} className="bg-slate-900 hover:bg-blue-600 hover:text-white text-slate-500 border-l border-slate-700 p-4 transition-colors">
-                                      <BookOpen size={18}/>
+                                  <button onClick={() => setSelectedMatchLogs(m.game_logs)} className="p-4 bg-gray-50 text-blue-500 hover:bg-blue-50 hover:text-blue-700 transition-colors border-l border-gray-100 font-bold text-xs uppercase tracking-wider">
+                                      Ver Log
                                   </button>
                               </div>
                           ))}
                       </div>
                   ) : (
-                      // TABELA RANKING DARK
-                      <table className="w-full text-sm text-left text-slate-300">
-                          <thead className="bg-slate-950 text-slate-500 uppercase font-bold text-xs">
-                              <tr>
-                                  <th className="px-6 py-3">#</th>
-                                  <th className="px-6 py-3">{tab === 'decks' ? 'Deck' : 'Jogador'}</th>
-                                  <th className="px-6 py-3 text-center">Partidas</th>
-                                  <th className="px-6 py-3 text-center">Vitórias</th>
-                                  <th className="px-6 py-3 text-right">Win Rate</th>
-                              </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-800">
-                              {(tab === 'decks' ? sortedDecks : sortedPlayers).map((item, idx) => {
-                                  const wr = ((item.wins / item.plays) * 100);
-                                  return (
-                                      <tr key={idx} className="hover:bg-slate-800 transition-colors">
-                                          <td className="px-6 py-3 font-bold text-slate-500">#{idx + 1}</td>
-                                          <td className="px-6 py-3 font-bold text-white text-base">{item.name}</td>
-                                          <td className="px-6 py-3 text-center font-mono">{item.plays}</td>
-                                          <td className="px-6 py-3 text-center font-mono text-green-400">{item.wins}</td>
-                                          <td className="px-6 py-3 text-right">
-                                              <span className={`px-2 py-1 rounded text-xs font-bold ${wr >= 50 ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
-                                                  {wr.toFixed(1)}%
-                                              </span>
-                                          </td>
-                                      </tr>
-                                  );
-                              })}
-                          </tbody>
-                      </table>
+                      // Tabela Ranking (Estilo Clean com Troféus)
+                      <div className="border border-gray-100 rounded-xl overflow-hidden shadow-sm">
+                          <table className="w-full text-sm text-left">
+                              <thead className="bg-gray-50 text-gray-500 uppercase font-bold text-xs">
+                                  <tr>
+                                      <th className="px-6 py-4 text-center">Posição</th>
+                                      <th className="px-6 py-4">{tab === 'decks' ? 'Deck' : 'Jogador'}</th>
+                                      <th className="px-6 py-4 text-center">Partidas</th>
+                                      <th className="px-6 py-4 text-center">Vitórias</th>
+                                      <th className="px-6 py-4 text-right">Win Rate</th>
+                                  </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-50 bg-white">
+                                  {(tab === 'decks' ? sortedDecks : sortedPlayers).map((item, idx) => {
+                                      const wr = ((item.wins / item.plays) * 100);
+                                      return (
+                                          <tr key={idx} className="hover:bg-blue-50 transition-colors">
+                                              <td className="px-6 py-4 flex justify-center items-center">
+                                                  {getRankIcon(idx)}
+                                              </td>
+                                              <td className="px-6 py-4 font-bold text-gray-800">
+                                                  {item.name}
+                                              </td>
+                                              <td className="px-6 py-4 text-center text-gray-600 font-mono">
+                                                  {item.plays}
+                                              </td>
+                                              <td className="px-6 py-4 text-center text-gray-600 font-mono">
+                                                  {item.wins}
+                                              </td>
+                                              <td className="px-6 py-4 text-right">
+                                                  <span className={`px-3 py-1 rounded-full text-xs font-black ${wr >= 50 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                      {wr.toFixed(1)}%
+                                                  </span>
+                                              </td>
+                                          </tr>
+                                      );
+                                  })}
+                              </tbody>
+                          </table>
+                      </div>
                   )}
               </div>
           </Card>
 
-          {/* --- TERMINAL DE LOGS (MODAL INTERNO) --- */}
+          {/* --- TERMINAL DE LOGS (MANTIDO O NOVO, COMO PEDIDO) --- */}
           {selectedMatchLogs && (
               <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[110] p-4 animate-in zoom-in duration-200">
-                  <div className="w-full max-w-3xl h-[85vh] flex flex-col bg-[#0f172a] rounded-xl shadow-2xl border border-slate-600 overflow-hidden">
+                  <div className="w-full max-w-3xl h-[85vh] flex flex-col bg-[#0f172a] rounded-xl shadow-2xl border border-slate-600 overflow-hidden font-mono">
                       
                       {/* Barra do Terminal */}
                       <div className="bg-[#1e293b] p-3 flex justify-between items-center border-b border-slate-700">
-                          <div className="flex gap-2">
-                              <div className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-400 cursor-pointer" onClick={() => setSelectedMatchLogs(null)}></div>
-                              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                          </div>
-                          <span className="text-slate-400 text-xs font-mono font-bold tracking-widest uppercase flex items-center gap-2">
-                              <History size={12}/> Battle Log
+                          <span className="text-slate-400 text-xs font-bold tracking-widest uppercase flex items-center gap-2">
+                              <History size={14}/> Registro de Combate
                           </span>
-                          <div className="w-10"></div>
+                          <button onClick={() => setSelectedMatchLogs(null)} className="text-slate-400 hover:text-white"><X size={18}/></button>
                       </div>
 
-                      {/* Conteúdo do Log com Cores */}
+                      {/* Conteúdo do Terminal (Texto Branco/Colorido) */}
                       <LogTerminal logs={selectedMatchLogs} />
 
-                      {/* Footer do Terminal */}
-                      <div className="p-3 bg-[#1e293b] border-t border-slate-700 text-right">
+                      {/* Footer */}
+                      <div className="p-4 bg-[#1e293b] border-t border-slate-700 flex justify-end">
                           <button 
                               onClick={() => setSelectedMatchLogs(null)}
-                              className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs font-bold uppercase transition-colors"
+                              className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-bold uppercase transition-colors shadow-lg"
                           >
-                              Fechar Console
+                              Fechar Log
                           </button>
                       </div>
                   </div>
