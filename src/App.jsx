@@ -315,7 +315,8 @@ export default function PokeJudgePro() {
   const [history, setHistory] = useState([]);
   // --- GERENCIADOR DE DECKS (SUPABASE) ---
   const [showDeckManager, setShowDeckManager] = useState(false);
-  const [availableDecks, setAvailableDecks] = useState({}); // Começa vazio
+  const [availableDecks, setAvailableDecks] = useState({});
+  const decksRef = useRef({}); // Começa vazio
   // --- CARREGA OS DADOS ASSIM QUE O SITE ABRE ---
   useEffect(() => {
     fetchDecksFromSupabase();
@@ -349,6 +350,7 @@ export default function PokeJudgePro() {
 
               // ATUALIZA O ESTADO DO APP
               setAvailableDecks(dbDecks);
+              decksRef.current = dbDecks; // <--- ADICIONE ISSO (Salva no cofre)
               console.log("✅ Dados carregados no App:", Object.keys(dbDecks).length, "decks.");
               
               // --- CORREÇÃO DO "STATUS STALE" (MOCHILA VELHA) ---
@@ -509,31 +511,51 @@ export default function PokeJudgePro() {
   };
 
   const handleStartGameFromLobby = () => {
-      // 1. Preparar os Decks
+      console.log("🚀 Iniciando partida com dados do Supabase...");
+
+      // 1. Usa o COFRE (decksRef) para garantir que temos a versão mais recente dos dados
+      // Se o cofre estiver vazio, tenta usar o state (availableDecks)
+      const sourceDecks = (decksRef.current && Object.keys(decksRef.current).length > 0) 
+          ? decksRef.current 
+          : availableDecks;
+
       const newPlayers = players.map(p => {
-          // Pega a lista de cartas do arquétipo escolhido
-          const originalCards = DECKS[p.deckArchetype]?.cards || [];
+          // --- AQUI ESTAVA O ERRO: Agora lemos de sourceDecks, não de DECKS ---
+          const freshDeckData = sourceDecks[p.deckArchetype];
           
-          // O seu deck.js atual tem poucas cartas (ex: 5). 
-          // Para simular um deck de 60, vamos duplicar as cartas até encher.
-          let fullDeck = [];
-          while (fullDeck.length < 60) {
-              fullDeck = [...fullDeck, ...originalCards];
+          if (!freshDeckData) {
+              console.error(`ERRO CRÍTICO: Deck ${p.deckArchetype} não encontrado no banco de dados!`, sourceDecks);
+              addLog(`Erro: Deck ${p.deckArchetype} não carregou. Dê F5.`, 'CRIT');
           }
-          fullDeck = fullDeck.slice(0, 60); // Garante 60 cartas exatas
+
+          const originalCards = freshDeckData?.cards || [];
           
-          // Embaralha
-          const shuffledDeck = shuffleDeck(fullDeck);
+          // Debug para provar que pegou o HP certo
+          if (originalCards.length > 0) {
+              console.log(`🔍 Deck ${p.deckArchetype} carregado. Exemplo: ${originalCards[0].name} - HP: ${originalCards[0].hp}`);
+          }
+
+          // Simular deck de 60 cartas
+          let fullDeck = [];
+          if (originalCards.length > 0) {
+              while (fullDeck.length < 60) {
+                  // structuredClone é mais seguro para copiar objetos profundos
+                  fullDeck = [...fullDeck, ...originalCards]; // Spread operator para cópia rasa
+              }
+              fullDeck = fullDeck.slice(0, 60); 
+          }
           
-          // Compra as 7 primeiras (Mão Inicial)
+          const shuffledDeck = shuffleDeck([...fullDeck]); // Copia antes de embaralhar
+          
           const initialHand = shuffledDeck.splice(0, 7);
           
           return {
               ...p,
-              deck: shuffledDeck, // O que sobrou (53 cartas)
-              hand: initialHand,  // As 7 cartas na mão
-              deckCount: shuffledDeck.length, // Mantemos o contador para compatibilidade visual
-              handCount: initialHand.length   // Mantemos o contador para compatibilidade visual
+              deckName: freshDeckData?.name || p.deckArchetype, // Atualiza nome visual
+              deck: shuffledDeck, 
+              hand: initialHand, 
+              deckCount: shuffledDeck.length, 
+              handCount: initialHand.length 
           };
       });
 
@@ -545,8 +567,7 @@ export default function PokeJudgePro() {
       }));
       setGameTimer(0);
       
-      // Logs de sistema
-      addLog(`Mesa configurada. Decks embaralhados (60 cartas).`, 'INFO');
+      addLog(`Mesa configurada com dados do Banco de Dados.`, 'INFO');
       addLog(`${newPlayers[0].name} comprou 7 cartas.`, 'INFO');
       addLog(`${newPlayers[1].name} comprou 7 cartas.`, 'INFO');
   };
@@ -1224,7 +1245,7 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
         const p = players[pIndex]; 
         const isCurrent = gameState.currentPlayerIndex === pIndex; 
         const isSetup = gameState.phase === PHASES.SETUP; 
-        const deckInfo = DECKS[p.deckArchetype]; 
+        const deckInfo = availableDecks[p.deckArchetype] || { name: 'Carregando...', color: 'bg-gray-400' }; 
         
         return ( 
             <Card className={`border-l-4 ${isCurrent ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-300'} mb-4 relative transition-all duration-300 ${pIndex === 0 ? 'bg-slate-50' : 'bg-red-50'}`}> 
@@ -1957,11 +1978,36 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
     )}
     
 
-    {showDeckModal && (
+    {showDeckModal && availableDecks[showDeckModal.deckId] && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-4xl max-h-[90vh] flex flex-col">
-              <div className="flex justify-between items-center mb-4 pb-2 border-b"><div><h2 className="text-xl font-bold flex items-center gap-2">{DECKS[showDeckModal.deckId].name}</h2><p className="text-sm text-gray-500">{showDeckModal.target && showDeckModal.target.includes('EVOLVE') ? 'Selecione a carta para evoluir' : 'Selecione uma carta'}</p></div><button onClick={() => setShowDeckModal(null)} className="p-2 hover:bg-gray-100 rounded-full"><X/></button></div>
-              <div className="flex-1 overflow-y-auto p-2"><div className="flex flex-wrap gap-4 justify-center">{DECKS[showDeckModal.deckId].cards.map((card, idx) => (<PokemonCard key={idx} card={card} onClick={showDeckModal.target ? () => placePokemon(card, showDeckModal.target, showDeckModal.pIndex, showDeckModal.evolveTargetIndex) : undefined} actions={showDeckModal.target ? (<div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/30 transition-all"><span className="bg-white text-black font-bold px-3 py-1 rounded-full shadow-lg transform scale-90 group-hover:scale-100 transition-transform opacity-0 group-hover:opacity-100">{showDeckModal.target.includes('EVOLVE') ? 'Evoluir' : 'Selecionar'}</span></div>) : null} />))}</div></div>
+              <div className="flex justify-between items-center mb-4 pb-2 border-b">
+                  <div>
+                      <h2 className="text-xl font-bold flex items-center gap-2">
+                          {availableDecks[showDeckModal.deckId].name}
+                      </h2>
+                      <p className="text-sm text-gray-500">
+                          {showDeckModal.target ? 'Selecione uma carta' : 'Visualização do Deck'}
+                      </p>
+                  </div>
+                  <button onClick={() => setShowDeckModal(null)} className="p-2 hover:bg-gray-100 rounded-full"><X/></button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-2">
+                  <div className="flex flex-wrap gap-4 justify-center">
+                      {availableDecks[showDeckModal.deckId].cards.map((card, idx) => (
+                          <PokemonCard 
+                              key={idx} 
+                              card={card} 
+                              onClick={showDeckModal.target ? () => placePokemon(card, showDeckModal.target, showDeckModal.pIndex, showDeckModal.evolveTargetIndex) : undefined} 
+                              actions={showDeckModal.target ? (
+                                  <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/30 transition-all">
+                                      <span className="bg-white text-black font-bold px-3 py-1 rounded-full shadow-lg transform scale-90 group-hover:scale-100 transition-transform opacity-0 group-hover:opacity-100">Selecionar</span>
+                                  </div>
+                              ) : null} 
+                          />
+                      ))}
+                  </div>
+              </div>
           </Card>
         </div>
     )}
