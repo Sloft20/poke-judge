@@ -19,6 +19,7 @@ import GameLobby from './components/GameLobby';
 import PrizeZone from './components/PrizeZone';
 import DeckManager from './components/DeckManager';
 import RuleBookModal from './components/RuleBookModal';
+import EnergyModal from './components/EnergyModal'; // Adicione esta linha
 
 
 
@@ -1969,25 +1970,28 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
         </div>
     )}
 
+    {/* --- SUBSTITUA O BLOCO ANTIGO POR ESTE AQUI --- */}
     {showEnergyModal && (
-      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-           <Card className="w-full max-w-lg">
-              <div className="flex justify-between items-center mb-4 border-b pb-2">
-                <div>
-                    <h3 className="text-lg font-bold">Selecionar Tipo de Energia</h3>
-                    <p className="text-[10px] font-mono text-blue-600 font-bold uppercase">
-                      Total no Pokémon: {
-                        showEnergyModal.location === 'ACTIVE' 
-                        ? players[showEnergyModal.pIndex].activePokemon?.attachedEnergy?.length || 0
-                        : players[showEnergyModal.pIndex].benchPokemon[showEnergyModal.index]?.attachedEnergy?.length || 0
-                      }
-                    </p>
-                </div>
-                <button onClick={() => setShowEnergyModal(null)}><X/></button>
-              </div>
-              <div className="grid grid-cols-3 gap-2">{Object.entries(ENERGY_TYPES).map(([key, val]) => (<button key={key} onClick={() => confirmAttachEnergy(val)} className={`${val.color} p-3 rounded-lg flex flex-col items-center gap-2 hover:opacity-90 transition-opacity`}><val.icon size={24} className={val.text === 'text-white' ? 'text-white' : 'text-black'} /><span className={`text-xs font-bold ${val.text}`}>{val.name}</span></button>))}</div>
-           </Card>
-      </div>
+        (() => {
+            // Lógica para pegar o nome do pokémon e quantas energias ele tem
+            const { pIndex, location, index } = showEnergyModal;
+            const targetPlayer = players[pIndex];
+            const targetPokemon = location === 'ACTIVE' 
+                ? targetPlayer.activePokemon 
+                : targetPlayer.benchPokemon[index];
+            
+            // Segurança caso o Pokémon não exista
+            if (!targetPokemon) return null;
+
+            return (
+                <EnergyModal
+                    onClose={() => setShowEnergyModal(null)}
+                    onConfirm={confirmAttachEnergy}
+                    pokemonName={targetPokemon.name}
+                    currentEnergyCount={targetPokemon.attachedEnergy?.length || 0}
+                />
+            );
+        })()
     )}
 
     {showToolModal && (
