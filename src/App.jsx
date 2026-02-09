@@ -854,6 +854,31 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
 
      addLog(`Removeu Energia ${removed[0]} de ${card.name}`, 'WARN', pIndex);
   };
+  // --- NOVA FUNÇÃO DE REGISTRO: DESCARTE MANUAL ---
+  const handleManualDiscard = () => {
+      saveGameHistory(); // Salva para poder desfazer (Ctrl+Z)
+      const { pIndex, location, index, card } = selectedCardAction;
+      
+      // 1. Remove da origem (Ativo ou Banco)
+      if (location === 'ACTIVE') {
+          updatePlayer(pIndex, { 
+              activePokemon: null, 
+              activeCondition: CONDITIONS.NONE,
+              // Adiciona ao histórico de descarte do jogador
+              discardPile: [...(players[pIndex].discardPile || []), card]
+          });
+      } else {
+          const newBench = players[pIndex].benchPokemon.filter((_, i) => i !== index);
+          updatePlayer(pIndex, { 
+              benchPokemon: newBench, 
+              benchCount: newBench.length,
+              discardPile: [...(players[pIndex].discardPile || []), card]
+          });
+      }
+
+      addLog(`REGISTRO: ${card.name} foi enviado para o Descarte.`, 'WARN', pIndex);
+      setSelectedCardAction(null); // Fecha o menu
+  };
 
   const handleManualDamage = (amount) => {
     saveGameHistory();
@@ -1664,6 +1689,16 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
                                     onClick={() => requestEvolution(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}
                                 >
                                     <GitMerge className="mr-3 text-gray-400" size={20}/> Evoluir Pokémon
+                                </Button>
+                                {/* ... outros botões (Ligar Energia, Evoluir, etc) ... */}
+
+                                <Button 
+                                    variant="ghost" 
+                                    className="h-14 border border-red-200 bg-red-50 hover:bg-red-100 hover:border-red-400 hover:text-red-700 justify-start px-4 col-span-1 md:col-span-2 mt-2" 
+                                    onClick={handleManualDiscard}
+                                >
+                                    <Trash2 className="mr-3 text-red-500" size={20}/> 
+                                    Registrar Descarte / Nocaute
                                 </Button>
 
                                 {/* Botão de Promover (Só aparece se estiver no Banco e não tiver Ativo) */}
