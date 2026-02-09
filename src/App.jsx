@@ -113,13 +113,13 @@ const RankingModal = ({ onClose }) => {
         fetchHistory();
     }, []);
 
-    // 2. FUNÇÃO DE CÁLCULO EM TEMPO REAL: Substitui a antiga calculateStats()
+    // 2. FUNÇÃO DE CÁLCULO EM TEMPO REAL
     const calculateLiveStats = () => {
         const deckStats = {};
         const playerStats = {};
 
         matches.forEach(m => {
-            // Processa Estatísticas de Decks
+            // Processa Decks
             if (!deckStats[m.winner_deck]) deckStats[m.winner_deck] = { name: m.winner_deck, wins: 0, plays: 0 };
             if (!deckStats[m.loser_deck]) deckStats[m.loser_deck] = { name: m.loser_deck, wins: 0, plays: 0 };
             
@@ -127,7 +127,7 @@ const RankingModal = ({ onClose }) => {
             deckStats[m.winner_deck].plays++;
             deckStats[m.loser_deck].plays++;
 
-            // Processa Estatísticas de Jogadores
+            // Processa Jogadores
             const wName = m.winner_name || "Desconhecido";
             const lName = m.loser_name || "Desconhecido";
 
@@ -142,86 +142,194 @@ const RankingModal = ({ onClose }) => {
         return { deckStats, playerStats };
     };
 
-    // 3. Gera as listas ordenadas baseadas nos dados do banco
     const { deckStats, playerStats } = calculateLiveStats();
     
     const sortedDecks = Object.values(deckStats).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
     const sortedPlayers = Object.entries(playerStats).map(([name, stat]) => ({name, ...stat})).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
 
-    // O restante do seu código (return) permanece o mesmo...
+    // Helper para ícone de troféu
+    const getRankIcon = (index) => {
+        if (index === 0) return <Trophy size={20} className="text-yellow-500 drop-shadow-sm" fill="currentColor"/>; // Ouro
+        if (index === 1) return <Trophy size={18} className="text-gray-400 drop-shadow-sm" fill="currentColor"/>;   // Prata
+        if (index === 2) return <Trophy size={16} className="text-orange-400 drop-shadow-sm" fill="currentColor"/>; // Bronze
+        return <span className="text-gray-400 font-mono font-bold text-sm">#{index + 1}</span>;
+    };
 
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
-          {/* Fundo Branco e Estilo Light conforme a primeira foto */}
-          <Card className="w-full max-w-2xl h-[85vh] flex flex-col bg-white border-gray-100 shadow-2xl">
-              <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4 px-4 pt-4">
-                  <h2 className="text-xl font-bold flex items-center gap-3 text-gray-800 uppercase tracking-tight">
-                      <Trophy className="text-yellow-500" size={28}/> 
-                      Ranking & Stats
-                  </h2>
-                  <button onClick={onClose} className="text-gray-400 hover:text-red-500 transition-colors"><X size={24}/></button>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
+          <Card className="w-full max-w-4xl h-[85vh] flex flex-col bg-white border-none shadow-2xl rounded-2xl overflow-hidden">
+              
+              {/* HEADER MODERNO */}
+              <div className="bg-slate-900 text-white p-6 flex justify-between items-center shadow-md">
+                  <div>
+                      <h2 className="text-2xl font-black flex items-center gap-3 uppercase tracking-tighter italic">
+                          <Trophy className="text-yellow-400" size={32}/> 
+                          Ranking & Estatísticas
+                      </h2>
+                      <p className="text-slate-400 text-xs font-mono mt-1">Base de dados unificada</p>
+                  </div>
+                  <button onClick={onClose} className="bg-white/10 hover:bg-red-500 hover:text-white text-white p-2 rounded-full transition-all">
+                      <X size={24}/>
+                  </button>
               </div>
               
-              {/* Abas com fundo cinza claro */}
-              <div className="flex gap-2 mb-6 p-1 bg-gray-100 mx-4 rounded-lg border border-gray-200">
-                  <button onClick={() => setTab('decks')} className={`flex-1 py-2 rounded-md text-xs font-bold uppercase transition-all ${tab === 'decks' ? 'bg-white text-blue-600 shadow-sm border border-gray-200' : 'text-gray-500'}`}>Decks Meta</button>
-                  <button onClick={() => setTab('players')} className={`flex-1 py-2 rounded-md text-xs font-bold uppercase transition-all ${tab === 'players' ? 'bg-white text-blue-600 shadow-sm border border-gray-200' : 'text-gray-500'}`}>Jogadores</button>
-                  <button onClick={() => setTab('history')} className={`flex-1 py-2 rounded-md text-xs font-bold uppercase transition-all ${tab === 'history' ? 'bg-white text-blue-600 shadow-sm border border-gray-200' : 'text-gray-500'}`}>Histórico</button>
+              {/* MENU DE ABAS */}
+              <div className="flex gap-2 p-4 bg-slate-50 border-b border-gray-200">
+                  {['decks', 'players', 'history'].map(t => (
+                      <button 
+                          key={t}
+                          onClick={() => setTab(t)} 
+                          className={`
+                              flex-1 py-3 rounded-lg text-sm font-black uppercase tracking-wider transition-all
+                              ${tab === t 
+                                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 translate-y-[-2px]' 
+                                  : 'bg-white text-gray-500 hover:bg-gray-100 border border-gray-200'}
+                          `}
+                      >
+                          {t === 'decks' ? '🔥 Meta Decks' : t === 'players' ? '👤 Jogadores' : '📜 Histórico'}
+                      </button>
+                  ))}
               </div>
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar px-4 pb-4">
+              <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-100 p-4">
                   {tab === 'history' ? (
-                      <div className="space-y-2">
+                      <div className="grid grid-cols-1 gap-3">
                           {loading ? (
-                              <p className="text-center py-10 text-gray-400 animate-pulse">Carregando histórico do Supabase...</p>
+                              <div className="flex flex-col items-center justify-center h-40 text-gray-400 gap-2">
+                                  <Loader2 className="animate-spin" size={32}/>
+                                  <p className="text-sm font-bold">Sincronizando partidas...</p>
+                              </div>
+                          ) : matches.length === 0 ? (
+                              <p className="text-center text-gray-400 mt-10">Nenhuma partida registrada ainda.</p>
                           ) : matches.map((m, idx) => (
-                              <div key={idx} className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex justify-between items-center hover:bg-gray-100 transition-all">
-                                  <div>
-                                      <div className="text-[10px] text-gray-400 font-mono mb-1">{new Date(m.created_at).toLocaleString()}</div>
-                                      <div className="text-sm font-bold text-gray-800"><span className="text-green-600">{m.winner_name}</span> vs {m.loser_name}</div>
-                                      <div className="text-[10px] italic text-gray-500">{m.winner_deck} vs {m.loser_deck}</div>
+                              // CARD DE HISTÓRICO "VERSUS"
+                              <div key={idx} className="bg-white p-0 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row overflow-hidden">
+                                  {/* Data Lateral */}
+                                  <div className="bg-slate-200 p-3 flex flex-col justify-center items-center md:w-24 border-r border-gray-300">
+                                      <span className="text-xs font-bold text-gray-500">{new Date(m.created_at).toLocaleDateString()}</span>
+                                      <span className="text-[10px] font-mono text-gray-400">{new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                                   </div>
-                                  <button onClick={() => setSelectedMatchLogs(m.game_logs)} className="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all text-[10px] uppercase font-bold border border-blue-100">Ver Log</button>
+
+                                  {/* Conteúdo VS */}
+                                  <div className="flex-1 p-4 flex justify-between items-center relative">
+                                      {/* Vencedor */}
+                                      <div className="flex-1 text-right pr-4">
+                                          <div className="font-black text-gray-800 text-lg flex items-center justify-end gap-2">
+                                              {m.winner_name} <Crown size={16} className="text-yellow-500 mb-1"/>
+                                          </div>
+                                          <div className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block">
+                                              {m.winner_deck}
+                                          </div>
+                                      </div>
+
+                                      {/* VS Badge */}
+                                      <div className="z-10 bg-slate-800 text-white text-[10px] font-black py-1 px-2 rounded italic -skew-x-12">
+                                          VS
+                                      </div>
+
+                                      {/* Perdedor */}
+                                      <div className="flex-1 text-left pl-4 opacity-70">
+                                          <div className="font-bold text-gray-600 text-sm">
+                                              {m.loser_name}
+                                          </div>
+                                          <div className="text-[10px] text-gray-400 uppercase font-bold">
+                                              {m.loser_deck}
+                                          </div>
+                                      </div>
+                                  </div>
+
+                                  {/* Botão Log */}
+                                  <button 
+                                      onClick={() => setSelectedMatchLogs(m.game_logs)} 
+                                      className="bg-gray-50 hover:bg-blue-50 text-gray-400 hover:text-blue-600 border-t md:border-t-0 md:border-l border-gray-100 p-4 flex items-center justify-center transition-colors"
+                                      title="Ver Detalhes"
+                                  >
+                                      <BookOpen size={20}/>
+                                  </button>
                               </div>
                           ))}
                       </div>
                   ) : (
-                      <table className="w-full text-sm text-left border-separate border-spacing-y-2">
-                          <tbody className="text-gray-700">
-                              {(tab === 'decks' ? sortedDecks : sortedPlayers).map((item, idx) => (
-                                  <tr key={idx} className="bg-gray-50 hover:bg-gray-100 transition-colors rounded-xl overflow-hidden border border-gray-200">
-                                      <td className="px-4 py-3 font-bold border-l-4 border-blue-500 rounded-l-xl">{item.name}</td>
-                                      <td className="px-4 py-3 text-center text-xs text-gray-500">{item.plays} partidas</td>
-                                      <td className="px-4 py-3 text-center font-bold rounded-r-xl">
-                                          <span className={`px-2 py-1 rounded-md text-[10px] ${((item.wins / item.plays) * 100) >= 50 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                              {((item.wins / item.plays) * 100).toFixed(1)}% WR
-                                          </span>
-                                      </td>
+                      // TABELA DE RANKING (DECKS E JOGADORES)
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                          <table className="w-full text-sm text-left">
+                              <thead className="bg-gray-50 text-gray-500 uppercase font-bold text-xs">
+                                  <tr>
+                                      <th className="px-6 py-4"># Rank</th>
+                                      <th className="px-6 py-4">{tab === 'decks' ? 'Arquétipo' : 'Jogador'}</th>
+                                      <th className="px-6 py-4 text-center">Partidas</th>
+                                      <th className="px-6 py-4 text-center">Vitórias</th>
+                                      <th className="px-6 py-4 text-right">Win Rate</th>
                                   </tr>
-                              ))}
-                          </tbody>
-                      </table>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100">
+                                  {(tab === 'decks' ? sortedDecks : sortedPlayers).map((item, idx) => {
+                                      const wr = ((item.wins / item.plays) * 100);
+                                      return (
+                                          <tr key={idx} className="hover:bg-blue-50/50 transition-colors group">
+                                              <td className="px-6 py-4 font-bold text-gray-400 group-hover:text-blue-600 flex justify-center w-20">
+                                                  {getRankIcon(idx)}
+                                              </td>
+                                              <td className="px-6 py-4">
+                                                  <span className="font-bold text-gray-800 text-lg">{item.name}</span>
+                                              </td>
+                                              <td className="px-6 py-4 text-center text-gray-600 font-mono">
+                                                  {item.plays}
+                                              </td>
+                                              <td className="px-6 py-4 text-center text-gray-600 font-mono">
+                                                  {item.wins}
+                                              </td>
+                                              <td className="px-6 py-4 text-right">
+                                                  <span className={`
+                                                      px-3 py-1 rounded-full text-xs font-black
+                                                      ${wr >= 60 ? 'bg-green-100 text-green-700' : wr >= 49 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}
+                                                  `}>
+                                                      {wr.toFixed(1)}%
+                                                  </span>
+                                              </td>
+                                          </tr>
+                                      );
+                                  })}
+                                  {(tab === 'decks' ? sortedDecks : sortedPlayers).length === 0 && (
+                                      <tr><td colSpan="5" className="text-center py-10 text-gray-400">Sem dados suficientes.</td></tr>
+                                  )}
+                              </tbody>
+                          </table>
+                      </div>
                   )}
               </div>
           </Card>
 
-          {/* Sub-modal de Replay com Estilo Light Moderno */}
+          {/* --- SUB-MODAL DE LOGS (ESTILO TERMINAL) --- */}
           {selectedMatchLogs && (
-              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4 animate-in zoom-in duration-200">
-                  <Card className="w-full max-w-lg h-[75vh] flex flex-col bg-white border-gray-200 shadow-2xl rounded-2xl">
-                      <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-2 p-4">
-                          <h3 className="text-gray-800 font-bold flex items-center gap-2">
-                              <History size={18} className="text-blue-500"/> Logs da Partida
-                          </h3>
-                          <button onClick={() => setSelectedMatchLogs(null)} className="text-gray-400 hover:text-red-500"><X/></button>
+              <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[110] p-4 animate-in zoom-in duration-200">
+                  <div className="w-full max-w-2xl h-[80vh] flex flex-col bg-slate-900 rounded-xl shadow-2xl border border-slate-700 overflow-hidden font-mono">
+                      
+                      {/* Barra de Título do Terminal */}
+                      <div className="bg-slate-800 p-3 flex justify-between items-center border-b border-slate-700">
+                          <div className="flex gap-2">
+                              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                          </div>
+                          <span className="text-slate-400 text-xs font-bold tracking-widest uppercase">System Log Viewer</span>
+                          <button onClick={() => setSelectedMatchLogs(null)} className="text-slate-400 hover:text-white"><X size={16}/></button>
                       </div>
-                      <div className="flex-1 overflow-y-auto p-4 m-4 bg-gray-50 rounded-xl font-mono text-[11px] text-gray-700 leading-relaxed custom-scrollbar whitespace-pre-wrap border border-gray-200">
-                          {selectedMatchLogs || "Nenhum log registrado para esta partida antiga."}
+
+                      {/* Área de Texto */}
+                      <div className="flex-1 overflow-y-auto p-6 text-xs leading-relaxed custom-scrollbar bg-slate-950 text-green-400 whitespace-pre-wrap">
+                          {selectedMatchLogs || "Log corrompido ou vazio."}
                       </div>
-                      <div className="p-4 pt-0">
-                          <Button variant="primary" className="w-full py-3" onClick={() => setSelectedMatchLogs(null)}>Voltar ao Ranking</Button>
+
+                      <div className="p-4 bg-slate-900 border-t border-slate-800 text-right">
+                          <button 
+                              onClick={() => setSelectedMatchLogs(null)}
+                              className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs font-bold uppercase transition-colors"
+                          >
+                              Fechar Terminal
+                          </button>
                       </div>
-                  </Card>
+                  </div>
               </div>
           )}
       </div>
