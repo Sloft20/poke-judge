@@ -179,7 +179,7 @@ const RankingModal = ({ onClose }) => {
                                   <div>
                                       <div className="text-[10px] text-gray-400 font-mono mb-1">{new Date(m.created_at).toLocaleString()}</div>
                                       <div className="text-sm font-bold text-gray-800"><span className="text-green-600">{m.winner_name}</span> vs {m.loser_name}</div>
-                                      <div className="text-[10px] italic text-gray-500">{(DECKS[m.winner_deck]?.name || m.winner_deck)} vs {(DECKS[m.loser_deck]?.name || m.loser_deck)}</div>
+                                      <div className="text-[10px] italic text-gray-500">{m.winner_deck} vs {m.loser_deck}</div>
                                   </div>
                                   <button onClick={() => setSelectedMatchLogs(m.game_logs)} className="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all text-[10px] uppercase font-bold border border-blue-100">Ver Log</button>
                               </div>
@@ -576,15 +576,26 @@ export default function PokeJudgePro() {
     const winner = players[winnerIndex];
     const loser = players[winnerIndex === 0 ? 1 : 0];
 
+    // --- CORREÇÃO: Traduzir ID para Nome ---
+    // Tenta ler do cofre (decksRef) para garantir dados atualizados, ou usa availableDecks
+    const currentDecks = (typeof decksRef !== 'undefined' && decksRef.current && Object.keys(decksRef.current).length > 0) 
+        ? decksRef.current 
+        : availableDecks;
+
+    // Busca o nome do deck usando o ID. Se não achar (ex: deck deletado), usa o próprio ID como reserva.
+    const winnerDeckName = currentDecks[winner.deckArchetype]?.name || winner.deckArchetype;
+    const loserDeckName = currentDecks[loser.deckArchetype]?.name || loser.deckArchetype;
+    // ---------------------------------------
+
     // Converte o array de logs em uma string formatada para leitura
     const fullLogText = logs.map(l => `[${l.time}] ${l.text}`).join('\n');
 
     const matchData = {
         winner_name: winner.name,
         loser_name: loser.name,
-        winner_deck: winner.deckArchetype,
-        loser_deck: loser.deckArchetype,
-        game_logs: fullLogText, // Aqui enviamos o histórico completo para o Supabase
+        winner_deck: winnerDeckName, // <--- Salva o NOME ("Charizard ex")
+        loser_deck: loserDeckName,   // <--- Salva o NOME ("Dragapult ex")
+        game_logs: fullLogText,
         created_at: new Date().toISOString()
     };
 
@@ -598,7 +609,7 @@ export default function PokeJudgePro() {
     } catch (error) {
         console.error("Erro ao salvar no Supabase:", error.message);
     }
-};
+  };
 
   const declareWinner = (winnerIndex) => {
       const winnerName = players[winnerIndex].name;
