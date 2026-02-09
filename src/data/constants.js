@@ -52,11 +52,70 @@ export const ENERGY_TYPES = {
 };
 
 // 5. BANCO DE REGRAS
+// src/data/constants.js
+
 export const RULES_DB = [
-  { id: 1, title: 'Evolução', text: 'Você não pode evoluir um Pokémon no turno em que ele foi baixado (Turno de "Enjoo"). Além disso, o Jogador 1 não pode evoluir no primeiro turno da partida. (Livro de Regras, p. 16)' },
-  { id: 2, title: 'Energia Manual', text: 'Um jogador só pode ligar 1 carta de Energia da sua mão a 1 dos seus Pokémon por turno. (Livro de Regras, p. 12)' },
-  { id: 3, title: 'Apoiador (Supporter)', text: 'Você só pode jogar 1 carta de Apoiador por turno. (Livro de Regras, p. 14)' },
-  { id: 4, title: 'Recuar', text: 'Para recuar, você deve descartar energia igual ao Custo de Recuo do Pokémon. (Livro de Regras, p. 13)' },
-  { id: 5, title: 'Fraqueza e Resistência', text: 'Se o atacante for do tipo da Fraqueza do Defensor, o dano é x2. Se for Resistência, é -30.' },
-  { id: 6, title: 'Checkup', text: 'Entre turnos: Veneno põe 1 contador (10). Queimadura põe 2 contadores (20) e joga moeda. Sono joga moeda. Paralisia cura se o turno do jogador afetado acabou.' }
+    {
+        id: 'win_cond',
+        category: 'basics',
+        title: 'Como Vencer',
+        icon: 'Trophy',
+        text: 'Você vence se: 1) Pegar todas as suas 6 cartas de Prêmio. 2) Nocautear todos os Pokémon em jogo do oponente. 3) O oponente não tiver cartas no deck no início do turno dele (Deck Out).'
+    },
+    {
+        id: 'setup',
+        category: 'basics',
+        title: 'Preparação & Mulligan',
+        icon: 'Shuffle',
+        text: 'Embaralhe e compre 7 cartas. Você DEVE ter um Básico na mão inicial. Se não tiver, revele a mão, embaralhe e compre 7 novas (Mulligan). O oponente pode comprar 1 carta extra para cada Mulligan seu.'
+    },
+    {
+        id: 'turn_structure',
+        category: 'gameplay',
+        title: 'Estrutura do Turno',
+        icon: 'Clock',
+        text: '1. Compre uma carta (Obrigatório). 2. Fase de Ação (Jogue itens, ligue 1 energia, recue, use habilidades). 3. Ataque (Encerra o turno) OU Passe a vez.'
+    },
+    {
+        id: 'first_turn',
+        category: 'gameplay',
+        title: 'Regras do 1º Turno',
+        icon: 'Ban',
+        text: 'O jogador que começa (Primeiro a jogar) NÃO pode atacar e NÃO pode jogar cartas de Apoiador no seu primeiro turno. Nenhum jogador pode evoluir no seu respectivo primeiro turno.'
+    },
+    {
+        id: 'evolution',
+        category: 'mechanics',
+        title: 'Evolução',
+        icon: 'ChevronsUp',
+        text: 'Básicos evoluem para Estágio 1, que evoluem para Estágio 2. Você não pode evoluir um Pokémon no mesmo turno em que ele foi baixado. Ao evoluir, o Pokémon cura todas as Condições Especiais, mas mantém o dano e energias.'
+    },
+    {
+        id: 'conditions',
+        category: 'status',
+        title: 'Condições Especiais',
+        icon: 'Skull',
+        text: '• VENENO: Põe 1 contador de dano por checkup. • QUEIMADO: Põe 2 contadores, joga moeda (cara cura). • DORMINDO: Joga moeda no checkup (cara acorda). Não pode atacar/recuar. • CONFUSO: Joga moeda p/ atacar (coroa = 30 dano em si). • PARALISADO: Não ataca/recua. Cura sozinho após seu turno.'
+    },
+    {
+        id: 'retreat',
+        category: 'mechanics',
+        title: 'Recuar',
+        icon: 'RotateCcw',
+        text: 'Uma vez por turno, você pode recuar seu Ativo para o Banco descartando energias iguais ao Custo de Recuo da carta. Dormindo ou Paralisado impedem o recuo.'
+    },
+    {
+        id: 'checkup',
+        category: 'status',
+        title: 'Fase de Checkup',
+        icon: 'Activity',
+        text: 'Acontece entre os turnos. Ordem: 1) Veneno. 2) Queimadura. 3) Dormindo. 4) Paralisia. Depois verifique Nocautes.'
+    },
+    {
+        id: 'abilities',
+        category: 'mechanics',
+        title: 'Habilidades',
+        icon: 'Zap',
+        text: 'Habilidades não são ataques. Você pode usar quantas quiser por turno (se a carta permitir) antes de atacar. Usar uma habilidade geralmente não encerra o turno.'
+    }
 ];

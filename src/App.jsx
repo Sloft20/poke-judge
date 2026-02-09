@@ -18,6 +18,7 @@ import { Card, Button, Badge } from './components/UI';
 import GameLobby from './components/GameLobby';
 import PrizeZone from './components/PrizeZone';
 import DeckManager from './components/DeckManager';
+import RuleBookModal from './components/RuleBookModal';
 
 
 
@@ -2167,9 +2168,10 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
     )}
 
     {gameState.phase === PHASES.GAME_OVER && (<div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"><div className="bg-white dark:bg-gray-800 p-8 rounded-lg text-center max-w-md w-full shadow-2xl border-4 border-yellow-400"><h2 className="text-4xl font-black text-yellow-500 mb-4">FIM DE JOGO!</h2><p className="text-2xl mb-6">Vencedor: <span className="font-bold text-blue-600">{gameState.winner}</span></p><Button variant="primary" onClick={resetGame}>Nova Partida</Button></div></div>)}
-    {showRules && (<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"><Card className="w-full max-w-2xl h-[80vh] flex flex-col"><div className="flex justify-between items-center mb-4 border-b pb-2"><h2 className="text-xl font-bold">Guia Rápido de Regras</h2><button onClick={() => setShowRules(false)} className="text-gray-500 hover:text-red-500"><Ban/>
-    </button></div><input type="text" placeholder="Buscar regra..." className="w-full p-2 border rounded mb-4 dark:bg-gray-700 dark:border-gray-600" value={searchRule} onChange={(e) => setSearchRule(e.target.value)} /><div className="flex-1 overflow-y-auto space-y-4">{RULES_DB.filter(r => r.title.toLowerCase().includes(searchRule.toLowerCase()) || r.text.toLowerCase().includes(searchRule.toLowerCase())).map(rule => (<div key={rule.id} className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-100 dark:border-blue-800"><h4 className="font-bold text-blue-800 dark:text-blue-300 mb-1">{rule.title}</h4><p className="text-sm text-black-700 dark:text-black-300">{rule.text}</p></div>))}</div></Card></div>)}
-    
+   {/* --- MODAL DE REGRAS (NOVO) --- */}
+    {showRules && (
+        <RuleBookModal onClose={() => setShowRules(false)} />
+    )}
     {/* --- O RANKING GLOBAL AGORA PODE SER VISTO NO LOBBY OU NO JOGO --- */}
     {showRanking && <RankingModal onClose={() => setShowRanking(false)} />}
     {/* --- MODAL DO GERENCIADOR DE DECKS --- */}
