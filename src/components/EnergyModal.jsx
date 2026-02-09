@@ -21,7 +21,7 @@ const EnergyModal = ({ onClose, onConfirm, pokemonName, currentEnergyCount }) =>
               Ligando Energias
             </h2>
             <p className="text-slate-400 text-xs font-mono mt-2 uppercase tracking-widest">
-              Selecionar Tipo de Energia: <span className="text-cyan-400 font-bold text-sm">{pokemonName || 'Pokémon Desconhecido'}</span>
+              Ligando Energia em : <span className="text-cyan-400 font-bold text-sm">{pokemonName || 'Pokémon Desconhecido'}</span>
             </p>
           </div>
 

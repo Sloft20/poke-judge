@@ -620,67 +620,91 @@ export default function PokeJudgePro() {
     });
   };
 
-  const handleStartGameFromLobby = () => {
-      console.log("🚀 Iniciando partida com dados do Supabase...");
+  // No App.jsx, localize e SUBSTITUA a função handleStartGameFromLobby por esta:
 
-      // 1. Usa o COFRE (decksRef) para garantir que temos a versão mais recente dos dados
-      // Se o cofre estiver vazio, tenta usar o state (availableDecks)
-      const sourceDecks = (decksRef.current && Object.keys(decksRef.current).length > 0) 
-          ? decksRef.current 
-          : availableDecks;
+const handleStartGameFromLobby = () => {
+    console.log("🚀 Iniciando partida...");
 
-      const newPlayers = players.map(p => {
-          // --- AQUI ESTAVA O ERRO: Agora lemos de sourceDecks, não de DECKS ---
-          const freshDeckData = sourceDecks[p.deckArchetype];
-          
-          if (!freshDeckData) {
-              console.error(`ERRO CRÍTICO: Deck ${p.deckArchetype} não encontrado no banco de dados!`, sourceDecks);
-              addLog(`Erro: Deck ${p.deckArchetype} não carregou. Dê F5.`, 'CRIT');
-          }
+    // 1. Define a fonte de dados com SEGURANÇA
+    // Tenta pegar do Cofre (Ref) > Estado (Supabase) > Arquivo Local (DECKS)
+    let sourceDecks = {};
+    
+    if (decksRef.current && Object.keys(decksRef.current).length > 0) {
+        sourceDecks = decksRef.current;
+    } else if (availableDecks && Object.keys(availableDecks).length > 0) {
+        sourceDecks = availableDecks;
+    } else {
+        // FALLBACK FINAL: Se nada carregou do banco, usa os decks locais para não travar
+        console.warn("⚠️ Usando decks locais (Fallback) pois o banco ainda não respondeu.");
+        sourceDecks = DECKS;
+    }
 
-          const originalCards = freshDeckData?.cards || [];
-          
-          // Debug para provar que pegou o HP certo
-          if (originalCards.length > 0) {
-              console.log(`🔍 Deck ${p.deckArchetype} carregado. Exemplo: ${originalCards[0].name} - HP: ${originalCards[0].hp}`);
-          }
+    const newPlayers = players.map(p => {
+        // Tenta achar o deck pelo ID. Se não achar, tenta buscar no local DECKS pelo ID padrão (ex: 'CHARIZARD')
+        let freshDeckData = sourceDecks[p.deckArchetype];
 
-          // Simular deck de 60 cartas
-          let fullDeck = [];
-          if (originalCards.length > 0) {
-              while (fullDeck.length < 60) {
-                  // structuredClone é mais seguro para copiar objetos profundos
-                  fullDeck = [...fullDeck, ...originalCards]; // Spread operator para cópia rasa
-              }
-              fullDeck = fullDeck.slice(0, 60); 
-          }
-          
-          const shuffledDeck = shuffleDeck([...fullDeck]); // Copia antes de embaralhar
-          
-          const initialHand = shuffledDeck.splice(0, 7);
-          
-          return {
-              ...p,
-              deckName: freshDeckData?.name || p.deckArchetype, // Atualiza nome visual
-              deck: shuffledDeck, 
-              hand: initialHand, 
-              deckCount: shuffledDeck.length, 
-              handCount: initialHand.length 
-          };
-      });
+        if (!freshDeckData) {
+            console.warn(`Deck ${p.deckArchetype} não encontrado na fonte principal. Tentando fallback local...`);
+            freshDeckData = DECKS[p.deckArchetype];
+        }
 
-      setPlayers(newPlayers);
-      
-      setGameState(prev => ({ 
-          ...prev, 
-          phase: PHASES.SETUP 
-      }));
-      setGameTimer(0);
-      
-      addLog(`Mesa configurada com dados do Banco de Dados.`, 'INFO');
-      addLog(`${newPlayers[0].name} comprou 7 cartas.`, 'INFO');
-      addLog(`${newPlayers[1].name} comprou 7 cartas.`, 'INFO');
-  };
+        if (!freshDeckData) {
+            addLog(`ERRO FATAL: Deck ${p.deckArchetype} não existe!`, 'CRIT');
+            return { ...p, deck: [], deckCount: 0 };
+        }
+
+        const originalCards = freshDeckData?.cards || [];
+        
+        // Simular deck de 60 cartas
+        let fullDeck = [];
+        if (originalCards.length > 0) {
+            while (fullDeck.length < 60) {
+                // deep clone simples para evitar referência cruzada
+                const clone = originalCards.map(c => ({...c, uniqueId: Math.random().toString(36)}));
+                fullDeck = [...fullDeck, ...clone];
+            }
+            fullDeck = fullDeck.slice(0, 60); 
+        }
+        
+        const shuffledDeck = shuffleDeck([...fullDeck]);
+        
+        // Separa a mão inicial (7 cartas)
+        const initialHand = shuffledDeck.splice(0, 7);
+        
+        // Separa as cartas de prêmio (6 cartas) - IMPORTANTE: Isso faltava e altera a conta do deck!
+        // No Pokémon real, prêmios saem do topo DEPOIS da mão.
+        const prizeCards = shuffledDeck.splice(0, 6);
+
+        return {
+            ...p,
+            deckName: freshDeckData?.name || p.deckArchetype,
+            deck: shuffledDeck, // Deck restante (aprox 47 cartas)
+            hand: initialHand,
+            prizes: 6, // Contador visual
+            prizeCards: prizeCards, // Array real dos prêmios (futuro uso)
+            deckCount: shuffledDeck.length, 
+            handCount: initialHand.length 
+        };
+    });
+
+    // TRAVA DE SEGURANÇA: Se o deck ficou vazio, não inicia!
+    if (newPlayers[0].deckCount === 0 || newPlayers[1].deckCount === 0) {
+        alert("Erro de Carregamento: Os decks estão vazios. Aguarde o carregamento do banco ou verifique sua internet e tente novamente.");
+        return; // Cancela o início do jogo
+    }
+
+    setPlayers(newPlayers);
+    
+    setGameState(prev => ({ 
+        ...prev, 
+        phase: PHASES.SETUP 
+    }));
+    setGameTimer(0);
+    
+    addLog(`Mesa configurada. Decks carregados com ${newPlayers[0].deckCount} cartas.`, 'INFO');
+    addLog(`${newPlayers[0].name} comprou 7 cartas.`, 'INFO');
+    addLog(`${newPlayers[1].name} comprou 7 cartas.`, 'INFO');
+};
 
   const saveMatchResult = async (winnerIndex) => {
     const winner = players[winnerIndex];
