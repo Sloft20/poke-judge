@@ -317,7 +317,7 @@ const RankingModal = ({ onClose }) => {
                       </div>
 
                       {/* Área de Texto */}
-                      <div className="flex-1 overflow-y-auto p-6 text-xs leading-relaxed custom-scrollbar bg-slate-950 text-green-400 whitespace-pre-wrap">
+                      <div className="flex-1 overflow-y-auto p-6 text-xs leading-relaxed custom-scrollbar bg-slate-950 text-white-400 whitespace-pre-wrap">
                           {selectedMatchLogs || "Log corrompido ou vazio."}
                       </div>
 
