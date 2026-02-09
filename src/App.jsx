@@ -113,27 +113,24 @@ const RankingModal = ({ onClose }) => {
         fetchHistory();
     }, []);
 
-    // 2. FUNÇÃO DE CÁLCULO EM TEMPO REAL
+    // 2. Cálculo de Stats
     const calculateLiveStats = () => {
         const deckStats = {};
         const playerStats = {};
 
         matches.forEach(m => {
-            // Processa Decks
+            // Stats Decks
             if (!deckStats[m.winner_deck]) deckStats[m.winner_deck] = { name: m.winner_deck, wins: 0, plays: 0 };
             if (!deckStats[m.loser_deck]) deckStats[m.loser_deck] = { name: m.loser_deck, wins: 0, plays: 0 };
-            
             deckStats[m.winner_deck].wins++;
             deckStats[m.winner_deck].plays++;
             deckStats[m.loser_deck].plays++;
 
-            // Processa Jogadores
+            // Stats Jogadores
             const wName = m.winner_name || "Desconhecido";
             const lName = m.loser_name || "Desconhecido";
-
             if (!playerStats[wName]) playerStats[wName] = { wins: 0, plays: 0 };
             if (!playerStats[lName]) playerStats[lName] = { wins: 0, plays: 0 };
-            
             playerStats[wName].wins++;
             playerStats[wName].plays++;
             playerStats[lName].plays++;
@@ -143,190 +140,183 @@ const RankingModal = ({ onClose }) => {
     };
 
     const { deckStats, playerStats } = calculateLiveStats();
-    
     const sortedDecks = Object.values(deckStats).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
     const sortedPlayers = Object.entries(playerStats).map(([name, stat]) => ({name, ...stat})).sort((a,b) => (b.wins/b.plays) - (a.wins/a.plays));
 
-    // Helper para ícone de troféu
-    const getRankIcon = (index) => {
-        if (index === 0) return <Trophy size={20} className="text-yellow-500 drop-shadow-sm" fill="currentColor"/>; // Ouro
-        if (index === 1) return <Trophy size={18} className="text-gray-400 drop-shadow-sm" fill="currentColor"/>;   // Prata
-        if (index === 2) return <Trophy size={16} className="text-orange-400 drop-shadow-sm" fill="currentColor"/>; // Bronze
-        return <span className="text-gray-400 font-mono font-bold text-sm">#{index + 1}</span>;
+    // --- COMPONENTE INTERNO: TERMINAL DE LOGS COLORIDO ---
+    const LogTerminal = ({ logs }) => {
+        if (!logs) return <div className="text-gray-500">Log vazio.</div>;
+        
+        return (
+            <div className="flex-1 overflow-y-auto p-4 font-mono text-xs leading-relaxed custom-scrollbar bg-[#0f172a]">
+                {logs.split('\n').map((line, i) => {
+                    // Lógica de Cores e Destaques
+                    let lineStyle = "text-gray-300"; // Cor padrão (branca/cinza claro)
+                    let icon = null;
+
+                    if (line.includes('NOCAUTE') || line.includes('Nocauteado')) {
+                        lineStyle = "text-red-400 font-bold bg-red-900/20 py-1 px-2 rounded border-l-2 border-red-500 block mb-1";
+                        icon = "💀 ";
+                    } else if (line.includes('EVOLUIU') || line.includes('Rare Candy')) {
+                        lineStyle = "text-cyan-300 font-bold bg-cyan-900/20 py-1 px-2 rounded border-l-2 border-cyan-500 block mb-1";
+                        icon = "✨ ";
+                    } else if (line.includes('Vencedor') || line.includes('Vitória')) {
+                        lineStyle = "text-yellow-400 font-black text-sm border-b border-yellow-500/50 pb-1 block mt-2";
+                        icon = "🏆 ";
+                    } else if (line.includes('Turno')) {
+                        lineStyle = "text-blue-400 font-bold mt-2 block border-t border-slate-700 pt-2";
+                    } else if (line.includes('CHECKUP')) {
+                        lineStyle = "text-purple-400 italic opacity-80";
+                    }
+
+                    // Separa o Timestamp do texto (Ex: [15:30:00] Texto...)
+                    const match = line.match(/^\[(.*?)\](.*)/);
+                    if (match) {
+                        return (
+                            <div key={i} className={`${lineStyle} break-words`}>
+                                <span className="text-slate-500 mr-2 select-none">[{match[1]}]</span>
+                                {icon}{match[2]}
+                            </div>
+                        );
+                    }
+                    return <div key={i} className={lineStyle}>{line}</div>;
+                })}
+            </div>
+        );
     };
 
     return (
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
-          <Card className="w-full max-w-4xl h-[85vh] flex flex-col bg-white border-none shadow-2xl rounded-2xl overflow-hidden">
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
+          
+          {/* Card Principal DARK MODE */}
+          <Card className="w-full max-w-5xl h-[85vh] flex flex-col bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden text-white">
               
-              {/* HEADER MODERNO */}
-              <div className="bg-slate-900 text-white p-6 flex justify-between items-center shadow-md">
+              {/* HEADER */}
+              <div className="bg-slate-950 p-6 flex justify-between items-center border-b border-slate-800">
                   <div>
-                      <h2 className="text-2xl font-black flex items-center gap-3 uppercase tracking-tighter italic">
-                          <Trophy className="text-yellow-400" size={32}/> 
-                          Ranking & Estatísticas
+                      <h2 className="text-2xl font-black flex items-center gap-3 uppercase tracking-tighter italic text-white">
+                          <Trophy className="text-yellow-500" size={32}/> 
+                          Ranking <span className="text-blue-500">Pro</span>
                       </h2>
-                      <p className="text-slate-400 text-xs font-mono mt-1">Base de dados unificada</p>
                   </div>
-                  <button onClick={onClose} className="bg-white/10 hover:bg-red-500 hover:text-white text-white p-2 rounded-full transition-all">
+                  <button onClick={onClose} className="bg-slate-800 hover:bg-red-600 hover:text-white text-slate-400 p-2 rounded-full transition-all">
                       <X size={24}/>
                   </button>
               </div>
               
               {/* MENU DE ABAS */}
-              <div className="flex gap-2 p-4 bg-slate-50 border-b border-gray-200">
+              <div className="flex gap-1 p-2 bg-slate-950 border-b border-slate-800">
                   {['decks', 'players', 'history'].map(t => (
                       <button 
                           key={t}
                           onClick={() => setTab(t)} 
                           className={`
-                              flex-1 py-3 rounded-lg text-sm font-black uppercase tracking-wider transition-all
+                              flex-1 py-3 rounded-md text-sm font-bold uppercase tracking-wider transition-all
                               ${tab === t 
-                                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 translate-y-[-2px]' 
-                                  : 'bg-white text-gray-500 hover:bg-gray-100 border border-gray-200'}
+                                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' 
+                                  : 'bg-transparent text-slate-500 hover:bg-slate-800 hover:text-white'}
                           `}
                       >
-                          {t === 'decks' ? '🔥 Meta Decks' : t === 'players' ? '👤 Jogadores' : '📜 Histórico'}
+                          {t === 'decks' ? '🔥 Decks' : t === 'players' ? '👤 Jogadores' : '📜 Histórico'}
                       </button>
                   ))}
               </div>
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-100 p-4">
+              {/* CONTEÚDO */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-900 p-4">
                   {tab === 'history' ? (
-                      <div className="grid grid-cols-1 gap-3">
+                      <div className="grid grid-cols-1 gap-2">
                           {loading ? (
-                              <div className="flex flex-col items-center justify-center h-40 text-gray-400 gap-2">
-                                  <Loader2 className="animate-spin" size={32}/>
-                                  <p className="text-sm font-bold">Sincronizando partidas...</p>
-                              </div>
-                          ) : matches.length === 0 ? (
-                              <p className="text-center text-gray-400 mt-10">Nenhuma partida registrada ainda.</p>
+                              <div className="flex justify-center p-10"><Loader2 className="animate-spin text-blue-500"/></div>
                           ) : matches.map((m, idx) => (
-                              // CARD DE HISTÓRICO "VERSUS"
-                              <div key={idx} className="bg-white p-0 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row overflow-hidden">
-                                  {/* Data Lateral */}
-                                  <div className="bg-slate-200 p-3 flex flex-col justify-center items-center md:w-24 border-r border-gray-300">
-                                      <span className="text-xs font-bold text-gray-500">{new Date(m.created_at).toLocaleDateString()}</span>
-                                      <span className="text-[10px] font-mono text-gray-400">{new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                              // CARD HISTÓRICO DARK
+                              <div key={idx} className="bg-slate-800 p-0 rounded-lg border border-slate-700 flex flex-col md:flex-row overflow-hidden group hover:border-blue-500 transition-colors">
+                                  <div className="bg-slate-950 p-3 flex flex-col justify-center items-center md:w-24 border-r border-slate-700">
+                                      <span className="text-xs font-bold text-slate-400">{new Date(m.created_at).toLocaleDateString()}</span>
+                                      <span className="text-[10px] font-mono text-slate-600">{new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                                   </div>
-
-                                  {/* Conteúdo VS */}
-                                  <div className="flex-1 p-4 flex justify-between items-center relative">
-                                      {/* Vencedor */}
-                                      <div className="flex-1 text-right pr-4">
-                                          <div className="font-black text-gray-800 text-lg flex items-center justify-end gap-2">
-                                              {m.winner_name} <Crown size={16} className="text-yellow-500 mb-1"/>
+                                  <div className="flex-1 p-3 flex justify-between items-center">
+                                      <div className="flex-1 text-right">
+                                          <div className="font-bold text-white text-md flex items-center justify-end gap-2">
+                                              {m.winner_name} <Crown size={14} className="text-yellow-500"/>
                                           </div>
-                                          <div className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block">
-                                              {m.winner_deck}
-                                          </div>
+                                          <div className="text-[10px] font-bold text-blue-400">{m.winner_deck}</div>
                                       </div>
-
-                                      {/* VS Badge */}
-                                      <div className="z-10 bg-slate-800 text-white text-[10px] font-black py-1 px-2 rounded italic -skew-x-12">
-                                          VS
-                                      </div>
-
-                                      {/* Perdedor */}
-                                      <div className="flex-1 text-left pl-4 opacity-70">
-                                          <div className="font-bold text-gray-600 text-sm">
-                                              {m.loser_name}
-                                          </div>
-                                          <div className="text-[10px] text-gray-400 uppercase font-bold">
-                                              {m.loser_deck}
-                                          </div>
+                                      <div className="mx-4 bg-slate-950 text-slate-500 text-[10px] font-black py-1 px-2 rounded italic">VS</div>
+                                      <div className="flex-1 text-left opacity-60">
+                                          <div className="font-bold text-slate-300 text-sm">{m.loser_name}</div>
+                                          <div className="text-[10px] text-slate-500">{m.loser_deck}</div>
                                       </div>
                                   </div>
-
-                                  {/* Botão Log */}
-                                  <button 
-                                      onClick={() => setSelectedMatchLogs(m.game_logs)} 
-                                      className="bg-gray-50 hover:bg-blue-50 text-gray-400 hover:text-blue-600 border-t md:border-t-0 md:border-l border-gray-100 p-4 flex items-center justify-center transition-colors"
-                                      title="Ver Detalhes"
-                                  >
-                                      <BookOpen size={20}/>
+                                  <button onClick={() => setSelectedMatchLogs(m.game_logs)} className="bg-slate-900 hover:bg-blue-600 hover:text-white text-slate-500 border-l border-slate-700 p-4 transition-colors">
+                                      <BookOpen size={18}/>
                                   </button>
                               </div>
                           ))}
                       </div>
                   ) : (
-                      // TABELA DE RANKING (DECKS E JOGADORES)
-                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                          <table className="w-full text-sm text-left">
-                              <thead className="bg-gray-50 text-gray-500 uppercase font-bold text-xs">
-                                  <tr>
-                                      <th className="px-6 py-4"># Rank</th>
-                                      <th className="px-6 py-4">{tab === 'decks' ? 'Arquétipo' : 'Jogador'}</th>
-                                      <th className="px-6 py-4 text-center">Partidas</th>
-                                      <th className="px-6 py-4 text-center">Vitórias</th>
-                                      <th className="px-6 py-4 text-right">Win Rate</th>
-                                  </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-100">
-                                  {(tab === 'decks' ? sortedDecks : sortedPlayers).map((item, idx) => {
-                                      const wr = ((item.wins / item.plays) * 100);
-                                      return (
-                                          <tr key={idx} className="hover:bg-blue-50/50 transition-colors group">
-                                              <td className="px-6 py-4 font-bold text-gray-400 group-hover:text-blue-600 flex justify-center w-20">
-                                                  {getRankIcon(idx)}
-                                              </td>
-                                              <td className="px-6 py-4">
-                                                  <span className="font-bold text-gray-800 text-lg">{item.name}</span>
-                                              </td>
-                                              <td className="px-6 py-4 text-center text-gray-600 font-mono">
-                                                  {item.plays}
-                                              </td>
-                                              <td className="px-6 py-4 text-center text-gray-600 font-mono">
-                                                  {item.wins}
-                                              </td>
-                                              <td className="px-6 py-4 text-right">
-                                                  <span className={`
-                                                      px-3 py-1 rounded-full text-xs font-black
-                                                      ${wr >= 60 ? 'bg-green-100 text-green-700' : wr >= 49 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}
-                                                  `}>
-                                                      {wr.toFixed(1)}%
-                                                  </span>
-                                              </td>
-                                          </tr>
-                                      );
-                                  })}
-                                  {(tab === 'decks' ? sortedDecks : sortedPlayers).length === 0 && (
-                                      <tr><td colSpan="5" className="text-center py-10 text-gray-400">Sem dados suficientes.</td></tr>
-                                  )}
-                              </tbody>
-                          </table>
-                      </div>
+                      // TABELA RANKING DARK
+                      <table className="w-full text-sm text-left text-slate-300">
+                          <thead className="bg-slate-950 text-slate-500 uppercase font-bold text-xs">
+                              <tr>
+                                  <th className="px-6 py-3">#</th>
+                                  <th className="px-6 py-3">{tab === 'decks' ? 'Deck' : 'Jogador'}</th>
+                                  <th className="px-6 py-3 text-center">Partidas</th>
+                                  <th className="px-6 py-3 text-center">Vitórias</th>
+                                  <th className="px-6 py-3 text-right">Win Rate</th>
+                              </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800">
+                              {(tab === 'decks' ? sortedDecks : sortedPlayers).map((item, idx) => {
+                                  const wr = ((item.wins / item.plays) * 100);
+                                  return (
+                                      <tr key={idx} className="hover:bg-slate-800 transition-colors">
+                                          <td className="px-6 py-3 font-bold text-slate-500">#{idx + 1}</td>
+                                          <td className="px-6 py-3 font-bold text-white text-base">{item.name}</td>
+                                          <td className="px-6 py-3 text-center font-mono">{item.plays}</td>
+                                          <td className="px-6 py-3 text-center font-mono text-green-400">{item.wins}</td>
+                                          <td className="px-6 py-3 text-right">
+                                              <span className={`px-2 py-1 rounded text-xs font-bold ${wr >= 50 ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
+                                                  {wr.toFixed(1)}%
+                                              </span>
+                                          </td>
+                                      </tr>
+                                  );
+                              })}
+                          </tbody>
+                      </table>
                   )}
               </div>
           </Card>
 
-          {/* --- SUB-MODAL DE LOGS (ESTILO TERMINAL) --- */}
+          {/* --- TERMINAL DE LOGS (MODAL INTERNO) --- */}
           {selectedMatchLogs && (
-              <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[110] p-4 animate-in zoom-in duration-200">
-                  <div className="w-full max-w-2xl h-[80vh] flex flex-col bg-slate-900 rounded-xl shadow-2xl border border-slate-700 overflow-hidden font-mono">
+              <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[110] p-4 animate-in zoom-in duration-200">
+                  <div className="w-full max-w-3xl h-[85vh] flex flex-col bg-[#0f172a] rounded-xl shadow-2xl border border-slate-600 overflow-hidden">
                       
-                      {/* Barra de Título do Terminal */}
-                      <div className="bg-slate-800 p-3 flex justify-between items-center border-b border-slate-700">
+                      {/* Barra do Terminal */}
+                      <div className="bg-[#1e293b] p-3 flex justify-between items-center border-b border-slate-700">
                           <div className="flex gap-2">
-                              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                              <div className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-400 cursor-pointer" onClick={() => setSelectedMatchLogs(null)}></div>
                               <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                               <div className="w-3 h-3 rounded-full bg-green-500"></div>
                           </div>
-                          <span className="text-slate-400 text-xs font-bold tracking-widest uppercase">System Log Viewer</span>
-                          <button onClick={() => setSelectedMatchLogs(null)} className="text-slate-400 hover:text-white"><X size={16}/></button>
+                          <span className="text-slate-400 text-xs font-mono font-bold tracking-widest uppercase flex items-center gap-2">
+                              <History size={12}/> Battle Log
+                          </span>
+                          <div className="w-10"></div>
                       </div>
 
-                      {/* Área de Texto */}
-                      <div className="flex-1 overflow-y-auto p-6 text-xs leading-relaxed custom-scrollbar bg-slate-950 text-green-400 whitespace-pre-wrap">
-                          {selectedMatchLogs || "Log corrompido ou vazio."}
-                      </div>
+                      {/* Conteúdo do Log com Cores */}
+                      <LogTerminal logs={selectedMatchLogs} />
 
-                      <div className="p-4 bg-slate-900 border-t border-slate-800 text-right">
+                      {/* Footer do Terminal */}
+                      <div className="p-3 bg-[#1e293b] border-t border-slate-700 text-right">
                           <button 
                               onClick={() => setSelectedMatchLogs(null)}
-                              className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs font-bold uppercase transition-colors"
+                              className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs font-bold uppercase transition-colors"
                           >
-                              Fechar Terminal
+                              Fechar Console
                           </button>
                       </div>
                   </div>
