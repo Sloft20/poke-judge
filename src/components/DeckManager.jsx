@@ -1,45 +1,83 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, Plus, Save, X, Loader2, Edit2, RotateCcw } from 'lucide-react';
+import { Trash2, Plus, Save, X, Loader2, Edit2, RotateCcw, Circle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { ENERGY_TYPES } from '../data/constants';
 
+// Componente para escolher as energias do ataque
+const EnergyCostBuilder = ({ label, cost, onChange }) => {
+    // cost é um array de strings, ex: ['Fire', 'Colorless']
+
+    const addEnergy = (type) => {
+        onChange([...cost, type]);
+    };
+
+    const removeEnergy = (index) => {
+        const newCost = [...cost];
+        newCost.splice(index, 1);
+        onChange(newCost);
+    };
+
+    return (
+        <div className="bg-gray-50 p-2 rounded border border-gray-200 mb-2">
+            <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">{label}</label>
+            
+            {/* Energias Selecionadas (Clique para remover) */}
+            <div className="flex flex-wrap gap-1 mb-2 min-h-[24px] bg-white p-1 rounded border border-gray-100 shadow-inner">
+                {cost.length === 0 && <span className="text-[10px] text-gray-300 italic p-1">Sem custo (Grátis)</span>}
+                {cost.map((type, idx) => {
+                    const EIcon = ENERGY_TYPES[type]?.icon || Circle;
+                    const color = ENERGY_TYPES[type]?.color || 'bg-gray-400';
+                    return (
+                        <button 
+                            key={idx} 
+                            onClick={() => removeEnergy(idx)}
+                            className={`w-5 h-5 rounded-full ${color} text-white flex items-center justify-center hover:scale-110 transition-transform`}
+                            title="Clique para remover"
+                        >
+                            <EIcon size={10} />
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* Botões para Adicionar */}
+            <div className="flex flex-wrap gap-1">
+                {Object.entries(ENERGY_TYPES).map(([key, val]) => (
+                    <button 
+                        key={key}
+                        onClick={() => addEnergy(key)}
+                        className={`w-4 h-4 rounded-full ${val.color} text-white flex items-center justify-center hover:ring-2 ring-gray-300 opacity-80 hover:opacity-100 transition-all`}
+                        title={`Adicionar ${val.name}`}
+                    >
+                        {/* Mostra ícone se couber, senão cor */}
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 const DeckManager = ({ onClose, onUpdate }) => {
-    // ESTADO LOCAL: O Gerenciador agora é dono dos seus próprios dados
     const [localDecks, setLocalDecks] = useState({});
     const [selectedDeckId, setSelectedDeckId] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [fetching, setFetching] = useState(true); // Começa carregando
-    
-    // Controle para edição do nome do deck
+    const [fetching, setFetching] = useState(true); 
     const [editingDeckName, setEditingDeckName] = useState('');
 
-    // --- FUNÇÃO DE BUSCA AUTÔNOMA (O SEGREDO) ---
     const refreshData = async () => {
         setFetching(true);
         try {
-            // Busca Decks
             const { data: decksData } = await supabase.from('decks').select('*');
-            // Busca Cartas
             const { data: cardsData } = await supabase.from('cards').select('*');
 
             if (decksData) {
                 const builtDecks = {};
-                
-                // 1. Monta os Decks
-                decksData.forEach(d => {
-                    builtDecks[d.id] = { ...d, cards: [] };
-                });
-
-                // 2. Distribui as Cartas
+                decksData.forEach(d => { builtDecks[d.id] = { ...d, cards: [] }; });
                 if (cardsData) {
                     cardsData.forEach(c => {
-                        if (builtDecks[c.deck_id]) {
-                            builtDecks[c.deck_id].cards.push(c);
-                        }
+                        if (builtDecks[c.deck_id]) builtDecks[c.deck_id].cards.push(c);
                     });
                 }
-                
-                console.log("Gerenciador atualizado:", builtDecks);
                 setLocalDecks(builtDecks);
             }
         } catch (error) {
@@ -49,12 +87,8 @@ const DeckManager = ({ onClose, onUpdate }) => {
         }
     };
 
-    // --- USE EFFECT: Roda assim que a janela abre ---
-    useEffect(() => {
-        refreshData();
-    }, []);
+    useEffect(() => { refreshData(); }, []);
 
-    // Atualiza nome do deck ao selecionar
     useEffect(() => {
         if (selectedDeckId && localDecks[selectedDeckId]) {
             setEditingDeckName(localDecks[selectedDeckId].name);
@@ -66,36 +100,26 @@ const DeckManager = ({ onClose, onUpdate }) => {
         id: null,
         name: '', hp: 60, type: 'Colorless', stage: 0, image: '',
         weakness: '', resistance: '', retreat: 1,
-        attack1_name: '', attack1_cost: 1, attack1_damage: 10,
-        attack2_name: '', attack2_cost: 2, attack2_damage: 30
+        attack1_name: '', attack1_cost: ['Colorless'], attack1_damage: 10,
+        attack2_name: '', attack2_cost: ['Colorless', 'Colorless'], attack2_damage: 30
     };
+    
     const [formData, setFormData] = useState(INITIAL_FORM);
-
-    // --- AÇÕES ---
 
     const handleCreateDeck = async () => {
         const id = `DECK_${Date.now()}`;
         const newDeck = { id, name: 'Novo Deck', color: 'bg-gray-500' };
-        
         setLoading(true);
         const { error } = await supabase.from('decks').insert([newDeck]);
-        if (!error) {
-            await refreshData(); // Atualiza localmente
-            onUpdate(); // Avisa o App
-            setSelectedDeckId(id);
-        }
+        if (!error) { await refreshData(); onUpdate(); setSelectedDeckId(id); }
         setLoading(false);
     };
 
     const handleSaveDeckName = async () => {
-        if (!selectedDeckId || !editingDeckName) return;
-        if (localDecks[selectedDeckId].name === editingDeckName) return;
-
+        if (!selectedDeckId || !editingDeckName || localDecks[selectedDeckId].name === editingDeckName) return;
         setLoading(true);
         await supabase.from('decks').update({ name: editingDeckName }).eq('id', selectedDeckId);
-        await refreshData();
-        onUpdate();
-        setLoading(false);
+        await refreshData(); onUpdate(); setLoading(false);
     };
 
     const handleDeleteDeck = async (id) => {
@@ -103,28 +127,26 @@ const DeckManager = ({ onClose, onUpdate }) => {
         setLoading(true);
         await supabase.from('cards').delete().eq('deck_id', id);
         await supabase.from('decks').delete().eq('id', id);
-        await refreshData();
-        onUpdate();
+        await refreshData(); onUpdate(); 
         if (selectedDeckId === id) setSelectedDeckId(null);
         setLoading(false);
     };
 
-    // --- CARTAS ---
-
+    // --- SALVAR CARTA COM CUSTO PERSONALIZADO ---
     const handleSaveCard = async () => {
         if (!selectedDeckId) return;
 
-        // Monta os ataques
         const attacks = [];
+        // Agora usamos o array de custo diretamente, sem criar Array.fill
         if (formData.attack1_name) attacks.push({
             name: formData.attack1_name,
             damage: parseInt(formData.attack1_damage || 0),
-            cost: Array(parseInt(formData.attack1_cost || 1)).fill(formData.type)
+            cost: formData.attack1_cost // <--- ARRAY DIRETO
         });
         if (formData.attack2_name) attacks.push({
             name: formData.attack2_name,
             damage: parseInt(formData.attack2_damage || 0),
-            cost: Array(parseInt(formData.attack2_cost || 1)).fill(formData.type)
+            cost: formData.attack2_cost // <--- ARRAY DIRETO
         });
 
         const cardPayload = {
@@ -142,7 +164,6 @@ const DeckManager = ({ onClose, onUpdate }) => {
 
         setLoading(true);
         let error;
-
         if (formData.id) {
             const { error: err } = await supabase.from('cards').update(cardPayload).eq('id', formData.id);
             error = err;
@@ -152,12 +173,11 @@ const DeckManager = ({ onClose, onUpdate }) => {
         }
 
         if (error) {
-            alert('Erro ao salvar: ' + error.message);
+            alert('Erro: ' + error.message);
         } else {
-            await refreshData(); // RECARREGA A LISTA NA HORA
-            onUpdate(); // Sincroniza o App para a próxima partida
-            setFormData(INITIAL_FORM); // Limpa form se for nova carta
-            if (formData.id) setFormData(INITIAL_FORM); // Se for edição, também limpa pra sair do modo edição
+            await refreshData(); 
+            onUpdate(); 
+            setFormData(INITIAL_FORM); // Limpa
         }
         setLoading(false);
     };
@@ -165,6 +185,7 @@ const DeckManager = ({ onClose, onUpdate }) => {
     const handleEditCard = (card) => {
         const atk1 = card.attacks?.[0] || {};
         const atk2 = card.attacks?.[1] || {};
+        
         setFormData({
             id: card.id,
             name: card.name,
@@ -176,10 +197,11 @@ const DeckManager = ({ onClose, onUpdate }) => {
             resistance: card.resistance || '',
             retreat: card.retreat || 1,
             attack1_name: atk1.name || '',
-            attack1_cost: atk1.cost ? atk1.cost.length : 1,
+            // Garante que seja array, senão usa padrão
+            attack1_cost: Array.isArray(atk1.cost) ? atk1.cost : ['Colorless'], 
             attack1_damage: atk1.damage || 0,
             attack2_name: atk2.name || '',
-            attack2_cost: atk2.cost ? atk2.cost.length : 0,
+            attack2_cost: Array.isArray(atk2.cost) ? atk2.cost : [],
             attack2_damage: atk2.damage || 0,
         });
     };
@@ -188,9 +210,7 @@ const DeckManager = ({ onClose, onUpdate }) => {
         if(!window.confirm("Apagar carta?")) return;
         setLoading(true);
         await supabase.from('cards').delete().eq('id', cardId);
-        await refreshData();
-        onUpdate();
-        setLoading(false);
+        await refreshData(); onUpdate(); setLoading(false);
     };
 
     const updateField = (field, value) => setFormData({ ...formData, [field]: value });
@@ -200,7 +220,6 @@ const DeckManager = ({ onClose, onUpdate }) => {
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
             <div className="bg-white rounded-xl w-full max-w-6xl h-[95vh] flex overflow-hidden shadow-2xl relative">
                 
-                {/* Loader Global */}
                 {(loading || fetching) && (
                     <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white px-6 py-2 rounded-full text-xs font-bold flex items-center gap-2 animate-pulse shadow-xl">
                         <Loader2 size={16} className="animate-spin"/> 
@@ -265,9 +284,7 @@ const DeckManager = ({ onClose, onUpdate }) => {
                             </div>
                         </>
                     ) : (
-                        <div className="flex-1 flex items-center justify-center text-gray-400 font-bold">
-                            {fetching ? "Carregando..." : "Selecione um Deck na Esquerda"}
-                        </div>
+                        <div className="flex-1 flex items-center justify-center text-gray-400 font-bold">Selecione um Deck</div>
                     )}
                 </div>
 
@@ -285,6 +302,7 @@ const DeckManager = ({ onClose, onUpdate }) => {
                     </div>
 
                     <div className="p-4 space-y-4">
+                        {/* DADOS BÁSICOS */}
                         <div className="space-y-2">
                             <label className="text-xs font-bold text-gray-400 uppercase">Dados Básicos</label>
                             <input className="w-full border p-2 rounded text-sm" placeholder="Nome" value={formData.name} onChange={e => updateField('name', e.target.value)} />
@@ -320,20 +338,39 @@ const DeckManager = ({ onClose, onUpdate }) => {
                             </div>
                         </div>
 
+                        {/* --- ATAQUES COM SELETOR DE ENERGIA --- */}
                         <div className="space-y-3 pt-2 border-t">
                             <label className="text-xs font-bold text-gray-400 uppercase">Ataques</label>
+                            
+                            {/* Ataque 1 */}
                             <div className="bg-gray-50 p-2 rounded border border-gray-200">
-                                <input className="w-full text-xs font-bold bg-transparent mb-1 outline-none" placeholder="Ataque 1" value={formData.attack1_name} onChange={e => updateField('attack1_name', e.target.value)} />
-                                <div className="flex gap-2">
-                                    <input type="number" className="w-1/2 p-1 text-xs border rounded" placeholder="Dano" value={formData.attack1_damage} onChange={e => updateField('attack1_damage', e.target.value)} />
-                                    <input type="number" className="w-1/2 p-1 text-xs border rounded" placeholder="Custo" value={formData.attack1_cost} onChange={e => updateField('attack1_cost', e.target.value)} />
+                                <input className="w-full text-xs font-bold bg-transparent mb-2 outline-none border-b border-gray-300 pb-1" placeholder="Nome do Ataque 1" value={formData.attack1_name} onChange={e => updateField('attack1_name', e.target.value)} />
+                                
+                                <EnergyCostBuilder 
+                                    label="Custo do Ataque 1"
+                                    cost={formData.attack1_cost}
+                                    onChange={(newCost) => updateField('attack1_cost', newCost)}
+                                />
+
+                                <div className="mt-2">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase">Dano Base</label>
+                                    <input type="number" className="w-full border p-1 rounded text-xs" placeholder="0" value={formData.attack1_damage} onChange={e => updateField('attack1_damage', e.target.value)} />
                                 </div>
                             </div>
+
+                            {/* Ataque 2 */}
                             <div className="bg-gray-50 p-2 rounded border border-gray-200">
-                                <input className="w-full text-xs font-bold bg-transparent mb-1 outline-none" placeholder="Ataque 2" value={formData.attack2_name} onChange={e => updateField('attack2_name', e.target.value)} />
-                                <div className="flex gap-2">
-                                    <input type="number" className="w-1/2 p-1 text-xs border rounded" placeholder="Dano" value={formData.attack2_damage} onChange={e => updateField('attack2_damage', e.target.value)} />
-                                    <input type="number" className="w-1/2 p-1 text-xs border rounded" placeholder="Custo" value={formData.attack2_cost} onChange={e => updateField('attack2_cost', e.target.value)} />
+                                <input className="w-full text-xs font-bold bg-transparent mb-2 outline-none border-b border-gray-300 pb-1" placeholder="Nome do Ataque 2 (Opcional)" value={formData.attack2_name} onChange={e => updateField('attack2_name', e.target.value)} />
+                                
+                                <EnergyCostBuilder 
+                                    label="Custo do Ataque 2"
+                                    cost={formData.attack2_cost}
+                                    onChange={(newCost) => updateField('attack2_cost', newCost)}
+                                />
+
+                                <div className="mt-2">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase">Dano Base</label>
+                                    <input type="number" className="w-full border p-1 rounded text-xs" placeholder="0" value={formData.attack2_damage} onChange={e => updateField('attack2_damage', e.target.value)} />
                                 </div>
                             </div>
                         </div>
