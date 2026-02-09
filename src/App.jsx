@@ -509,63 +509,41 @@ export default function PokeJudgePro() {
   };
 
   const handleStartGameFromLobby = () => {
-      // 1. Preparar os Decks (USANDO OS DADOS DO SUPABASE)
+      // 1. Preparar os Decks
       const newPlayers = players.map(p => {
-          // --- A CORREÇÃO ESTÁ AQUI ---
-          // Em vez de ler do arquivo estático (DECKS), lemos do estado atualizado (availableDecks)
-          const freshDeckData = availableDecks[p.deckArchetype];
+          // Pega a lista de cartas do arquétipo escolhido
+          const originalCards = DECKS[p.deckArchetype]?.cards || [];
           
-          // Segurança: Se não achar o deck, usa array vazio
-          const originalCards = freshDeckData ? freshDeckData.cards : [];
-          
-          if (!originalCards || originalCards.length === 0) {
-              console.error(`ERRO: O deck ${p.deckArchetype} está vazio ou não foi encontrado.`);
-          }
-
-          // Simular deck de 60 cartas (Duplicando as cartas existentes)
+          // O seu deck.js atual tem poucas cartas (ex: 5). 
+          // Para simular um deck de 60, vamos duplicar as cartas até encher.
           let fullDeck = [];
-          if (originalCards.length > 0) {
-              while (fullDeck.length < 60) {
-                  // O spread operator (...) garante que estamos copiando os objetos
-                  fullDeck = [...fullDeck, ...originalCards];
-              }
-              fullDeck = fullDeck.slice(0, 60); // Garante 60 exatas
+          while (fullDeck.length < 60) {
+              fullDeck = [...fullDeck, ...originalCards];
           }
+          fullDeck = fullDeck.slice(0, 60); // Garante 60 cartas exatas
           
-          // Embaralha (Presume que você tem a função shuffleDeck no arquivo)
-          // Se não tiver, me avise que eu te passo.
-          const shuffledDeck = shuffleDeck([...fullDeck]); 
+          // Embaralha
+          const shuffledDeck = shuffleDeck(fullDeck);
           
           // Compra as 7 primeiras (Mão Inicial)
           const initialHand = shuffledDeck.splice(0, 7);
           
           return {
               ...p,
-              // Atualiza tudo com os dados novos
-              deckName: freshDeckData?.name || "Deck",
-              deck: shuffledDeck,           // O que sobrou da pilha
-              hand: initialHand,            // As 7 cartas da mão
-              activePokemon: null,          // Garante limpo
-              bench: [],                    // Garante limpo
-              discardPile: [],              // Garante limpo
-              deckCount: shuffledDeck.length, 
-              handCount: initialHand.length 
+              deck: shuffledDeck, // O que sobrou (53 cartas)
+              hand: initialHand,  // As 7 cartas na mão
+              deckCount: shuffledDeck.length, // Mantemos o contador para compatibilidade visual
+              handCount: initialHand.length   // Mantemos o contador para compatibilidade visual
           };
       });
 
-      // 2. Atualiza o Estado do Jogo
       setPlayers(newPlayers);
       
       setGameState(prev => ({ 
           ...prev, 
-          turn: 1, 
-          phase: PHASES.GAME, // <--- Mudei para GAME para ir direto pra mesa (se preferir SETUP, mude de volta)
-          logs: [{ message: "⚡ Partida Iniciada! Dados sincronizados com Supabase.", type: "INFO" }]
+          phase: PHASES.SETUP 
       }));
-      
-      // (Opcional) Reseta timer se tiver
-      if (typeof setGameTimer === 'function') setGameTimer(0);
-  
+      setGameTimer(0);
       
       // Logs de sistema
       addLog(`Mesa configurada. Decks embaralhados (60 cartas).`, 'INFO');
