@@ -20,6 +20,7 @@ import PrizeZone from './components/PrizeZone';
 import DeckManager from './components/DeckManager';
 import RuleBookModal from './components/RuleBookModal';
 import EnergyModal from './components/EnergyModal'; // Adicione esta linha
+import RetreatModal from './components/RetreatModal';
 
 
 
@@ -2112,52 +2113,22 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
       </div>
     )}
 
+    {/* --- MODAL DE RECUO (NOVO - DARK/LARANJA) --- */}
     {retreatModal && (
-      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4">
-          <Card className="w-full max-w-sm border-2 border-blue-500">
-              <h3 className="font-bold text-lg mb-2 flex items-center gap-2 text-blue-700">
-                  <RefreshCw size={20}/> Pagar Custo de Recuo
-              </h3>
-              <p className="text-xs text-gray-500 mb-4">
-                  Selecione {retreatModal.cost} energia(s) para descartar:
-              </p>
-              
-              <div className="flex flex-wrap gap-2 mb-6">
-                  {retreatModal.availableEnergies.map((type, idx) => {
-                      const isSelected = retreatModal.selectedIndices.includes(idx);
-                      const EIcon = ENERGY_TYPES[type]?.icon || Circle;
-                      return (
-                          <button
-                              key={idx}
-                              onClick={() => {
-                                  const newIndices = isSelected 
-                                      ? retreatModal.selectedIndices.filter(i => i !== idx)
-                                      : [...retreatModal.selectedIndices, idx].slice(0, retreatModal.cost);
-                                  setRetreatModal(prev => ({ ...prev, selectedIndices: newIndices }));
-                              }}
-                              className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
-                                  isSelected ? 'border-red-500 scale-110 shadow-lg' : 'border-transparent opacity-60'
-                              } ${ENERGY_TYPES[type]?.color}`}
-                          >
-                              <EIcon size={20} className="text-white" />
-                          </button>
-                      );
-                  })}
-              </div>
-
-              <div className="flex gap-2">
-                  <Button variant="secondary" className="flex-1" onClick={() => setRetreatModal(null)}>Cancelar</Button>
-                  <Button 
-                      variant="primary" 
-                      className="flex-1" 
-                      disabled={retreatModal.selectedIndices.length !== retreatModal.cost}
-                      onClick={() => confirmRetreat(retreatModal.selectedIndices)}
-                  >
-                      Recuar
-                  </Button>
-              </div>
-          </Card>
-      </div>
+        <RetreatModal 
+            cost={retreatModal.cost}
+            availableEnergies={retreatModal.availableEnergies}
+            selectedIndices={retreatModal.selectedIndices}
+            onSelect={(idx) => {
+                const isSelected = retreatModal.selectedIndices.includes(idx);
+                const newIndices = isSelected 
+                    ? retreatModal.selectedIndices.filter(i => i !== idx)
+                    : [...retreatModal.selectedIndices, idx].slice(0, retreatModal.cost);
+                setRetreatModal(prev => ({ ...prev, selectedIndices: newIndices }));
+            }}
+            onConfirm={confirmRetreat}
+            onCancel={() => setRetreatModal(null)}
+        />
     )}
     
 
