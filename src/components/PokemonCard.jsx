@@ -1,5 +1,6 @@
+// src/components/PokemonCard.jsx
 import React from 'react';
-import { Circle, Briefcase, PlusCircle, Star, Skull, Flame, EyeOff, Shield, Heart, Zap } from 'lucide-react'; 
+import { Circle, Briefcase, PlusCircle, Star, Skull, Flame, EyeOff } from 'lucide-react'; 
 import { ENERGY_TYPES, CONDITIONS } from '../data/constants';
 
 // Pequeno componente auxiliar (Barra de Vida)
@@ -52,7 +53,7 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
   const isEx = card.name?.toLowerCase().includes('ex') || card.name?.toLowerCase().includes(' v');
   const borderClass = isEx ? 'border-gray-400 ring-2 ring-gray-300' : 'border-yellow-400 ring-2 ring-yellow-400';
 
-  // Lógica de Status
+  // --- LÓGICA DE STATUS ---
   const isPoisoned = card.isPoisoned;
   const isBurned = card.isBurned;
   const condition = card.activeCondition || CONDITIONS.NONE;
@@ -60,6 +61,16 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
   let rotateClass = '';
   if (condition === CONDITIONS.ASLEEP) rotateClass = '-rotate-90 grayscale brightness-90 transition-all duration-500'; 
   if (condition === CONDITIONS.PARALYZED) rotateClass = 'rotate-90 brightness-110 saturate-150 transition-all duration-500'; 
+
+  // --- LISTA DE STATUS PARA EXIBIÇÃO (TEXTO) ---
+  const activeStatuses = [];
+  if (isPoisoned) activeStatuses.push({ label: 'VENENO', color: 'bg-purple-600' });
+  if (isBurned) activeStatuses.push({ label: 'QUEIMADO', color: 'bg-red-600' });
+  
+  // Mapeia a condição especial para um nome curto e cor
+  if (condition === CONDITIONS.ASLEEP) activeStatuses.push({ label: 'DORMINDO', color: 'bg-indigo-500' });
+  if (condition === CONDITIONS.CONFUSED) activeStatuses.push({ label: 'CONFUSO', color: 'bg-pink-500' });
+  if (condition === CONDITIONS.PARALYZED) activeStatuses.push({ label: 'PARALISADO', color: 'bg-yellow-500 text-black border-yellow-600' });
 
   // --- HELPERS DE RENDERIZAÇÃO ---
 
@@ -94,10 +105,10 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
   return (
     <div 
       onClick={onClick}
-      className={`relative ${small ? 'w-24 h-36' : 'w-52 h-80'} rounded-xl overflow-hidden shadow-lg border-4 ${borderClass} flex flex-col transform transition-transform duration-300 ${actions || onClick ? '' : 'hover:scale-105'} ${onClick ? 'cursor-pointer hover:ring-2 hover:ring-blue-500' : 'cursor-default'} group ${cardBackground} ${className} ${rotateClass}`}
+      className={`relative ${small ? 'w-28 h-32' : 'w-52 h-80'} rounded-xl overflow-hidden shadow-lg border-4 ${borderClass} flex flex-col transform transition-transform duration-300 ${actions || onClick ? '' : 'hover:scale-105'} ${onClick ? 'cursor-pointer hover:ring-2 hover:ring-blue-500' : 'cursor-default'} group ${cardBackground} ${className} ${rotateClass}`}
     >
       
-      {/* 1. MARCADORES DE STATUS (TOKENS) */}
+      {/* 1. ÍCONES DE STATUS FLUTUANTES (Mantido para feedback visual rápido) */}
       <div className="absolute top-8 left-0 right-0 z-20 flex justify-center gap-1 pointer-events-none">
           {isPoisoned && (
               <div className="w-6 h-6 bg-purple-600 rounded-full border border-white shadow-lg flex items-center justify-center animate-bounce">
@@ -116,10 +127,10 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
           )}
       </div>
 
-      {/* Overlay de Sono */}
+      {/* Overlay de Sono (Zzz) */}
       {condition === CONDITIONS.ASLEEP && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none bg-indigo-900/30">
-              <span className="text-2xl font-black text-white drop-shadow-md animate-pulse">Zzz...</span>
+          <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none bg-indigo-900/20">
+              <span className="text-3xl font-black text-white drop-shadow-md animate-pulse">Zzz...</span>
           </div>
       )}
 
@@ -135,7 +146,7 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
       {/* --- HEADER --- */}
       <div className={`flex justify-between items-center px-2 py-1 ${typeText} text-[10px] font-bold z-10 bg-white/10 backdrop-blur-sm border-b border-white/20`}>
         <div className="flex flex-col leading-tight">
-            <span className={`truncate ${small ? 'max-w-[60px] text-[9px]' : 'max-w-[120px] text-xs'} font-black drop-shadow-sm`}>{card.name}</span>
+            <span className={`truncate ${small ? 'max-w-[70px] text-[9px]' : 'max-w-[120px] text-xs'} font-black drop-shadow-sm`}>{card.name}</span>
             {card.stage > 0 && (
                 <span className="text-[6px] opacity-80 uppercase font-mono bg-black/10 px-1 rounded w-fit">
                    Estágio {card.stage}
@@ -149,7 +160,6 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
       </div>
       
       {/* --- IMAGEM --- */}
-      {/* Se for pequeno, a imagem agora ocupa mais espaço (flex-1) para preencher o vazio deixado pelos ataques */}
       <div className={`relative mx-1.5 mt-1 border-2 border-white/40 shadow-inner bg-slate-100 overflow-hidden flex items-center justify-center ${small ? 'flex-1 min-h-[50px]' : 'h-32'}`}>
          {imageUrl ? (
              <img src={imageUrl} alt={card.name} className="w-full h-full object-cover z-0" />
@@ -157,7 +167,22 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
              <TypeIcon size={small ? 24 : 60} className={`opacity-50 text-gray-400`} />
          )}
 
-         {/* Ferramenta Ligada */}
+         {/* NOVA ÁREA DE STATUS (TEXTO) */}
+         {/* Fica no canto inferior esquerdo da imagem, empilhando etiquetas */}
+         {activeStatuses.length > 0 && (
+             <div className="absolute bottom-1 left-1 flex flex-col gap-0.5 z-20 items-start">
+                 {activeStatuses.map((status, idx) => (
+                     <span 
+                        key={idx} 
+                        className={`${status.color} text-white ${small ? 'text-[5px] px-1 py-0.5' : 'text-[7px] px-1.5 py-0.5'} font-black uppercase tracking-widest rounded shadow-sm border border-white/30 backdrop-blur-sm`}
+                     >
+                         {status.label}
+                     </span>
+                 ))}
+             </div>
+         )}
+
+         {/* Ferramenta Ligada (Topo Direito) */}
          {card.attachedTool && (
              <div className="absolute top-1 right-1 bg-blue-600 text-white text-[7px] font-bold px-1.5 py-0.5 rounded shadow-sm flex items-center gap-1 z-10 border border-white">
                  <Briefcase size={8} />
@@ -165,8 +190,8 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
              </div>
          )}
 
-         {/* Energias Ligadas (Sobre a imagem) */}
-         <div className="absolute bottom-1 right-1 flex flex-wrap-reverse gap-0.5 justify-end max-w-[90%] z-10">
+         {/* Energias Ligadas (Canto Inferior Direito) */}
+         <div className="absolute bottom-1 right-1 flex flex-wrap-reverse gap-0.5 justify-end max-w-[60%] z-10">
              {(card.attachedEnergy || []).map((energyType, idx) => {
                  const EIcon = ENERGY_TYPES[energyType]?.icon || PlusCircle;
                  const EColor = ENERGY_TYPES[energyType]?.color || 'bg-gray-400';
@@ -184,7 +209,7 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
           <HPBar current={currentHP} max={maxHP} />
       </div>
 
-      {/* --- ATAQUES (SÓ RENDERIZA SE NÃO FOR PEQUENO) --- */}
+      {/* --- ATAQUES (SÓ SE NÃO FOR PEQUENO) --- */}
       {!small && (
         <div className="bg-white/90 flex-1 flex flex-col overflow-hidden text-gray-900 mx-1 mb-1 rounded-sm p-1 border border-black/5 shadow-sm">
             <div className="flex-1 space-y-1 overflow-y-auto custom-scrollbar">
@@ -203,22 +228,19 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
         </div>
       )}
 
-      {/* --- FOOTER (Fraqueza, Resistência, Recuo) --- */}
+      {/* --- FOOTER --- */}
       <div className={`bg-gray-100 border-t border-gray-300 text-gray-600 flex justify-between items-center px-2 rounded-b-lg ${small ? 'h-5 py-0.5' : 'h-7 py-1'}`}>
           
-          {/* Fraqueza */}
           <div className="flex items-center gap-1" title="Fraqueza">
               <span className="text-[6px] font-bold uppercase text-gray-400">F</span>
               {renderWeakRes(card.weakness, 'Fraq')}
           </div>
 
-          {/* Resistência */}
           <div className="flex items-center gap-1" title="Resistência">
               <span className="text-[6px] font-bold uppercase text-gray-400">R</span>
               {renderWeakRes(card.resistance, 'Res')}
           </div>
           
-          {/* Recuo */}
           <div className="flex items-center gap-0.5" title="Custo de Recuo">
               <div className="flex gap-0.5">
                   {[...Array(retreatCost)].map((_, i) => (
