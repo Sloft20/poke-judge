@@ -25,7 +25,7 @@ import ToolsModal from './components/ToolsModal';
 import PlayerBoard from './components/PlayerBoard';
 import GameLog from './components/GameLog';
 import GameHeader from './components/GameHeader';
-import CoinFlipModal from './components/modals/CoinFlipModal';
+import CoinFlipModal from './components/CoinFlipModal';
 
 
 // --- 4. FUNÇÕES UTILITÁRIAS ---
