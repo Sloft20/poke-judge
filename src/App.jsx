@@ -22,6 +22,7 @@ import RuleBookModal from './components/RuleBookModal';
 import EnergyModal from './components/EnergyModal'; // Adicione esta linha
 import RetreatModal from './components/RetreatModal';
 import ToolsModal from './components/ToolsModal';
+import PlayerBoard from './components/PlayerBoard';
 
 
 
@@ -1602,6 +1603,7 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
 
         <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
+              {/* Barra de Status do Turno (Mantida igual) */}
               <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <Clock size={20} className="text-gray-400"/>
@@ -1613,10 +1615,49 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
                   {(gameState.phase === PHASES.ACTION || gameState.phase === PHASES.ATTACK) && (<div className="flex gap-2"><Button variant="secondary" onClick={endTurn}>Encerrar Turno</Button></div>)}
                   {gameState.phase === PHASES.CHECKUP && (<Button variant="primary" icon={RotateCcw} onClick={performCheckup}>Concluir Checkup & Iniciar Próx. Turno</Button>)}
               </div>
-              {renderPlayerSide(0)}
-              {renderPlayerSide(1)}
+
+              {/* --- ÁREA DO JOGADOR 1 (NOVO VISUAL) --- */}
+              <PlayerBoard 
+                  player={players[0]} 
+                  index={0}
+                  gameState={gameState}
+                  deckInfo={availableDecks[players[0].deckArchetype] || { name: 'Carregando...', color: 'bg-gray-400' }}
+                  onCardClick={(loc, idx) => handleExistingCardClick(0, loc, idx)}
+                  onAddPokemon={(target) => setShowDeckModal({ deckId: players[0].deckArchetype, pIndex: 0, target })}
+                  onUpdateStatus={(updates) => updateStatus(0, updates)}
+                  actions={{
+                      playItem,
+                      playSupporter,
+                      retreat,
+                      openAttackModal,
+                      reportKnockout,
+                      handleMulligan: () => handleMulligan(0),
+                      onOpenPrizes: () => gameState.currentPlayerIndex === 0 ? setShowPrizeModal(true) : null
+                  }}
+              />
+
+              {/* --- ÁREA DO JOGADOR 2 (NOVO VISUAL) --- */}
+              <PlayerBoard 
+                  player={players[1]} 
+                  index={1}
+                  gameState={gameState}
+                  deckInfo={availableDecks[players[1].deckArchetype] || { name: 'Carregando...', color: 'bg-gray-400' }}
+                  onCardClick={(loc, idx) => handleExistingCardClick(1, loc, idx)}
+                  onAddPokemon={(target) => setShowDeckModal({ deckId: players[1].deckArchetype, pIndex: 1, target })}
+                  onUpdateStatus={(updates) => updateStatus(1, updates)}
+                  actions={{
+                      playItem,
+                      playSupporter,
+                      retreat,
+                      openAttackModal,
+                      reportKnockout,
+                      handleMulligan: () => handleMulligan(1),
+                      onOpenPrizes: () => gameState.currentPlayerIndex === 1 ? setShowPrizeModal(true) : null
+                  }}
+              />
           </div>
 
+          {/* Coluna da Direita (Logs e Alertas - Mantida igual) */}
           <div className="space-y-6">
               <Card className="h-[600px] flex flex-col">
                   <div className="flex justify-between items-center mb-4 pb-2 border-b">
