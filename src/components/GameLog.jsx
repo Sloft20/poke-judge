@@ -52,7 +52,7 @@ const GameLog = ({ logs, onAddLog, onDownload, currentPlayer, onUpdatePlayer, cu
                 >
                     {logs.length === 0 && (
                         <div className="text-slate-600 italic text-center mt-10 opacity-50">
-                            > Aguardando entrada de dados...
+                             Aguardando entrada de dados...
                         </div>
                     )}
                     
@@ -63,7 +63,7 @@ const GameLog = ({ logs, onAddLog, onDownload, currentPlayer, onUpdatePlayer, cu
                                 {log.level !== 'INFO' && <span>{log.level}</span>}
                             </div>
                             <div className="leading-tight break-words">
-                                > {log.text}
+                                 {log.text}
                             </div>
                         </div>
                     ))}
