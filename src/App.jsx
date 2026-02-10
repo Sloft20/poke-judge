@@ -23,7 +23,7 @@ import EnergyModal from './components/EnergyModal'; // Adicione esta linha
 import RetreatModal from './components/RetreatModal';
 import ToolsModal from './components/ToolsModal';
 import PlayerBoard from './components/PlayerBoard';
-import GameLog from './components/GameLog';
+
 
 
 
