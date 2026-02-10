@@ -1,7 +1,7 @@
 import React from 'react';
-import { User, Layers, Gift, Shield, Zap, Skull, Flame, EyeOff, PlusCircle, Sword, Play } from 'lucide-react';
+import { User, Layers, Gift, Shield, Zap, Skull, Flame, PlusCircle, Sword } from 'lucide-react';
 import PokemonCard from './PokemonCard';
-import { Card, Button, Badge } from './UI';
+import { Button, Badge } from './UI';
 import PrizeZone from './PrizeZone';
 import { CONDITIONS, PHASES } from '../data/constants';
 
@@ -18,48 +18,48 @@ const PlayerBoard = ({
     const isP1 = index === 0;
     const isCurrent = gameState.currentPlayerIndex === index;
     
-    // Cores Dinâmicas (Clean Tech)
-    // Azul tecnológico para P1, Vermelho tático para P2
+    // Cores Dinâmicas
     const themeColor = isP1 ? 'blue' : 'red';
     const borderColor = isP1 ? 'border-blue-200' : 'border-red-200';
     const accentColor = isP1 ? 'text-blue-600' : 'text-red-600';
     const bgGradient = isP1 
-        ? 'bg-gradient-to-br from-slate-50 to-blue-50/30' 
-        : 'bg-gradient-to-br from-slate-50 to-red-50/30';
+        ? 'bg-gradient-to-br from-slate-50 to-blue-50/20' 
+        : 'bg-gradient-to-br from-slate-50 to-red-50/20';
 
-    // Renderiza os slots vazios do banco
+    // Renderiza os slots do banco (Agora menores: w-20 em vez de w-24)
     const renderBenchSlots = () => {
         const slots = [];
         
         // Pokémons existentes
         player.benchPokemon.forEach((poke, idx) => {
             slots.push(
-                <div key={`bench-${idx}`} className="relative group transform hover:-translate-y-2 transition-transform duration-300">
+                <div key={`bench-${idx}`} className="relative group transform hover:-translate-y-1 transition-transform duration-200 cursor-pointer">
                     <div onClick={() => onCardClick('BENCH', idx)}>
-                        <PokemonCard card={poke} small={true} />
+                        {/* Forçamos o small={true} para garantir tamanho reduzido */}
+                        <PokemonCard card={poke} small={true} className="w-20 h-28" />
                     </div>
-                    {/* Sombra holográfica em baixo */}
-                    <div className={`absolute -bottom-2 left-2 right-2 h-1 rounded-full blur-sm ${isP1 ? 'bg-blue-400/30' : 'bg-red-400/30'}`}></div>
+                    {/* Sombra holográfica */}
+                    <div className={`absolute -bottom-1 left-1 right-1 h-0.5 rounded-full blur-sm ${isP1 ? 'bg-blue-400/30' : 'bg-red-400/30'}`}></div>
                 </div>
             );
         });
 
-        // Slots vazios (Placeholders Tech)
+        // Slots vazios (Placeholders Compactos)
         for (let i = player.benchCount; i < 5; i++) {
             slots.push(
                 <div 
                     key={`empty-${i}`} 
                     onClick={() => onAddPokemon('BENCH')}
                     className={`
-                        w-24 h-36 rounded-xl border-2 border-dashed ${borderColor} 
-                        flex flex-col items-center justify-center gap-2
-                        bg-white/50 hover:bg-white transition-all cursor-pointer group
+                        w-20 h-28 rounded-lg border border-dashed ${borderColor} 
+                        flex flex-col items-center justify-center gap-1
+                        bg-white/40 hover:bg-white transition-all cursor-pointer group
                     `}
                 >
-                    <div className={`p-2 rounded-full bg-slate-100 group-hover:bg-${themeColor}-50 transition-colors`}>
-                        <PlusCircle size={20} className="text-slate-300 group-hover:text-slate-400"/>
+                    <div className={`p-1.5 rounded-full bg-slate-50 group-hover:bg-${themeColor}-50 transition-colors`}>
+                        <PlusCircle size={16} className="text-slate-300 group-hover:text-slate-400"/>
                     </div>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Vazio</span>
+                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Vazio</span>
                 </div>
             );
         }
@@ -68,81 +68,84 @@ const PlayerBoard = ({
 
     return (
         <div className={`
-            relative rounded-3xl p-1 shadow-xl transition-all duration-500 mb-6
-            ${isCurrent ? `ring-4 ring-${themeColor}-100 shadow-${themeColor}-200` : 'opacity-90 grayscale-[0.3]'}
+            relative rounded-2xl shadow-sm transition-all duration-500 mb-3
+            ${isCurrent ? `ring-2 ring-${themeColor}-100 shadow-md` : 'opacity-80 grayscale-[0.2] scale-[0.99]'}
         `}>
-            {/* Container Principal "Clean Glass" */}
-            <div className={`rounded-[1.4rem] ${bgGradient} border ${borderColor} overflow-hidden`}>
+            {/* Container Principal Compacto */}
+            <div className={`rounded-xl ${bgGradient} border ${borderColor} overflow-hidden`}>
                 
-                {/* --- HEADER DO JOGADOR --- */}
-                <div className="flex justify-between items-start p-5 bg-white/60 backdrop-blur-sm border-b border-slate-100">
+                {/* --- HEADER COMPACTO --- */}
+                <div className="flex justify-between items-center px-4 py-2 bg-white/60 backdrop-blur-sm border-b border-slate-100 h-14">
                     
                     {/* Info do Jogador */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                         <div className={`
-                            w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm
+                            w-8 h-8 rounded-lg flex items-center justify-center shadow-sm
                             ${isP1 ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-600'}
                         `}>
-                            <User size={24} />
+                            <User size={18} />
                         </div>
                         <div>
-                            <h2 className={`text-lg font-black uppercase tracking-tight flex items-center gap-2 ${accentColor}`}>
+                            <h2 className={`text-sm font-black uppercase tracking-tight flex items-center gap-2 ${accentColor}`}>
                                 {player.name}
                                 {isCurrent && (
-                                    <span className="flex h-2 w-2 relative">
+                                    <span className="flex h-1.5 w-1.5 relative">
                                         <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-${themeColor}-400`}></span>
-                                        <span className={`relative inline-flex rounded-full h-2 w-2 bg-${themeColor}-500`}></span>
+                                        <span className={`relative inline-flex rounded-full h-1.5 w-1.5 bg-${themeColor}-500`}></span>
                                     </span>
                                 )}
                             </h2>
-                            <div className="flex items-center gap-2 mt-1">
-                                <Badge className={`${deckInfo.color} border-none shadow-sm text-[10px]`}>
+                            <div className="flex items-center gap-2">
+                                <span className={`text-[10px] font-bold px-1.5 rounded-sm ${deckInfo.color || 'bg-gray-100'}`}>
                                     {deckInfo.name}
-                                </Badge>
-                                <div className="flex items-center gap-1 text-xs font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
-                                    <Layers size={10}/> {player.deckCount} Cartas
-                                </div>
+                                </span>
+                                <span className="text-[9px] text-slate-400 flex items-center gap-0.5">
+                                    <Layers size={9}/> {player.deckCount}
+                                </span>
                             </div>
                         </div>
                     </div>
 
                     {/* HUD Superior (Mão e Prêmios) */}
-                    <div className="flex gap-3">
+                    <div className="flex gap-2 h-full items-center">
                          {/* Card de Prêmios */}
-                        <div className="flex flex-col items-center bg-white p-2 rounded-xl border border-slate-100 shadow-sm">
-                            <div className="text-[9px] text-slate-400 uppercase font-bold mb-1 tracking-wider">Prêmios</div>
-                            <div onClick={actions.onOpenPrizes} className={isCurrent ? 'cursor-pointer hover:scale-105 transition-transform' : ''}>
-                                <PrizeZone count={player.prizes} compact={true} />
+                        <div className="flex flex-col items-center bg-white px-2 py-1 rounded-lg border border-slate-100 shadow-sm cursor-pointer hover:bg-slate-50" onClick={actions.onOpenPrizes}>
+                            <span className="text-[8px] text-slate-400 uppercase font-bold">Prêmios</span>
+                            <div className="flex gap-0.5">
+                                {Array.from({length: player.prizes}).map((_, i) => (
+                                    <div key={i} className={`w-2 h-3 rounded-sm ${isP1 ? 'bg-blue-500' : 'bg-red-500'}`}></div>
+                                ))}
                             </div>
                         </div>
 
                         {/* Card da Mão */}
-                        <div className="flex flex-col justify-center items-center bg-white w-16 rounded-xl border border-slate-100 shadow-sm">
-                            <span className="text-2xl font-black text-slate-700">{player.handCount}</span>
-                            <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Mão</span>
+                        <div className="flex flex-col justify-center items-center bg-white w-12 h-10 rounded-lg border border-slate-100 shadow-sm">
+                            <span className="text-base font-black text-slate-700 leading-none">{player.handCount}</span>
+                            <span className="text-[8px] text-slate-400 uppercase font-bold">Mão</span>
                         </div>
                     </div>
                 </div>
 
                 {/* --- ÁREA DE JOGO (GRID) --- */}
-                <div className="p-5 grid grid-cols-1 md:grid-cols-12 gap-6">
+                <div className="p-3 grid grid-cols-1 md:grid-cols-12 gap-3">
                     
-                    {/* COLUNA DO ATIVO (Esquerda - Maior destaque) */}
-                    <div className="md:col-span-4 flex flex-col items-center">
-                        <div className="w-full flex justify-between items-center mb-2 px-2">
-                             <span className="text-[10px] font-bold uppercase text-slate-400 tracking-widest flex items-center gap-1">
-                                <Shield size={10}/> Zona Ativa
+                    {/* COLUNA DO ATIVO (Esquerda - 4 cols) */}
+                    <div className="md:col-span-4 flex flex-col items-center border-r border-slate-100/50 pr-2">
+                        <div className="w-full flex justify-between items-center mb-1">
+                             <span className="text-[9px] font-bold uppercase text-slate-400 tracking-widest flex items-center gap-1">
+                                <Shield size={9}/> Zona Ativa
                              </span>
                         </div>
 
-                        {/* Slot do Pokémon Ativo (Plataforma) */}
-                        <div className="relative w-full aspect-[3/4] flex justify-center items-center">
-                            {/* Base Holográfica (Decoração) */}
-                            <div className={`absolute bottom-4 w-32 h-8 rounded-[100%] blur-md opacity-40 ${isP1 ? 'bg-blue-400' : 'bg-red-400'}`}></div>
+                        {/* Slot do Pokémon Ativo */}
+                        <div className="relative w-full flex justify-center items-start min-h-[220px]">
+                            {/* Base Decorativa */}
+                            <div className={`absolute bottom-6 w-24 h-4 rounded-[100%] blur-md opacity-30 ${isP1 ? 'bg-blue-400' : 'bg-red-400'}`}></div>
                             
                             {player.activePokemon ? (
-                                <div className="relative z-10 w-full flex justify-center">
+                                <div className="relative z-10">
                                     <div onClick={() => onCardClick('ACTIVE')}>
+                                        {/* Carta Ativa levemente maior que o banco, mas contida */}
                                         <PokemonCard 
                                             card={{
                                                 ...player.activePokemon, 
@@ -150,28 +153,26 @@ const PlayerBoard = ({
                                                 isPoisoned: player.isPoisoned, 
                                                 isBurned: player.isBurned
                                             }} 
-                                            className="shadow-2xl hover:scale-105 transition-transform duration-300"
+                                            className="w-40 h-56 shadow-lg hover:scale-[1.02] transition-transform duration-200"
                                         />
                                     </div>
                                     
-                                    {/* Botões de Status Flutuantes */}
-                                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex gap-2 bg-white/90 backdrop-blur border border-slate-200 p-1.5 rounded-full shadow-lg z-20">
+                                    {/* Botões de Status (Compactos e Sobrepostos) */}
+                                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex gap-1 bg-white border border-slate-200 p-1 rounded-full shadow-sm z-20 scale-90">
                                          <button 
-                                            className={`p-1.5 rounded-full transition-all ${player.isPoisoned ? 'bg-purple-100 text-purple-600 ring-2 ring-purple-500' : 'hover:bg-slate-100 text-slate-300'}`}
+                                            className={`p-1 rounded-full ${player.isPoisoned ? 'bg-purple-100 text-purple-600 ring-1 ring-purple-500' : 'text-slate-300'}`}
                                             onClick={() => onUpdateStatus({ isPoisoned: !player.isPoisoned })}
-                                            title="Veneno"
                                          >
-                                            <Skull size={14}/>
+                                            <Skull size={12}/>
                                          </button>
                                          <button 
-                                            className={`p-1.5 rounded-full transition-all ${player.isBurned ? 'bg-red-100 text-red-600 ring-2 ring-red-500' : 'hover:bg-slate-100 text-slate-300'}`}
+                                            className={`p-1 rounded-full ${player.isBurned ? 'bg-red-100 text-red-600 ring-1 ring-red-500' : 'text-slate-300'}`}
                                             onClick={() => onUpdateStatus({ isBurned: !player.isBurned })}
-                                            title="Queimadura"
                                          >
-                                            <Flame size={14}/>
+                                            <Flame size={12}/>
                                          </button>
                                          <select 
-                                            className="text-[9px] font-bold uppercase bg-transparent outline-none text-slate-600 cursor-pointer"
+                                            className="text-[9px] font-bold uppercase bg-transparent outline-none text-slate-600 cursor-pointer w-16"
                                             value={player.activeCondition}
                                             onChange={(e) => onUpdateStatus({ activeCondition: e.target.value })}
                                          >
@@ -183,57 +184,58 @@ const PlayerBoard = ({
                                 <div 
                                     onClick={() => onAddPokemon('ACTIVE')}
                                     className={`
-                                        w-48 h-72 rounded-2xl border-2 border-dashed ${borderColor} bg-white/40 
-                                        flex flex-col items-center justify-center gap-3 cursor-pointer 
-                                        hover:bg-white hover:border-${themeColor}-400 transition-all
+                                        w-36 h-52 rounded-xl border-2 border-dashed ${borderColor} bg-white/40 
+                                        flex flex-col items-center justify-center gap-2 cursor-pointer 
+                                        hover:bg-white transition-all
                                     `}
                                 >
-                                    <div className={`p-4 rounded-full bg-${themeColor}-50 text-${themeColor}-300`}>
-                                        <PlusCircle size={32} />
+                                    <div className={`p-3 rounded-full bg-${themeColor}-50 text-${themeColor}-300`}>
+                                        <PlusCircle size={24} />
                                     </div>
-                                    <span className={`text-xs font-bold uppercase text-${themeColor}-300`}>Adicionar Ativo</span>
+                                    <span className={`text-[10px] font-bold uppercase text-${themeColor}-300`}>+ Ativo</span>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* COLUNA DO BANCO E AÇÕES (Direita) */}
-                    <div className="md:col-span-8 flex flex-col gap-4">
+                    {/* COLUNA DO BANCO E AÇÕES (Direita - 8 cols) */}
+                    <div className="md:col-span-8 flex flex-col justify-between gap-2">
                         
-                        {/* Banco */}
-                        <div className="bg-white/50 rounded-2xl border border-slate-100 p-4 shadow-inner">
-                            <div className="flex justify-between items-center mb-3">
-                                <span className="text-[10px] font-bold uppercase text-slate-400 tracking-widest flex items-center gap-1">
-                                    <User size={10}/> Banco ({player.benchCount}/5)
+                        {/* Banco Compacto */}
+                        <div className="bg-white/40 rounded-xl border border-slate-50 p-2 shadow-inner">
+                            <div className="mb-1 pl-1">
+                                <span className="text-[9px] font-bold uppercase text-slate-400 tracking-widest">
+                                    Banco ({player.benchCount}/5)
                                 </span>
                             </div>
-                            <div className="flex gap-3 overflow-x-auto pb-4 custom-scrollbar">
+                            {/* Flex em vez de Grid para melhor ajuste */}
+                            <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar justify-start md:justify-between">
                                 {renderBenchSlots()}
                             </div>
                         </div>
 
-                        {/* Painel de Controle (Ações) */}
-                        {isCurrent && gameState.phase === PHASES.ACTION && (
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 animate-in slide-in-from-bottom-2">
-                                <Button variant="ghost" className="bg-white border hover:border-blue-300 text-xs shadow-sm" onClick={actions.playItem}>Item</Button>
-                                <Button variant="ghost" className="bg-white border hover:border-purple-300 text-xs shadow-sm" onClick={actions.playSupporter}>Apoiador</Button>
-                                <Button variant="ghost" className="bg-white border hover:border-green-300 text-xs shadow-sm" onClick={() => onAddPokemon('BENCH')}>+ Básico</Button>
-                                <Button variant="ghost" className="bg-white border hover:border-orange-300 text-xs shadow-sm" onClick={actions.retreat}>Recuar</Button>
+                        {/* Painel de Ações Slim */}
+                        {isCurrent && gameState.phase === PHASES.ACTION ? (
+                            <div className="grid grid-cols-4 gap-1.5 animate-in slide-in-from-bottom-1">
+                                <Button variant="ghost" className="bg-white border h-8 text-[10px] px-1" onClick={actions.playItem}>Item</Button>
+                                <Button variant="ghost" className="bg-white border h-8 text-[10px] px-1" onClick={actions.playSupporter}>Apoiador</Button>
+                                <Button variant="ghost" className="bg-white border h-8 text-[10px] px-1" onClick={() => onAddPokemon('BENCH')}>+ Básico</Button>
+                                <Button variant="ghost" className="bg-white border h-8 text-[10px] px-1" onClick={actions.retreat}>Recuar</Button>
                                 
-                                <Button variant="danger" className="col-span-2 shadow-md shadow-red-200" icon={Sword} onClick={actions.openAttackModal}>FASE DE COMBATE</Button>
-                                <Button variant="secondary" className="col-span-2 text-red-700 bg-red-50 border-red-100 hover:bg-red-100" onClick={actions.reportKnockout}><Skull size={14} className="mr-1"/> Registrar Nocaute</Button>
+                                <Button variant="danger" className="col-span-2 h-9 text-xs shadow-sm" icon={Sword} onClick={actions.openAttackModal}>COMBATE</Button>
+                                <Button variant="secondary" className="col-span-2 h-9 text-xs border-red-100 text-red-600 bg-red-50 hover:bg-red-100" onClick={actions.reportKnockout}>NOCAUTE</Button>
                             </div>
+                        ) : (
+                            !isCurrent && (
+                                <div className="h-16 flex items-center justify-center bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
+                                    <span className="text-[10px] font-bold text-slate-300 uppercase italic">Aguardando Oponente...</span>
+                                </div>
+                            )
                         )}
                         
-                        {/* Estado Setup/Espera */}
-                        {!isCurrent && (
-                            <div className="h-full flex items-center justify-center bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-                                <span className="text-xs font-bold text-slate-300 uppercase italic">Aguardando Turno...</span>
-                            </div>
-                        )}
-                         {/* Mulligan Button no Setup */}
+                        {/* Mulligan (Só aparece no Setup) */}
                         {gameState.phase === PHASES.SETUP && (
-                             <Button variant="secondary" className="w-full" onClick={actions.handleMulligan}>Registrar Mulligan ({player.mulligans})</Button>
+                             <Button variant="secondary" className="w-full h-8 text-xs" onClick={actions.handleMulligan}>Registrar Mulligan ({player.mulligans})</Button>
                         )}
                     </div>
                 </div>
