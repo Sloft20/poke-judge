@@ -25,34 +25,33 @@ const PlayerBoard = ({
         ? 'bg-gradient-to-br from-slate-50 to-blue-50/30' 
         : 'bg-gradient-to-br from-slate-50 to-red-50/30';
 
-    // Renderiza os slots do banco (Tamanho AUMENTADO: w-28 h-40)
+    // Renderiza os slots do banco
     const renderBenchSlots = () => {
         const slots = [];
         
         // Pokémons existentes
         player.benchPokemon.forEach((poke, idx) => {
             slots.push(
-                <div key={`bench-${idx}`} className="relative group transform hover:-translate-y-1 transition-transform duration-200 cursor-pointer">
+                <div key={`bench-${idx}`} className="relative group transform hover:-translate-y-2 transition-transform duration-300 cursor-pointer">
                     <div onClick={() => onCardClick('BENCH', idx)}>
-                        {/* Aumentado de w-24 h-34 para w-28 h-40 */}
-                        <PokemonCard card={poke} small={true} className="w-28 h-40 shadow-sm hover:shadow-md transition-shadow" />
+                        <PokemonCard card={poke} small={true} className="w-28 h-32 shadow-md hover:shadow-xl transition-shadow" />
                     </div>
-                    {/* Sombra holográfica */}
-                    <div className={`absolute -bottom-1 left-1 right-1 h-1 rounded-full blur-sm ${isP1 ? 'bg-blue-400/30' : 'bg-red-400/30'}`}></div>
+                    {/* Sombra holográfica na base */}
+                    <div className={`absolute -bottom-2 left-2 right-2 h-1.5 rounded-full blur-sm opacity-60 ${isP1 ? 'bg-blue-400' : 'bg-red-400'}`}></div>
                 </div>
             );
         });
 
-        // Slots vazios (Placeholders Aumentados)
+        // Slots vazios
         for (let i = player.benchCount; i < 5; i++) {
             slots.push(
                 <div 
                     key={`empty-${i}`} 
                     onClick={() => onAddPokemon('BENCH')}
                     className={`
-                        w-28 h-40 rounded-xl border-2 border-dashed ${borderColor} 
+                        w-28 h-32 rounded-xl border-2 border-dashed ${borderColor} 
                         flex flex-col items-center justify-center gap-2
-                        bg-white/50 hover:bg-white transition-all cursor-pointer group
+                        bg-white/40 hover:bg-white transition-all cursor-pointer group
                     `}
                 >
                     <div className={`p-2 rounded-full bg-slate-50 group-hover:bg-${themeColor}-50 transition-colors`}>
@@ -105,9 +104,8 @@ const PlayerBoard = ({
                         </div>
                     </div>
 
-                    {/* HUD Superior (Mão e Prêmios) */}
+                    {/* HUD Superior */}
                     <div className="flex gap-3 h-full items-center">
-                         {/* Card de Prêmios */}
                         <div className="flex flex-col items-center justify-center bg-white px-3 py-1 rounded-xl border border-slate-100 shadow-sm cursor-pointer hover:bg-slate-50 hover:border-slate-200 transition-all h-12" onClick={actions.onOpenPrizes}>
                             <span className="text-[9px] text-slate-400 uppercase font-bold mb-0.5">Prêmios</span>
                             <div className="flex gap-1">
@@ -117,7 +115,6 @@ const PlayerBoard = ({
                             </div>
                         </div>
 
-                        {/* Card da Mão */}
                         <div className="flex flex-col justify-center items-center bg-white w-14 h-12 rounded-xl border border-slate-100 shadow-sm">
                             <span className="text-xl font-black text-slate-700 leading-none">{player.handCount}</span>
                             <span className="text-[9px] text-slate-400 uppercase font-bold">Mão</span>
@@ -125,10 +122,10 @@ const PlayerBoard = ({
                     </div>
                 </div>
 
-                {/* --- ÁREA DE JOGO (GRID REBALANCEADO) --- */}
+                {/* --- ÁREA DE JOGO --- */}
                 <div className="p-5 grid grid-cols-1 md:grid-cols-12 gap-5">
                     
-                    {/* COLUNA DO ATIVO (Reduzida para 3 colunas para dar espaço ao banco) */}
+                    {/* COLUNA DO ATIVO */}
                     <div className="md:col-span-3 flex flex-col items-center border-r border-slate-200/50 pr-4">
                         <div className="w-full flex justify-between items-center mb-2 px-1">
                              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-widest flex items-center gap-1">
@@ -155,7 +152,7 @@ const PlayerBoard = ({
                                         />
                                     </div>
                                     
-                                    {/* Botões de Status (AGORA FIXOS ABAIXO DA CARTA - Não cobrem mais o rodapé) */}
+                                    {/* Botões de Status */}
                                     <div className="mt-3 flex gap-2 bg-white/80 backdrop-blur-sm border border-slate-200 p-2 rounded-xl shadow-sm z-10 items-center justify-center w-auto whitespace-nowrap">
                                          <button 
                                             className={`p-1.5 rounded-full transition-all ${player.isPoisoned ? 'bg-purple-100 text-purple-600 ring-2 ring-purple-500 shadow-sm' : 'hover:bg-slate-100 text-slate-300'}`}
@@ -205,24 +202,31 @@ const PlayerBoard = ({
                         </div>
                     </div>
 
-                    {/* COLUNA DO BANCO E AÇÕES (Aumentada para 9 colunas) */}
+                    {/* COLUNA DO BANCO E AÇÕES */}
                     <div className="md:col-span-9 flex flex-col justify-between gap-4 pl-2">
                         
-                        {/* Banco (Agora com mais espaço horizontal) */}
-                        <div className="bg-white/60 rounded-2xl border border-slate-100 p-3 shadow-inner">
-                            <div className="mb-2 pl-1 flex justify-between items-center">
+                        {/* AQUI ESTÁ A MUDANÇA:
+                           1. Usei 'flex-1' para o container crescer e ocupar o espaço.
+                           2. Adicionei 'flex items-center' no interior para centralizar verticalmente.
+                           3. Aumentei 'min-h' para garantir altura.
+                           4. Mudei 'gap-3' para 'gap-6' (mais espaço entre cartas).
+                        */}
+                        <div className="bg-white/60 rounded-2xl border border-slate-100 p-3 shadow-inner flex flex-col flex-1 min-h-[180px]">
+                            <div className="mb-1 pl-1 flex justify-between items-center shrink-0">
                                 <span className="text-[10px] font-bold uppercase text-slate-400 tracking-widest flex items-center gap-1">
                                     <User size={12}/> Banco ({player.benchCount}/5)
                                 </span>
                             </div>
-                            <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar justify-start lg:justify-center px-2">
+                            
+                            {/* Container das Cartas - Centralizado Verticalmente e com mais espaço */}
+                            <div className="flex-1 flex items-center gap-6 overflow-x-auto custom-scrollbar justify-start lg:justify-center px-4 py-2">
                                 {renderBenchSlots()}
                             </div>
                         </div>
 
                         {/* Painel de Ações */}
                         {isCurrent && gameState.phase === PHASES.ACTION ? (
-                            <div className="grid grid-cols-4 gap-2 animate-in slide-in-from-bottom-1">
+                            <div className="grid grid-cols-4 gap-2 animate-in slide-in-from-bottom-1 shrink-0">
                                 <Button variant="ghost" className="bg-white border border-slate-200 hover:border-blue-300 h-10 text-xs font-bold shadow-sm" onClick={actions.playItem}>Item</Button>
                                 <Button variant="ghost" className="bg-white border border-slate-200 hover:border-purple-300 h-10 text-xs font-bold shadow-sm" onClick={actions.playSupporter}>Apoiador</Button>
                                 <Button variant="ghost" className="bg-white border border-slate-200 hover:border-green-300 h-10 text-xs font-bold shadow-sm" onClick={() => onAddPokemon('BENCH')}>+ Básico</Button>
@@ -233,7 +237,7 @@ const PlayerBoard = ({
                             </div>
                         ) : (
                             !isCurrent && (
-                                <div className="h-24 flex items-center justify-center bg-slate-50/50 rounded-xl border border-dashed border-slate-300">
+                                <div className="h-24 flex items-center justify-center bg-slate-50/50 rounded-xl border border-dashed border-slate-300 shrink-0">
                                     <span className="text-xs font-bold text-slate-400 uppercase italic flex items-center gap-2">
                                         <Clock size={16} className="animate-pulse"/> Aguardando Turno do Oponente...
                                     </span>
@@ -243,7 +247,7 @@ const PlayerBoard = ({
                         
                         {/* Mulligan */}
                         {gameState.phase === PHASES.SETUP && (
-                             <Button variant="secondary" className="w-full h-10 text-xs font-bold border-slate-300" onClick={actions.handleMulligan}>Registrar Mulligan ({player.mulligans})</Button>
+                             <Button variant="secondary" className="w-full h-10 text-xs font-bold border-slate-300 shrink-0" onClick={actions.handleMulligan}>Registrar Mulligan ({player.mulligans})</Button>
                         )}
                     </div>
                 </div>
