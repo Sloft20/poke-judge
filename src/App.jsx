@@ -21,6 +21,7 @@ import DeckManager from './components/DeckManager';
 import RuleBookModal from './components/RuleBookModal';
 import EnergyModal from './components/EnergyModal'; // Adicione esta linha
 import RetreatModal from './components/RetreatModal';
+import ToolsModal from './components/ToolsModal';
 
 
 
@@ -2019,20 +2020,12 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
         })()
     )}
 
+    {/* --- MODAL DE FERRAMENTAS (NOVO - ROXO) --- */}
     {showToolModal && (
-      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-           <Card className="w-full max-w-lg">
-              <div className="flex justify-between items-center mb-4"><h3 className="text-lg font-bold">Selecionar Ferramenta</h3><button onClick={() => setShowToolModal(null)}><X/></button></div>
-              <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-                  {TOOLS.map((tool) => (
-                      <button key={tool.id} onClick={() => confirmAttachTool(tool)} className="w-full p-3 bg-white border border-gray-200 rounded hover:bg-blue-50 flex justify-between items-center">
-                          <span className="font-bold text-sm">{tool.name}</span>
-                          <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600">{tool.effect}</span>
-                      </button>
-                  ))}
-              </div>
-           </Card>
-      </div>
+        <ToolsModal 
+            onSelect={confirmAttachTool}
+            onClose={() => setShowToolModal(null)}
+        />
     )}
 
     {/* --- MODAL DE ATAQUE (VISUAL DE BATALHA) --- */}
