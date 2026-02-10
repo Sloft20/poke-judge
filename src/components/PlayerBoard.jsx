@@ -34,7 +34,7 @@ const PlayerBoard = ({
             slots.push(
                 <div key={`bench-${idx}`} className="relative group transform hover:-translate-y-2 transition-transform duration-300 cursor-pointer">
                     <div onClick={() => onCardClick('BENCH', idx)}>
-                        <PokemonCard card={poke} small={true} className="w-28 h-38 shadow-md hover:shadow-xl transition-shadow" />
+                        <PokemonCard card={poke} small={true} className="w-28 h-48 shadow-md hover:shadow-xl transition-shadow" />
                     </div>
                     {/* Sombra holográfica na base */}
                     <div className={`absolute -bottom-2 left-2 right-2 h-1.5 rounded-full blur-sm opacity-60 ${isP1 ? 'bg-blue-400' : 'bg-red-400'}`}></div>
