@@ -1,17 +1,17 @@
 import React, { useEffect, useRef } from 'react';
-import { History, AlertTriangle, Terminal, Download, Zap, Shield, Sparkles, Activity } from 'lucide-react';
+import { AlertTriangle, Terminal, Download, Zap, Sparkles, Activity } from 'lucide-react';
 
 const GameLog = ({ logs, onAddLog, onDownload, currentPlayer, onUpdatePlayer, currentPlayerIndex }) => {
     const logsContainerRef = useRef(null);
 
-    // Auto-scroll para o final sempre que chegar um log novo
+    // Auto-scroll para o final
     useEffect(() => {
         if (logsContainerRef.current) {
             logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight;
         }
     }, [logs]);
 
-    // Função para definir a cor da linha baseado no tipo de log
+    // --- AQUI MUDA A COR DO TEXTO ---
     const getLogStyle = (level) => {
         switch (level) {
             case 'CRIT': return 'text-red-400 border-l-2 border-red-500 bg-red-950/30';
@@ -19,7 +19,8 @@ const GameLog = ({ logs, onAddLog, onDownload, currentPlayer, onUpdatePlayer, cu
             case 'RULE': return 'text-purple-400 border-l-2 border-purple-500 bg-purple-950/30';
             case 'SUCCESS': return 'text-green-400 border-l-2 border-green-500 bg-green-950/30';
             case 'PRIZE': return 'text-yellow-200 border-l-2 border-yellow-200 bg-yellow-900/20';
-            default: return 'text-blue-300 border-l-2 border-blue-500/50 hover:bg-slate-800/50';
+            // MUDANÇA: De 'text-blue-300' para 'text-cyan-300' (Mais claro e legível)
+            default: return 'text-cyan-300 border-l-2 border-cyan-500/50 hover:bg-slate-800/50';
         }
     };
 
@@ -29,7 +30,7 @@ const GameLog = ({ logs, onAddLog, onDownload, currentPlayer, onUpdatePlayer, cu
             {/* --- TERMINAL DE LOGS --- */}
             <div className="flex-1 bg-slate-950 rounded-2xl border border-slate-800 shadow-xl overflow-hidden flex flex-col relative">
                 
-                {/* Header do Terminal */}
+                {/* Header */}
                 <div className="bg-slate-900/80 p-3 border-b border-slate-800 flex justify-between items-center backdrop-blur-sm">
                     <div className="flex items-center gap-2">
                         <Terminal size={16} className="text-green-500 animate-pulse"/>
@@ -47,23 +48,28 @@ const GameLog = ({ logs, onAddLog, onDownload, currentPlayer, onUpdatePlayer, cu
                 {/* Área de Scroll (Logs) */}
                 <div 
                     ref={logsContainerRef} 
-                    className="flex-1 overflow-y-auto p-3 space-y-1 font-mono text-xs custom-scrollbar bg-slate-950"
+                    className="flex-1 overflow-y-auto p-4 space-y-2 font-mono custom-scrollbar bg-slate-950"
                     style={{ scrollBehavior: 'smooth' }}
                 >
                     {logs.length === 0 && (
-                        <div className="text-slate-600 italic text-center mt-10 opacity-50">
-                             Aguardando entrada de dados...
+                        <div className="text-slate-600 italic text-center mt-10 opacity-50 text-sm">
+                            > Aguardando entrada de dados...
                         </div>
                     )}
                     
                     {logs.map((log) => (
-                        <div key={log.id} className={`p-2 rounded-r mb-1 transition-all animate-in fade-in slide-in-from-left-2 ${getLogStyle(log.level)}`}>
-                            <div className="flex justify-between opacity-50 text-[10px] mb-0.5 font-bold">
+                        // MUDANÇA: Padding aumentado (p-3) e margem (mb-2) para respirar melhor
+                        <div key={log.id} className={`p-3 rounded-r mb-2 transition-all animate-in fade-in slide-in-from-left-2 ${getLogStyle(log.level)}`}>
+                            
+                            {/* MUDANÇA: Aumentei o tamanho da data para text-xs (antes era [10px]) */}
+                            <div className="flex justify-between opacity-60 text-xs mb-1 font-bold">
                                 <span>[{log.time}]</span>
                                 {log.level !== 'INFO' && <span>{log.level}</span>}
                             </div>
-                            <div className="leading-tight break-words">
-                                 {log.text}
+                            
+                            {/* MUDANÇA: Aumentei o texto principal para text-sm (antes era xs) */}
+                            <div className="leading-snug break-words text-sm font-medium">
+                                > {log.text}
                             </div>
                         </div>
                     ))}
@@ -71,13 +77,13 @@ const GameLog = ({ logs, onAddLog, onDownload, currentPlayer, onUpdatePlayer, cu
 
                 {/* Footer Decorativo */}
                 <div className="bg-slate-900 p-1 border-t border-slate-800 flex justify-between items-center px-3">
-                    <span className="text-[9px] text-green-500/50 animate-pulse">● ONLINE</span>
-                    <span className="text-[9px] text-slate-600 font-mono">SECURE CONNECTION</span>
+                    <span className="text-[10px] text-green-500/50 animate-pulse">● ONLINE</span>
+                    <span className="text-[10px] text-slate-600 font-mono">SECURE CONNECTION</span>
                 </div>
             </div>
 
             {/* --- PAINEL DE CONTROLE DO JUIZ --- */}
-            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-lg">
+            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-lg shrink-0">
                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                     <AlertTriangle size={14} className="text-yellow-500"/> 
                     Controles de Arbitragem
