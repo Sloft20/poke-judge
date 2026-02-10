@@ -23,6 +23,7 @@ import EnergyModal from './components/EnergyModal'; // Adicione esta linha
 import RetreatModal from './components/RetreatModal';
 import ToolsModal from './components/ToolsModal';
 import PlayerBoard from './components/PlayerBoard';
+import GameLog from './components/GameLog';
 
 
 
@@ -1658,52 +1659,17 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
           </div>
 
           {/* Coluna da Direita (Logs e Alertas - Mantida igual) */}
-          <div className="space-y-6">
-              <Card className="h-[600px] flex flex-col">
-                  <div className="flex justify-between items-center mb-4 pb-2 border-b">
-                    <h3 className="font-bold flex items-center gap-2"><History size={18}/> Linha do Tempo</h3>
-                    <Badge color="gray">Live</Badge>
-                  </div>
-                  <div ref={logsContainerRef} className="flex-1 overflow-y-auto space-y-3 pr-2 font-mono text-sm">
-                      {logs.map((log) => (
-                        <div key={log.id} className={`p-2 rounded border-l-4 bg-gray-50 dark:bg-gray-700/50 ${log.level === 'CRIT' ? 'border-red-500 bg-red-50 dark:bg-red-900/20' : log.level === 'WARN' ? 'border-yellow-500' : log.level === 'RULE' ? 'border-purple-500 bg-purple-50' : log.level === 'SUCCESS' ? 'border-green-500 bg-green-50' : log.level === 'PRIZE' ? 'border-yellow-500 bg-yellow-50' : 'border-blue-400'}`}>
-                          <div className="text-xs text-gray-500 mb-1">{log.time}</div>
-                          <div>{log.text}</div>
-                        </div>
-                      ))}
-                  </div>
-              </Card>
-              <Card>
-                  <h3 className="font-bold mb-2 flex items-center gap-2"><AlertTriangle size={18}/> Alertas de Juiz</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                      <Button variant="ghost" className="border text-xs" onClick={() => addLog('Aviso: Jogo Lento (Slow Play).', 'WARN')}>Slow Play</Button>
-                      <Button variant="ghost" className="border text-xs" onClick={() => addLog('Erro de Procedimento Menor.', 'WARN')}>Erro Menor</Button>
-                      <Button variant="ghost" className="border text-xs" onClick={() => addLog('Game State Irreparável.', 'CRIT')}>Irreparável</Button>
-                      <Button 
-                          variant={currentPlayer.allowUnlimitedEnergy ? "success" : "ghost"} 
-                          className="border text-[10px]" 
-                          onClick={() => {
-                              updatePlayer(gameState.currentPlayerIndex, { allowUnlimitedEnergy: !currentPlayer.allowUnlimitedEnergy });
-                              addLog(`${currentPlayer.allowUnlimitedEnergy ? 'Restringiu' : 'LIBEROU'} uso de energia ilimitada.`, 'RULE', gameState.currentPlayerIndex);
-                          }}
-                      >
-                          {currentPlayer.allowUnlimitedEnergy ? "Energia: Ilimitada" : "Energia: 1 p/ Turno"}
-                      </Button>
-                      <Button variant="secondary" className="text-xs" icon={Download} onClick={downloadLog}>Exportar .txt</Button>
-                      <Button 
-                        variant={currentPlayer.allowRareCandy ? "warning" : "ghost"} 
-                        className={`border text-[10px] ${currentPlayer.allowRareCandy ? 'bg-blue-100 text-blue-800 border-blue-300' : ''}`}
-                        onClick={() => {
-                            updatePlayer(gameState.currentPlayerIndex, { allowRareCandy: !currentPlayer.allowRareCandy });
-                            addLog(`${currentPlayer.allowRareCandy ? 'DESATIVOU' : 'ATIVOU'} modo Rare Candy (Pular Estágio).`, 'RULE', gameState.currentPlayerIndex);
-                        }}
-                      >
-                        <Sparkles size={14} className={currentPlayer.allowRareCandy ? "text-blue-600" : "text-gray-400"}/>
-                        {currentPlayer.allowRareCandy ? "Rare Candy: ON" : "Rare Candy: OFF"}
-                      </Button>
-                  </div>
-              </Card>
-          </div>
+          {/* --- COLUNA DA DIREITA (TERMINAL DE LOGS) --- */}
+            <div className="h-[calc(100vh-140px)] sticky top-4">
+                <GameLog 
+                    logs={logs}
+                    onAddLog={addLog}
+                    onDownload={downloadLog}
+                    currentPlayer={currentPlayer}
+                    currentPlayerIndex={gameState.currentPlayerIndex}
+                    onUpdatePlayer={updatePlayer}
+                />
+            </div>
         </main>
       </>
     )}
