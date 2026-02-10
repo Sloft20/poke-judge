@@ -24,6 +24,7 @@ import RetreatModal from './components/RetreatModal';
 import ToolsModal from './components/ToolsModal';
 import PlayerBoard from './components/PlayerBoard';
 import GameLog from './components/GameLog';
+import GameHeader from './components/GameHeader';
 
 
 
@@ -1566,41 +1567,19 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
     {/* 2. INTERFACE DE JOGO (SÓ APARECE SE NÃO ESTIVER NO LOBBY) */}
     {gameState.phase !== PHASES.LOBBY && (
       <>
-        <header className="flex justify-between items-center mb-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-          <div className="flex items-center gap-3">
-              <Shield className="text-blue-600" size={32} />
-              <div>
-                <h1 className="text-2xl font-black tracking-tighter uppercase italic text-white">PokéJudge Pro</h1>
-                
-                <p className="text-xs text-slate-400 font-mono">Assistente de Arbitragem v2.5</p>
-                <button onClick={() => setShowDeckManager(true)} className="mb-6 text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 w-full underline">
-                    <Edit3 size={12}/> Gerenciar Decks (Supabase)
-                </button>
-                
-                
-              </div>
-          </div>
-          <div className="flex items-center gap-4">
-               <div className="flex items-center gap-2 mr-4 bg-gray-100 px-3 py-1 rounded">
-                   <Clock size={16} className={isTimerPaused ? 'text-red-500' : 'text-green-600'}/>
-                   <span className="font-mono font-bold text-lg">{formatTime(gameTimer)}</span>
-                   <button onClick={() => setIsTimerPaused(!isTimerPaused)} className="ml-2 text-xs text-blue-600 hover:underline">
-                    {isTimerPaused ? <Play size={12}/> : <Pause size={12}/>}
-                   </button>
-               </div>
-               <div className="text-right">
-                <div className="text-xs uppercase font-bold text-gray-500">Fase Atual</div>
-                <div className="text-xl font-bold text-blue-600">{gameState.phase}</div>
-               </div>
-               <Button variant="ghost" onClick={handleCoinFlip} className="border border-yellow-400 bg-yellow-50 text-yellow-700 hover:bg-yellow-100">
-                <Coins className="mr-1" size={16}/> Moeda
-               </Button>
-               <Button variant="ghost" onClick={() => setShowRanking(true)} className="border border-purple-400 bg-purple-50 text-purple-700 hover:bg-purple-100">
-                <BarChart2 className="mr-1" size={16}/> Ranking
-               </Button>
-              <Button variant="secondary" icon={BookOpen} onClick={() => setShowRules(true)}>Regras</Button>
-          </div>
-        </header>
+        {/* --- NOVO HEADER (MÓDULO DE COMANDO) --- */}
+        <div className="mb-6">
+            <GameHeader 
+                gameState={gameState}
+                gameTimer={gameTimer}
+                isTimerPaused={isTimerPaused}
+                onToggleTimer={() => setIsTimerPaused(!isTimerPaused)}
+                onCoinFlip={handleCoinFlip}
+                onOpenDeckManager={() => setShowDeckManager(true)}
+                onOpenRanking={() => setShowRanking(true)}
+                onOpenRules={() => setShowRules(true)}
+            />
+        </div>
 
         <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
