@@ -25,7 +25,7 @@ import ToolsModal from './components/ToolsModal';
 import PlayerBoard from './components/PlayerBoard';
 import GameLog from './components/GameLog';
 import GameHeader from './components/GameHeader';
-
+import CoinFlipModal from './components/modals/CoinFlipModal';
 
 
 // --- 4. FUNÇÕES UTILITÁRIAS ---
@@ -432,6 +432,7 @@ export default function PokeJudgePro() {
   const [showDeckManager, setShowDeckManager] = useState(false);
   const [availableDecks, setAvailableDecks] = useState({});
   const decksRef = useRef({}); // Começa vazio
+  const [showCoinFlipModal, setShowCoinFlipModal] = useState(false);
   // --- CARREGA OS DADOS ASSIM QUE O SITE ABRE ---
   useEffect(() => {
     fetchDecksFromSupabase();
@@ -797,22 +798,10 @@ const handleStartGameFromLobby = () => {
     addLog(`Mulligan declarado. Embaralhando e comprando nova mão.`, 'WARN', pIndex);
   };
 
- const handleCoinFlip = () => {
-    // 1. Caminho atualizado para a nova pasta organizada
-    const audio = new Audio('/sounds/coinflip.mp3'); 
-    audio.volume = 0.6;
-    audio.play().catch(e => console.log("Interação necessária para tocar som"));
-
-    const result = Math.random() < 0.5 ? 'CARA' : 'COROA';
-    
-    // 2. Mantemos o delay de 600ms para sincronia com o som
-    setTimeout(() => {
-        setCoinResult(result);
-        addLog(`Resultado da Moeda: ${result}`, 'SUCCESS');
-    }, 600); 
-
-    setTimeout(() => setCoinResult(null), 3000);
-};
+ // Nova função para abrir o modal 3D
+  const handleCoinFlip = () => {
+    setShowCoinFlipModal(true);
+  };
 
   const finishSetup = () => {
     if (!players[0].activePokemon || !players[1].activePokemon) {
@@ -2159,6 +2148,19 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
             onUpdate={fetchDecksFromSupabase} // Recarrega quando você salva algo novo
         />
     )}
+    {/* --- MODAIS EXISTENTES --- */}
+      {/* ... seus outros modais (DeckManager, Ranking, etc) ... */}
+
+      {/* --- NOVO MODAL DE MOEDA 3D --- */}
+      <CoinFlipModal 
+        isOpen={showCoinFlipModal}
+        onClose={() => setShowCoinFlipModal(false)}
+        onComplete={(logText, logLevel) => {
+            addLog(logText, logLevel);
+            // Opcional: fechar automaticamente após um tempo
+            // setTimeout(() => setShowCoinFlipModal(false), 2000);
+        }}
+      />
         
     {/* --- BOTÃO FLUTUANTE DE DESFAZER (UNDO) --- */}
     {history.length > 0 && gameState.phase !== PHASES.LOBBY && (
