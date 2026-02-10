@@ -20,7 +20,7 @@ const GameLog = ({ logs, onAddLog, onDownload, currentPlayer, onUpdatePlayer, cu
             case 'SUCCESS': return 'text-green-400 border-l-2 border-green-500 bg-green-950/30';
             case 'PRIZE': return 'text-yellow-200 border-l-2 border-yellow-200 bg-yellow-900/20';
             // MUDANÇA: De 'text-blue-300' para 'text-cyan-300' (Mais claro e legível)
-            default: return 'text-cyan-300 border-l-2 border-cyan-500/50 hover:bg-slate-800/50';
+            default: return 'text-white border-l-2 border-cyan-500/50 hover:bg-slate-800/50';
         }
     };
 
@@ -28,14 +28,14 @@ const GameLog = ({ logs, onAddLog, onDownload, currentPlayer, onUpdatePlayer, cu
         <div className="flex flex-col gap-4 h-full">
             
             {/* --- TERMINAL DE LOGS --- */}
-            <div className="flex-1 bg-slate-950 rounded-2xl border border-slate-800 shadow-xl overflow-hidden flex flex-col relative">
+            <div className="flex-1 bg-gray-900 rounded-2xl border border-slate-800 shadow-xl overflow-hidden flex flex-col relative">
                 
                 {/* Header */}
                 <div className="bg-slate-900/80 p-3 border-b border-slate-800 flex justify-between items-center backdrop-blur-sm">
                     <div className="flex items-center gap-2">
                         <Terminal size={16} className="text-green-500 animate-pulse"/>
                         <span className="text-xs font-mono font-bold text-slate-300 uppercase tracking-widest">
-                            SYSTEM_LOG // V.2.5
+                            Live: Jogo em Andament!
                         </span>
                     </div>
                     <div className="flex gap-1">
@@ -53,7 +53,7 @@ const GameLog = ({ logs, onAddLog, onDownload, currentPlayer, onUpdatePlayer, cu
                 >
                     {logs.length === 0 && (
                         <div className="text-slate-600 italic text-center mt-10 opacity-50 text-sm">
-                            > Aguardando entrada de dados...
+                             Aguardando entrada de dados...
                         </div>
                     )}
                     
@@ -62,14 +62,14 @@ const GameLog = ({ logs, onAddLog, onDownload, currentPlayer, onUpdatePlayer, cu
                         <div key={log.id} className={`p-3 rounded-r mb-2 transition-all animate-in fade-in slide-in-from-left-2 ${getLogStyle(log.level)}`}>
                             
                             {/* MUDANÇA: Aumentei o tamanho da data para text-xs (antes era [10px]) */}
-                            <div className="flex justify-between opacity-60 text-xs mb-1 font-bold">
+                            <div className="flex justify-between opacity-60 text-lg mb-1 font-bold">
                                 <span>[{log.time}]</span>
                                 {log.level !== 'INFO' && <span>{log.level}</span>}
                             </div>
                             
                             {/* MUDANÇA: Aumentei o texto principal para text-sm (antes era xs) */}
                             <div className="leading-snug break-words text-sm font-medium">
-                                > {log.text}
+                                 {log.text}
                             </div>
                         </div>
                     ))}
