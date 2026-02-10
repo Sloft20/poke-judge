@@ -1,4 +1,3 @@
-// src/components/PokemonCard.jsx
 import React from 'react';
 import { Circle, Briefcase, PlusCircle, Star, Skull, Flame, EyeOff, Shield, Heart, Zap } from 'lucide-react'; 
 import { ENERGY_TYPES, CONDITIONS } from '../data/constants';
@@ -81,14 +80,10 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
 
   // Renderiza Fraqueza ou Resistência
   const renderWeakRes = (data, label) => {
-      // Aceita string ('Water') ou objeto ({type: 'Water', value: 'x2'})
       const type = typeof data === 'object' ? data?.type : data;
-      
       if (!type || type === 'none') return <span className="text-[8px] text-gray-400 font-bold">-</span>;
-
       const EInfo = ENERGY_TYPES[type] || { color: 'bg-gray-500', icon: Circle };
       const EIcon = EInfo.icon;
-      
       return (
         <div className={`w-4 h-4 rounded-full ${EInfo.color} flex items-center justify-center text-white shadow-sm border border-white/30`}>
             <EIcon size={10} />
@@ -154,7 +149,8 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
       </div>
       
       {/* --- IMAGEM --- */}
-      <div className={`relative mx-1.5 mt-1 border-2 border-white/40 shadow-inner bg-slate-100 overflow-hidden flex items-center justify-center ${small ? 'h-14' : 'h-32'}`}>
+      {/* Se for pequeno, a imagem agora ocupa mais espaço (flex-1) para preencher o vazio deixado pelos ataques */}
+      <div className={`relative mx-1.5 mt-1 border-2 border-white/40 shadow-inner bg-slate-100 overflow-hidden flex items-center justify-center ${small ? 'flex-1 min-h-[50px]' : 'h-32'}`}>
          {imageUrl ? (
              <img src={imageUrl} alt={card.name} className="w-full h-full object-cover z-0" />
          ) : (
@@ -188,22 +184,24 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
           <HPBar current={currentHP} max={maxHP} />
       </div>
 
-      {/* --- ATAQUES --- */}
-      <div className="bg-white/90 flex-1 flex flex-col overflow-hidden text-gray-900 mx-1 mb-1 rounded-sm p-1 border border-black/5 shadow-sm">
-          <div className="flex-1 space-y-1 overflow-y-auto custom-scrollbar">
-              {(card.attacks || []).slice(0, small ? 1 : 2).map((atk, i) => (
-                  <div key={i} className="flex flex-col border-b border-gray-200 last:border-0 pb-1 mb-0.5">
-                      <div className="flex justify-between items-start">
-                          <div className="flex gap-0.5 pt-0.5">
-                              {renderEnergyCost(atk.cost)}
-                          </div>
-                          <span className="font-black text-black text-[10px]">{atk.damage > 0 ? atk.damage : ''}</span>
-                      </div>
-                      <span className="text-gray-800 font-bold truncate leading-tight text-[8px] mt-0.5">{atk.name}</span>
-                  </div>
-              ))}
-          </div>
-      </div>
+      {/* --- ATAQUES (SÓ RENDERIZA SE NÃO FOR PEQUENO) --- */}
+      {!small && (
+        <div className="bg-white/90 flex-1 flex flex-col overflow-hidden text-gray-900 mx-1 mb-1 rounded-sm p-1 border border-black/5 shadow-sm">
+            <div className="flex-1 space-y-1 overflow-y-auto custom-scrollbar">
+                {(card.attacks || []).slice(0, 2).map((atk, i) => (
+                    <div key={i} className="flex flex-col border-b border-gray-200 last:border-0 pb-1 mb-0.5">
+                        <div className="flex justify-between items-start">
+                            <div className="flex gap-0.5 pt-0.5">
+                                {renderEnergyCost(atk.cost)}
+                            </div>
+                            <span className="font-black text-black text-[10px]">{atk.damage > 0 ? atk.damage : ''}</span>
+                        </div>
+                        <span className="text-gray-800 font-bold truncate leading-tight text-[8px] mt-0.5">{atk.name}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+      )}
 
       {/* --- FOOTER (Fraqueza, Resistência, Recuo) --- */}
       <div className={`bg-gray-100 border-t border-gray-300 text-gray-600 flex justify-between items-center px-2 rounded-b-lg ${small ? 'h-5 py-0.5' : 'h-7 py-1'}`}>
