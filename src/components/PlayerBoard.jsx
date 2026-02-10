@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Layers, Shield, Skull, Flame, PlusCircle, Sword } from 'lucide-react';
+import { User, Layers, Shield, Skull, Flame, PlusCircle, Sword, Clock } from 'lucide-react';
 import PokemonCard from './PokemonCard';
 import { Button } from './UI';
 import { CONDITIONS, PHASES } from '../data/constants';
