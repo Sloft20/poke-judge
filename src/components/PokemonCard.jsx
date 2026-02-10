@@ -154,7 +154,7 @@ const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) 
             )}
         </div>
         <div className="flex items-center gap-1">
-             <span className={`${small ? 'text-[8px]' : 'text-xs'} font-black`}>HP{maxHP}</span>
+             {!small && <span className="text-xs font-black">HP{maxHP}</span>}
              <TypeIcon size={small ? 14 : 16} />
         </div>
       </div>
