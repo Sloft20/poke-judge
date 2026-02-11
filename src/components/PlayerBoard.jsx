@@ -148,7 +148,7 @@ const PlayerBoard = ({
                                                 isPoisoned: player.isPoisoned, 
                                                 isBurned: player.isBurned
                                             }} 
-                                            className="w-44 h-60 shadow-xl hover:scale-[1.02] transition-transform duration-200"
+                                            
                                         />
                                     </div>
                                     
