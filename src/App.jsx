@@ -25,7 +25,7 @@ import ToolsModal from './components/ToolsModal';
 import PlayerBoard from './components/PlayerBoard';
 import GameLog from './components/GameLog';
 import GameHeader from './components/GameHeader';
-import { VStarIcon, DoubleEnergy } from './CustomIcons'; // Ajuste o caminho
+
 
 
 
