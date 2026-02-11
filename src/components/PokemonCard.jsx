@@ -56,15 +56,16 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
             
             {/* 1. BARRA DE VIDA (Posicionada na Faixa Central) */}
             {/* top-[54%] coloca ela logo abaixo da imagem da maioria das cartas */}
-            <div className="absolute top-[54%] left-4 right-4 z-20 -translate-y-1/2">
-                {/* Fundo escuro leve para destacar a barra naquela faixa cinza */}
-                <div className="relative h-3.5 bg-gray-900/80 backdrop-blur-[2px] rounded-full border border-white/20 overflow-hidden shadow-md">
-                    {/* A barra colorida */}
+            {/* 1. BARRA DE VIDA (Ajuste Fino) */}
+            {/* Mudamos para 51% para cobrir a faixa de dados da Pokédex */}
+            <div className="absolute top-[51%] left-4 right-4 z-20 -translate-y-1/2">
+                
+                {/* Mantive o resto igual para preservar o estilo que você gostou */}
+                <div className="relative h-3.5 bg-gray-900/90 backdrop-blur-[2px] rounded-full border border-white/20 overflow-hidden shadow-md">
                     <div 
                         className={`h-full transition-all duration-500 ease-out ${getHealthColor(healthPercentage)}`}
                         style={{ width: `${healthPercentage}%` }}
                     ></div>
-                    {/* Texto do HP (Texto menor para caber na barra fina) */}
                     <div className="absolute inset-0 flex items-center justify-center">
                          <span className="text-[9px] font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,1)] tracking-widest uppercase">
                             {currentHP}/{maxHP}
