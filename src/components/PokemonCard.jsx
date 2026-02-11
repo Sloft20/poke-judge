@@ -54,20 +54,20 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
                  CAMADA 2: OVERLAYS (As informações por cima da imagem)
             ============================================================ */}
             
-            {/* 1. BARRA DE VIDA (Reposicionada para a parte inferior) */}
-            {/* Mudamos de 'top-2' para 'bottom-[60px]' para ficar acima das energias */}
-            <div className="absolute bottom-[60px] left-3 right-3 z-20">
-                {/* Fundo escuro mais forte para garantir leitura sobre o texto da carta */}
-                <div className="relative h-5 bg-black/70 backdrop-blur-md rounded-full border border-white/30 overflow-hidden shadow-lg">
+            {/* 1. BARRA DE VIDA (Posicionada na Faixa Central) */}
+            {/* top-[54%] coloca ela logo abaixo da imagem da maioria das cartas */}
+            <div className="absolute top-[54%] left-4 right-4 z-20 -translate-y-1/2">
+                {/* Fundo escuro leve para destacar a barra naquela faixa cinza */}
+                <div className="relative h-3.5 bg-gray-900/80 backdrop-blur-[2px] rounded-full border border-white/20 overflow-hidden shadow-md">
                     {/* A barra colorida */}
                     <div 
                         className={`h-full transition-all duration-500 ease-out ${getHealthColor(healthPercentage)}`}
                         style={{ width: `${healthPercentage}%` }}
                     ></div>
-                    {/* Texto do HP */}
+                    {/* Texto do HP (Texto menor para caber na barra fina) */}
                     <div className="absolute inset-0 flex items-center justify-center">
-                         <span className="text-xs font-black text-white drop-shadow-[0_2px_2px_rgba(0,0,0,1)] tracking-wider">
-                            {currentHP} / {maxHP} HP
+                         <span className="text-[9px] font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,1)] tracking-widest uppercase">
+                            {currentHP}/{maxHP}
                         </span>
                     </div>
                 </div>
