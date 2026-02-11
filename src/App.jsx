@@ -899,8 +899,8 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
 
         // --- REGRA 2: NOME DA EVOLUÇÃO ---
         // Se NÃO for Rare Candy, o nome precisa bater. Se FOR Rare Candy, ignora o nome (mas exige Stage 0 -> Stage 2)
-        if (cardData.evolvesFrom !== targetPokemon.name && !isRareCandyAction) {
-            addLog(`EVOLUÇÃO INVÁLIDA: ${cardData.name} evolui de ${cardData.evolvesFrom}, mas o alvo é ${targetPokemon.name}.`, 'CRIT', pIndex);
+        if (requiredName !== targetPokemon.name && !isRareCandyAction) {
+            addLog(`EVOLUÇÃO INVÁLIDA: ${cardData.name} evolui de ${requiredName}, mas o alvo é ${targetPokemon.name}.`, 'CRIT', pIndex);
             return;
         }
 
