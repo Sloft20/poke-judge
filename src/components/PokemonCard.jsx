@@ -4,17 +4,17 @@ import { Anchor } from 'lucide-react';
 
 // --- IMAGENS OFICIAIS DAS ENERGIAS (PNG Transparente) ---
 const ENERGY_IMAGES = {
-    'Grass': 'https://limitlesstcg.com/img/symbols/energy/grass.png',
-    'Fire': 'https://limitlesstcg.com/img/symbols/energy/fire.png',
-    'Water': 'https://limitlesstcg.com/img/symbols/energy/water.png',
-    'Lightning': 'https://limitlesstcg.com/img/symbols/energy/lightning.png',
-    'Psychic': 'https://limitlesstcg.com/img/symbols/energy/psychic.png',
-    'Fighting': 'https://limitlesstcg.com/img/symbols/energy/fighting.png',
-    'Darkness': 'https://limitlesstcg.com/img/symbols/energy/darkness.png',
-    'Metal': 'https://limitlesstcg.com/img/symbols/energy/metal.png',
-    'Dragon': 'https://limitlesstcg.com/img/symbols/energy/dragon.png',
-    'Fairy': 'https://limitlesstcg.com/img/symbols/energy/fairy.png',
-    'Colorless': 'https://limitlesstcg.com/img/symbols/energy/colorless.png',
+    'Grass': 'https://archives.bulbagarden.net/media/upload/thumb/2/2e/Grass-attack.png/20px-Grass-attack.png',
+    'Fire': 'https://archives.bulbagarden.net/media/upload/thumb/a/ad/Fire-attack.png/20px-Fire-attack.png',
+    'Water': 'https://archives.bulbagarden.net/media/upload/thumb/1/11/Water-attack.png/20px-Water-attack.png',
+    'Lightning': 'https://archives.bulbagarden.net/media/upload/thumb/0/04/Lightning-attack.png/20px-Lightning-attack.png',
+    'Psychic': 'https://limitlesstcg.com/img/symbols/energy/psychic.https://archives.bulbagarden.net/media/upload/thumb/e/ef/Psychic-attack.png/20px-Psychic-attack.png',
+    'Fighting': 'https://archives.bulbagarden.net/media/upload/thumb/4/4c/Fighting-attack.png/20px-Fighting-attack.png',
+    'Darkness': 'https://archives.bulbagarden.net/media/upload/thumb/8/8f/Darkness-attack.png/20px-Darkness-attack.png',
+    'Metal': 'https://archives.bulbagarden.net/media/upload/thumb/f/f1/Metal-attack.png/20px-Metal-attack.png',
+    'Dragon': 'https://archives.bulbagarden.net/media/upload/thumb/d/d7/Dragon-attack.png/20px-Dragon-attack.png',
+    'Fairy': 'https://archives.bulbagarden.net/media/upload/thumb/c/c3/Fairy-attack.png/20px-Fairy-attack.png',
+    'Colorless': 'https://archives.bulbagarden.net/media/upload/thumb/1/1d/Colorless-attack.png/20px-Colorless-attack.png',
     'Ability': 'https://limitlesstcg.com/img/symbols/energy/ability.png' // Bônus: Ícone de Habilidade
 };
 
