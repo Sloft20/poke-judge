@@ -849,6 +849,15 @@ const handleStartGameFromLobby = () => {
 
   // ... (Demais lógicas de jogo mantidas identicas) ...
   const startTurnLogic = () => {
+    // --- BLOQUEIO DE SEGURANÇA ---
+    // Se o jogador não tem um Pokémon Ativo (ex: acabou de ser nocauteado),
+    // ele NÃO pode iniciar o turno (comprar carta) até promover alguém do banco.
+    if (!currentPlayer.activePokemon) {
+        addLog(`REGRA: Você precisa promover um Pokémon do banco para o Ativo antes de começar!`, 'CRIT', gameState.currentPlayerIndex);
+        return; // <--- O código para aqui e não deixa avançar
+    }
+
+    // Se tiver ativo, segue o jogo normal:
     setGameState(prev => ({ ...prev, phase: PHASES.DRAW }));
     addLog(`Fase de Início de Turno concluída.`, 'INFO', gameState.currentPlayerIndex);
   };
@@ -1397,45 +1406,70 @@ const handleStartGameFromLobby = () => {
   }, 1000); 
 };
   
+  // SUBSTITUA A FUNÇÃO takePrize POR ESTA:
   const takePrize = (count) => { 
       const current = players[gameState.currentPlayerIndex].prizes; 
       const newCount = Math.max(0, current - count); 
-      updatePlayer(gameState.currentPlayerIndex, { prizes: newCount }); 
-      addLog(`Pegou ${count} carta(s) de prêmio. Restantes: ${newCount}`, 'WARN', gameState.currentPlayerIndex); 
-      if (newCount === 0) { declareWinner(gameState.currentPlayerIndex); } 
+      
+      updatePlayer(gameState.currentPlayerIndex, { 
+          prizes: newCount,
+          handCount: players[gameState.currentPlayerIndex].handCount + count // Adiciona à mão visualmente
+      }); 
+      
+      addLog(`Pegou carta de prêmio. Restantes: ${newCount}`, 'SUCCESS', gameState.currentPlayerIndex); 
+      
+      // Fecha o modal automaticamente após pegar 1 prêmio para agilizar
+      
+
+      if (newCount === 0) { 
+          declareWinner(gameState.currentPlayerIndex); 
+      } 
   };
   
+  // SUBSTITUA A FUNÇÃO reportKnockout POR ESTA:
   const reportKnockout = (victimIndex) => { 
     const victim = players[victimIndex]; 
     const attackerIndex = victimIndex === 0 ? 1 : 0; 
-    
-    // Check if multi prize rule box
+    const attacker = players[attackerIndex];
+
+    // 1. Lógica de Prêmios: Ex/V valem 2, outros valem 1
     let prizeCount = 1;
     if (victim.activePokemon && (victim.activePokemon.name.includes('ex') || victim.activePokemon.name.includes(' V'))) {
         prizeCount = 2;
     }
     
     addLog(`${victim.activePokemon ? victim.activePokemon.name : 'Ativo'} foi Nocauteado!`, 'CRIT', victimIndex); 
-    
-    // Trigger Prize Alert
-    setPrizeAlert({ player: players[attackerIndex].name, count: prizeCount });
 
+    // 2. Limpa o Pokémon Nocauteado
     updatePlayer(victimIndex, { activePokemon: null, activeCondition: CONDITIONS.NONE }); 
-    
-    // Check bench out win condition
-    // FIX: Using length directly is safer than relying on potentially stale benchCount
+
+    // 3. Verifica Vitória por Falta de Banco (Bench Out)
+    // Se o oponente não tem ninguém no banco para substituir, o atacante ganha na hora.
     if (victim.benchPokemon.length === 0) { 
         addLog(`SEM POKÉMON NO BANCO! ${victim.name} perdeu o jogo.`, 'CRIT', victimIndex); 
         declareWinner(attackerIndex); 
         return; 
     } 
     
-    addLog(`Atenção: ${victim.name} deve promover um Pokémon do Banco.`, 'WARN', victimIndex); 
+    // 4. Verifica Vitória por Prêmios (Se pegar os prêmios agora, ganha?)
+    if (attacker.prizes - prizeCount <= 0) {
+        addLog(`PEGOU TODOS OS PRÊMIOS! ${attacker.name} venceu o jogo!`, 'SUCCESS', attackerIndex);
+        declareWinner(attackerIndex);
+        return;
+    }
+
+    // 5. Automação: Abre o modal de prêmios para o Vencedor
+    // Setamos o estado para mostrar o modal e definimos quantos prêmios ele DEVE pegar.
+    if (gameState.currentPlayerIndex === attackerIndex) {
+        setShowPrizeModal(true);
+        // Opcional: Você pode criar um estado temporário 'prizesToTake' se quiser forçar a pegar a quantidade exata
+        addLog(`Pegue ${prizeCount} carta(s) de prêmio.`, 'WARN', attackerIndex);
+    } else {
+        // Se foi dano de veneno/queimadura no turno do oponente, avisa para ele pegar depois
+        addLog(`${attacker.name} deve pegar ${prizeCount} prêmio(s).`, 'WARN', attackerIndex);
+    }
     
-    // Warning about prizes
-    setTimeout(() => { 
-        addLog(`Após resolver o Nocaute e Prêmios, encerre o turno manualmente.`, 'INFO'); 
-    }, 1000); 
+    addLog(`Atenção: ${victim.name} deve promover um Pokémon do Banco.`, 'WARN', victimIndex); 
   };
   const applyCondition = (pIndex, condition) => { updatePlayer(pIndex, { activeCondition: condition }); addLog(`Condição Especial aplicada: ${condition}`, 'WARN', pIndex); };
   const updateStatus = (pIndex, updates) => {
