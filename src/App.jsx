@@ -851,13 +851,17 @@ const handleStartGameFromLobby = () => {
   // --- LÓGICA DE CARTAS E TABULEIRO --- (Mantida)
   // ... (placePokemon, requestEvolution, promoteFromBench, etc... - Igual anterior) ...
   // Substitua a função placePokemon antiga por esta NOVA VERSÃO COM REGRAS
-const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.currentPlayerIndex, evolveTargetIndex = null) => {
+// SUBSTITUA A FUNÇÃO placePokemon INTEIRA POR ESTA:
+  const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.currentPlayerIndex, evolveTargetIndex = null) => {
     saveGameHistory();
     const player = players[pIndex];
     
+    // Proteção contra cartas vazias
+    if (!card) { console.error("Erro: Carta inválida."); return; }
+
     // Criação do objeto da carta
     const cardData = { 
-        ...(card || { name: 'Desconhecido', type: 'Colorless', hp: '???', imgColor: 'gray', retreat: 1, isGeneric: true, stage: 0 }), 
+        ...card, 
         turnPlayed: gameState.turnCount, 
         attachedEnergy: [], 
         attachedTool: null, 
@@ -865,9 +869,11 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
         abilitiesUsedThisTurn: [] 
     };
 
+    console.log(`Tentando jogar ${cardData.name} em ${destination}...`); // Debug
+
     // --- REGRA 1: BÁSICOS ---
     // Só pode baixar diretamente se for Básico (Stage 0)
-    if ((destination === 'ACTIVE' || destination === 'BENCH') && cardData.stage !== 0) {
+    if ((destination === 'ACTIVE' || destination === 'BENCH') && parseInt(cardData.stage) !== 0) {
         addLog(`JOGADA ILEGAL: ${cardData.name} é Estágio ${cardData.stage} e não pode ser baixado direto.`, 'CRIT', pIndex);
         return;
     }
@@ -888,28 +894,43 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
         updatePlayer(pIndex, { benchPokemon: [...player.benchPokemon, cardData], benchCount: player.benchCount + 1, handCount: Math.max(0, player.handCount - 1) });
         addLog(`BAIXOU: ${cardData.name} no Banco.`, 'INFO', pIndex);
     } 
-    // --- LÓGICA DE EVOLUÇÃO (ATUALIZADA COM RARE CANDY) ---
+    // --- LÓGICA DE EVOLUÇÃO ---
     else if (destination === 'EVOLVE_ACTIVE' || destination === 'EVOLVE_BENCH') {
-        // Identifica o alvo da evolução
+        // Identifica o alvo da evolução com segurança
         const targetPokemon = destination === 'EVOLVE_ACTIVE' ? player.activePokemon : player.benchPokemon[evolveTargetIndex];
         
-        // --- NOVO: VERIFICAÇÃO DE RARE CANDY ---
-        // Permite se o botão estiver ligado, for Stage 2 e o alvo for Stage 0
-        const isRareCandyAction = player.allowRareCandy && cardData.stage === 2 && targetPokemon.stage === 0;
+        if (!targetPokemon) {
+             console.error("Erro: Alvo da evolução não encontrado.");
+             return;
+        }
 
-        // --- REGRA 2: NOME DA EVOLUÇÃO ---
-        // Se NÃO for Rare Candy, o nome precisa bater. Se FOR Rare Candy, ignora o nome (mas exige Stage 0 -> Stage 2)
-        if (requiredName !== targetPokemon.name && !isRareCandyAction) {
-            addLog(`EVOLUÇÃO INVÁLIDA: ${cardData.name} evolui de ${requiredName}, mas o alvo é ${targetPokemon.name}.`, 'CRIT', pIndex);
+        // --- CORREÇÃO DO NOME DO PAI (IMPORTANTE) ---
+        // Lê tanto do Supabase (evolves_from) quanto do App antigo (evolvesFrom)
+        const requiredName = cardData.evolves_from || cardData.evolvesFrom;
+        const targetName = targetPokemon.name;
+
+        console.log(`Evoluindo: ${cardData.name} (Pede: ${requiredName}) -> Alvo: ${targetName}`); // Debug
+
+        // --- VERIFICAÇÃO DE RARE CANDY ---
+        const isRareCandyAction = player.allowRareCandy && parseInt(cardData.stage) === 2 && parseInt(targetPokemon.stage) === 0;
+
+        // Se NÃO for Rare Candy, o nome precisa bater.
+        // Se requiredName for nulo (carta não salva direito), avisa.
+        if (!requiredName && !isRareCandyAction) {
+             addLog(`ERRO NA CARTA: ${cardData.name} não tem o campo "Evolui de" configurado no Deck Manager.`, 'CRIT', pIndex);
+             return;
+        }
+
+        if (requiredName !== targetName && !isRareCandyAction) {
+            addLog(`EVOLUÇÃO INVÁLIDA: ${cardData.name} evolui de ${requiredName}, mas o alvo é ${targetName}.`, 'CRIT', pIndex);
             return;
         }
 
-        const oldName = targetPokemon.name;
         const oldEnergies = targetPokemon.attachedEnergy || []; 
         const oldTool = targetPokemon.attachedTool; 
         const oldDamage = targetPokemon.damage || 0;
         
-        // Mantém danos e energias, mas atualiza HP Máximo e Ataques
+        // Mantém danos e energias
         const newPokemonStats = { ...cardData, attachedEnergy: oldEnergies, attachedTool: oldTool, damage: oldDamage };
         
         if (destination === 'EVOLVE_ACTIVE') {
@@ -917,34 +938,28 @@ const placePokemon = (card = null, destination = 'BENCH', pIndex = gameState.cur
                 activePokemon: newPokemonStats, 
                 activeCondition: CONDITIONS.NONE, 
                 handCount: Math.max(0, player.handCount - 1),
-                allowRareCandy: false // Desliga o modo automaticamente após usar
+                allowRareCandy: false 
             });
-
-            if (isRareCandyAction) {
-                addLog(`🍬 RARE CANDY: ${oldName} evoluiu direto para ${cardData.name} (Ativo).`, 'SUCCESS', pIndex);
-            } else {
-                addLog(`EVOLUIU: ${oldName} para ${cardData.name} (Ativo).`, 'SUCCESS', pIndex);
-            }
+            addLog(`EVOLUIU: ${targetName} para ${cardData.name} (Ativo).`, 'SUCCESS', pIndex);
         } else {
             const newBench = [...player.benchPokemon];
-            newBench[evolveTargetIndex] = newPokemonStats;
-            updatePlayer(pIndex, { 
-                benchPokemon: newBench, 
-                handCount: Math.max(0, player.handCount - 1),
-                allowRareCandy: false // Desliga o modo automaticamente após usar
-            });
-
-            if (isRareCandyAction) {
-                addLog(`🍬 RARE CANDY: ${oldName} evoluiu direto para ${cardData.name} (Banco).`, 'SUCCESS', pIndex);
+            if (typeof evolveTargetIndex === 'number' && newBench[evolveTargetIndex]) {
+                newBench[evolveTargetIndex] = newPokemonStats;
+                updatePlayer(pIndex, { 
+                    benchPokemon: newBench, 
+                    handCount: Math.max(0, player.handCount - 1),
+                    allowRareCandy: false 
+                });
+                addLog(`EVOLUIU: ${targetName} para ${cardData.name} (Banco).`, 'SUCCESS', pIndex);
             } else {
-                addLog(`EVOLUIU: ${oldName} para ${cardData.name} (Banco).`, 'SUCCESS', pIndex);
+                console.error("Erro: Índice do banco inválido para evolução.");
             }
         }
     }
     
     // Fecha o modal após o sucesso
     setShowDeckModal(null); 
-};
+  };
   const requestEvolution = (pIndex, location, index = null) => {
       const p = players[pIndex]; const targetPokemon = location === 'ACTIVE' ? p.activePokemon : p.benchPokemon[index];
       if (gameState.turnCount === 1 && pIndex === 0) { addLog(`REGRA: J1 não pode evoluir no T1.`, 'CRIT', pIndex); return; }
