@@ -81,6 +81,7 @@ const DeckManager = ({ onClose, onUpdate }) => {
     const INITIAL_FORM = {
         id: null,
         name: '', hp: 60, type: 'Colorless', stage: 0, image: '',
+        evolves_from: '',
         weakness: '', resistance: '', retreat: 1,
         
         // Ataque 1
@@ -153,6 +154,7 @@ const DeckManager = ({ onClose, onUpdate }) => {
             hp: parseInt(formData.hp),
             type: formData.type,
             stage: parseInt(formData.stage),
+            evolves_from: formData.evolves_from, // <--- ADICIONE ESTA LINHA AQUI
             image: formData.image,
             retreat: parseInt(formData.retreat),
             weakness: formData.weakness,
@@ -188,6 +190,7 @@ const DeckManager = ({ onClose, onUpdate }) => {
             hp: card.hp,
             type: card.type,
             stage: card.stage,
+            evolves_from: card.evolves_from || '', // <--- ADICIONE ESTA LINHA AQUI
             image: card.image || '',
             weakness: card.weakness || '',
             resistance: card.resistance || '',
@@ -290,6 +293,17 @@ const DeckManager = ({ onClose, onUpdate }) => {
                                 <input type="number" className="border p-2 rounded text-sm" placeholder="Recuo" value={formData.retreat} onChange={e => updateField('retreat', e.target.value)} />
                             </div>
                         </div>
+                        {parseInt(formData.stage) > 0 && (
+                            <div className="mt-2 animate-in fade-in">
+                                <label className="text-[10px] font-bold text-gray-400 uppercase">Evolui de (Nome Exato)</label>
+                                <input 
+                                    className="w-full border p-2 rounded text-sm bg-yellow-50 border-yellow-200" 
+                                    placeholder="Ex: Duskull" 
+                                    value={formData.evolves_from} 
+                                    onChange={e => updateField('evolves_from', e.target.value)} 
+                                />
+                            </div>
+                        )}
 
                         <div className="space-y-2 pt-2 border-t">
                             <label className="text-xs font-bold text-gray-400 uppercase">Status</label>
