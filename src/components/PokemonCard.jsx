@@ -114,12 +114,12 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
                 </div>
             )}
 
-            {/* 4. INDICADOR DE ESTÁGIO (Movido para o Topo Direito) */}
+            {/* 4. INDICADOR DE ESTÁGIO (Ajuste Fino - Mais Fino e Mais Alto) */}
             {parseInt(card.stage) > 0 && (
-                 // Mudamos de 'top-8 left-2' para 'top-[48px] right-2'
-                 // Isso coloca logo abaixo do HP/Tipo no canto direito
-                 <div className="absolute top-[48px] right-2 z-20">
-                    <Badge variant="neutral" className="shadow-lg backdrop-blur-md bg-slate-900/90 text-slate-100 border-slate-500 py-0.5 px-2 text-[10px] font-bold tracking-wider uppercase">
+                 // Mudamos para 'top-[32px]' (bem mais alto) e mantemos 'right-2'
+                 <div className="absolute top-[32px] right-2 z-20">
+                    {/* Diminuí o padding vertical (py-0) para ficar bem fina e mudei o texto para 9px */}
+                    <Badge variant="neutral" className="shadow-md backdrop-blur-sm bg-slate-900/80 text-slate-200 border border-slate-600/50 py-0 px-2 text-[9px] font-bold tracking-wider uppercase h-4 flex items-center">
                         STAGE {card.stage}
                     </Badge>
                 </div>
