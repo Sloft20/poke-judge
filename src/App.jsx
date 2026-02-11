@@ -31,25 +31,41 @@ import GameHeader from './components/GameHeader';
 
 // --- 4. FUNÇÕES UTILITÁRIAS ---
 
+// --- 4. FUNÇÕES UTILITÁRIAS ---
+
 const checkEnergyCost = (cost, attachedEnergies) => {
-    if (!cost) return true;
+    // 1. Se não tiver custo ou for array vazio, é GRÁTIS -> Pode atacar
+    if (!cost || cost.length === 0) return true;
+    
+    // 2. Habilidades também são grátis de energia
     if (cost[0] === 'Ability') return true;
 
     const available = [...attachedEnergies];
+
+    // 3. O PULO DO GATO: Ordenar o custo! 
+    // Colocamos energias específicas (Fogo, Água...) no começo e Incolores no fim.
+    // Isso impede que uma energia Incolor "coma" uma energia de Fogo que seria necessária depois.
+    const sortedCost = [...cost].sort((a, b) => {
+        if (a === 'Colorless') return 1; // Joga Incolor pro final
+        if (b === 'Colorless') return -1;
+        return 0;
+    });
     
-    for (let c of cost) {
+    for (let c of sortedCost) {
         if (c === 'Colorless') {
+            // Para incolor, qualquer uma serve. Removemos a última disponível.
             if (available.length > 0) {
                 available.pop(); 
             } else {
-                return false;
+                return false; // Não tem energia nenhuma sobrando
             }
         } else {
+            // Para tipos específicos, precisamos achar a energia exata
             const index = available.indexOf(c);
             if (index !== -1) {
                 available.splice(index, 1);
             } else {
-                return false;
+                return false; // Não tem a energia específica necessária
             }
         }
     }
