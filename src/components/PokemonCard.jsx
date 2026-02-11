@@ -34,8 +34,8 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
     const energyCount = card.attachedEnergy ? card.attachedEnergy.length : 0;
 
     const cardSizeClasses = location === 'active' 
-        ? 'w-[260px] h-[363px] md:w-[300px] md:h-[418px]' 
-        : 'w-[160px] h-[223px] md:w-[180px] md:h-[251px]';
+        ? 'w-[280px] h-[383px] md:w-[320px] md:h-[438px]' 
+        : 'w-[120px] h-[167px] md:w-[145px] md:h-[202px]';
 
     const hoverClasses = onClick ? 'cursor-pointer hover:scale-105 hover:shadow-xl hover:ring-2 hover:ring-blue-400 transition-all duration-300' : '';
     const activeRing = isActive ? 'ring-4 ring-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.6)] scale-105 z-10' : '';
