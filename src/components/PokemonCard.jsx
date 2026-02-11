@@ -91,7 +91,7 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
             {energyCount > 0 && (
                 // Mudei para 'right-3' (lado direito)
                 // Mudei para 'top-[44%]' (para ficar logo acima da barra de vida que está em 51%)
-                <div className="absolute top-[44%] right-3 z-20 max-w-[60%] pointer-events-none">
+                <div className="absolute top-[41%] right-3 z-20 max-w-[60%] pointer-events-none">
                     {/* Adicionei 'justify-end' para as energias ficarem alinhadas à direita */}
                     <div className="flex flex-wrap gap-0.5 justify-end">
                         {card.attachedEnergy.map((energyName, index) => {
