@@ -813,6 +813,7 @@ const handleStartGameFromLobby = () => {
     updatePlayer(pIndex, { mulligans: players[pIndex].mulligans + 1 });
     addLog(`Mulligan declarado. Embaralhando e comprando nova mão.`, 'WARN', pIndex);
   };
+  
 
  const handleCoinFlip = () => {
     // 1. Caminho atualizado para a nova pasta organizada

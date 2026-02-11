@@ -1,259 +1,130 @@
-// src/components/PokemonCard.jsx
 import React from 'react';
-import { Circle, Briefcase, PlusCircle, Star, Skull, Flame, EyeOff } from 'lucide-react'; 
-import { ENERGY_TYPES, CONDITIONS } from '../data/constants';
+import { Badge } from './UI'; // Certifique-se que o caminho está certo
+import { Swords, Shield, Footprints, Sparkles, Anchor } from 'lucide-react';
 
-// Pequeno componente auxiliar (Barra de Vida)
-const HPBar = ({ current, max }) => {
-    const percentage = Math.max(0, Math.min(100, (current / max) * 100));
-    let colorClass = 'bg-green-500';
-    if (percentage < 50) colorClass = 'bg-yellow-500';
-    if (percentage < 20) colorClass = 'bg-red-600 animate-pulse';
-
-    return (
-        <div className="w-full h-3 bg-gray-200 rounded-full mt-1 overflow-hidden border border-gray-400 relative">
-            <div 
-                className={`h-full transition-all duration-500 ease-out ${colorClass}`} 
-                style={{ width: `${percentage}%` }}
-            />
-            <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-black drop-shadow-sm">
-                {current}/{max}
-            </div>
-        </div>
-    );
+// --- FUNÇÃO AUXILIAR PARA COR DA BARRA DE VIDA ---
+const getHealthColor = (percentage) => {
+    if (percentage > 60) return 'bg-green-500';
+    if (percentage > 30) return 'bg-yellow-500';
+    return 'bg-red-600animate-pulse';
 };
 
-// Componente Principal
-const PokemonCard = ({ card, actions, small = false, onClick, className = '' }) => {
-  if (!card) return null;
+const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getMaxHP }) => {
+    if (!card) return null;
 
-  // Dados principais
-  const typeInfo = ENERGY_TYPES[card.type] || { icon: Circle, color: 'bg-gray-500', gradient: 'bg-gray-500', text: 'text-white' };
-  const TypeIcon = typeInfo.icon;
-  const cardBackground = typeInfo.gradient || 'bg-gray-300';
-  const typeText = typeInfo.text || 'text-black';
-  const imageUrl = card.image || card.images?.small;
+    // 1. Cálculos de Estado (Usando a função getMaxHP que criamos antes)
+    const maxHP = getMaxHP ? getMaxHP(card) : parseInt(card.hp);
+    const currentHP = Math.max(0, maxHP - (card.damage || 0));
+    const healthPercentage = Math.min(100, (currentHP / maxHP) * 100);
+    const hasTool = !!card.attachedTool;
+    const energyCount = card.attachedEnergy ? card.attachedEnergy.length : 0;
 
-  // Cálculo de HP e Ferramentas
-  let maxHP = parseInt(card.hp) || 0;
-  let retreatCost = parseInt(card.retreat) || 0;
-  
-  if (card.attachedTool) {
-      if (card.attachedTool.type === 'hp' && card.attachedTool.condition(card)) {
-          maxHP += card.attachedTool.value;
-      }
-      if (card.attachedTool.type === 'retreat') {
-          retreatCost = Math.max(0, retreatCost + card.attachedTool.value);
-      }
-  }
+    // Define o tamanho base do card (Ativo é maior)
+    const cardSizeClasses = location === 'active' 
+        ? 'w-[260px] h-[363px] md:w-[300px] md:h-[418px]' // Tamanho de carta real (proporção ~0.71)
+        : 'w-[160px] h-[223px] md:w-[180px] md:h-[251px]'; // Banco menor
 
-  const currentDamage = card.damage || 0;
-  const currentHP = Math.max(0, maxHP - currentDamage);
-  
-  const isEx = card.name?.toLowerCase().includes('ex') || card.name?.toLowerCase().includes(' v');
-  const borderClass = isEx ? 'border-gray-400 ring-2 ring-gray-300' : 'border-yellow-400 ring-2 ring-yellow-400';
+    // Efeito de Hover e Seleção
+    const hoverClasses = onClick ? 'cursor-pointer hover:scale-105 hover:shadow-xl hover:ring-2 hover:ring-blue-400 transition-all duration-300' : '';
+    const activeRing = isActive ? 'ring-4 ring-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.6)] scale-105 z-10' : '';
 
-  // --- LÓGICA DE STATUS ---
-  const isPoisoned = card.isPoisoned;
-  const isBurned = card.isBurned;
-  const condition = card.activeCondition || CONDITIONS.NONE;
-
-  let rotateClass = '';
-  if (condition === CONDITIONS.ASLEEP) rotateClass = '-rotate-90 grayscale brightness-90 transition-all duration-500'; 
-  if (condition === CONDITIONS.PARALYZED) rotateClass = 'rotate-90 brightness-110 saturate-150 transition-all duration-500'; 
-
-  // --- LISTA DE STATUS PARA EXIBIÇÃO (TEXTO) ---
-  const activeStatuses = [];
-  if (isPoisoned) activeStatuses.push({ label: 'VENENO', color: 'bg-purple-600' });
-  if (isBurned) activeStatuses.push({ label: 'QUEIMADO', color: 'bg-red-600' });
-  
-  // Mapeia a condição especial para um nome curto e cor
-  if (condition === CONDITIONS.ASLEEP) activeStatuses.push({ label: 'DORMINDO', color: 'bg-indigo-500' });
-  if (condition === CONDITIONS.CONFUSED) activeStatuses.push({ label: 'CONFUSO', color: 'bg-pink-500' });
-  if (condition === CONDITIONS.PARALYZED) activeStatuses.push({ label: 'PARALISADO', color: 'bg-yellow-500 text-black border-yellow-600' });
-
-  // --- HELPERS DE RENDERIZAÇÃO ---
-
-  // Renderiza Custo de Energia (Ataque)
-  const renderEnergyCost = (cost) => {
-      if (!cost) return null;
-      return cost.map((type, idx) => {
-          if (type === 'Ability') return <span key={idx} className="text-[8px] font-bold text-red-600 uppercase">HAB</span>;
-          const EIcon = ENERGY_TYPES[type]?.icon || Circle;
-          const EColor = ENERGY_TYPES[type]?.color || 'bg-gray-400';
-          return (
-              <div key={idx} className={`w-3 h-3 ${EColor} rounded-full flex items-center justify-center text-white shadow-sm border border-white/20`}>
-                  <EIcon size={8} />
-              </div>
-          );
-      });
-  };
-
-  // Renderiza Fraqueza ou Resistência
-  const renderWeakRes = (data, label) => {
-      const type = typeof data === 'object' ? data?.type : data;
-      if (!type || type === 'none') return <span className="text-[8px] text-gray-400 font-bold">-</span>;
-      const EInfo = ENERGY_TYPES[type] || { color: 'bg-gray-500', icon: Circle };
-      const EIcon = EInfo.icon;
-      return (
-        <div className={`w-4 h-4 rounded-full ${EInfo.color} flex items-center justify-center text-white shadow-sm border border-white/30`}>
-            <EIcon size={10} />
-        </div>
-      );
-  };
-
-  return (
-    <div 
-      onClick={onClick}
-      className={`relative ${small ? 'w-28 h-32' : 'w-52 h-80'} rounded-xl overflow-hidden shadow-lg border-4 ${borderClass} flex flex-col transform transition-transform duration-300 ${actions || onClick ? '' : 'hover:scale-105'} ${onClick ? 'cursor-pointer hover:ring-2 hover:ring-blue-500' : 'cursor-default'} group ${cardBackground} ${className} ${rotateClass}`}
-    >
-      
-      {/* 1. ÍCONES DE STATUS FLUTUANTES (Mantido para feedback visual rápido) */}
-      <div className="absolute top-8 left-0 right-0 z-20 flex justify-center gap-1 pointer-events-none">
-          {isPoisoned && (
-              <div className="w-6 h-6 bg-purple-600 rounded-full border border-white shadow-lg flex items-center justify-center animate-bounce">
-                  <Skull className="text-white w-3 h-3" />
-              </div>
-          )}
-          {isBurned && (
-              <div className="w-6 h-6 bg-red-600 rounded-full border border-white shadow-lg flex items-center justify-center animate-pulse">
-                  <Flame className="text-white w-3 h-3" />
-              </div>
-          )}
-          {condition === CONDITIONS.CONFUSED && (
-              <div className="w-6 h-6 bg-pink-500 rounded-full border border-white shadow-lg flex items-center justify-center animate-spin-slow">
-                  <EyeOff className="text-white w-3 h-3" />
-              </div>
-          )}
-      </div>
-
-      {/* Overlay de Sono (Zzz) */}
-      {condition === CONDITIONS.ASLEEP && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none bg-indigo-900/20">
-              <span className="text-3xl font-black text-white drop-shadow-md animate-pulse">Zzz...</span>
-          </div>
-      )}
-
-      {/* Ações (Hover Overlay) */}
-      {actions && (
-          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-30 p-2 pointer-events-none">
-              <div className="pointer-events-auto w-full flex flex-col gap-2 transform scale-90">
-                    {actions}
-              </div>
-          </div>
-      )}
-
-      {/* --- HEADER --- */}
-      <div className={`flex justify-between items-center px-2 py-1 ${typeText} text-[10px] font-bold z-10 bg-white/10 backdrop-blur-sm border-b border-white/20`}>
-        <div className="flex flex-col leading-tight">
-            <span className={`truncate ${small ? 'max-w-[70px] text-[9px]' : 'max-w-[120px] text-xs'} font-black drop-shadow-sm`}>{card.name}</span>
-            {card.stage > 0 && (
-                <span className="text-[6px] opacity-80 uppercase font-mono bg-black/10 px-1 rounded w-fit">
-                   Estágio {card.stage}
-                </span>
+    return (
+        <div className={`relative rounded-xl overflow-hidden shadow-lg group ${cardSizeClasses} ${hoverClasses} ${activeRing}`} onClick={onClick}>
+            
+            {/* --- CAMADA 1: A IMAGEM COMPLETA DA CARTA --- */}
+            {card.image ? (
+                <img 
+                    src={card.image} 
+                    alt={card.name} 
+                    className="w-full h-full object-cover z-0"
+                    // Fallback se a imagem falhar (mostra um fundo cinza)
+                    onError={(e) => {
+                        e.target.onerror = null; 
+                        e.target.parentElement.classList.add('bg-slate-800'); e.target.style.display = 'none';
+                    }}
+                />
+            ) : (
+                // Fallback se não tiver URL de imagem cadastrada
+                <div className="w-full h-full bg-slate-800 flex items-center justify-center text-slate-500 font-bold">
+                    SEM IMAGEM
+                </div>
             )}
-        </div>
-        <div className="flex items-center gap-1">
-             {!small && <span className="text-xs font-black">HP{maxHP}</span>}
-             <TypeIcon size={small ? 14 : 16} />
-        </div>
-      </div>
-      
-      {/* --- IMAGEM --- */}
-      <div className={`relative mx-1.5 mt-1 border-2 border-white/40 shadow-inner bg-slate-100 overflow-hidden flex items-center justify-center ${small ? 'flex-1 min-h-[50px]' : 'h-32'}`}>
-         {imageUrl ? (
-             <img src={imageUrl} alt={card.name} className="w-full h-full object-cover z-0" />
-         ) : (
-             <TypeIcon size={small ? 24 : 60} className={`opacity-50 text-gray-400`} />
-         )}
 
-         {/* NOVA ÁREA DE STATUS (TEXTO) */}
-         {/* Fica no canto inferior esquerdo da imagem, empilhando etiquetas */}
-         {activeStatuses.length > 0 && (
-             <div className="absolute bottom-1 left-1 flex flex-col gap-0.5 z-20 items-start">
-                 {activeStatuses.map((status, idx) => (
-                     <span 
-                        key={idx} 
-                        className={`${status.color} text-white ${small ? 'text-[5px] px-1 py-0.5' : 'text-[7px] px-1.5 py-0.5'} font-black uppercase tracking-widest rounded shadow-sm border border-white/30 backdrop-blur-sm`}
-                     >
-                         {status.label}
-                     </span>
-                 ))}
-             </div>
-         )}
-
-         {/* Ferramenta Ligada (Topo Direito) */}
-         {card.attachedTool && (
-             <div className="absolute top-1 right-1 bg-blue-600 text-white text-[7px] font-bold px-1.5 py-0.5 rounded shadow-sm flex items-center gap-1 z-10 border border-white">
-                 <Briefcase size={8} />
-                 {!small && card.attachedTool.name.split(' ')[0]}
-             </div>
-         )}
-
-         {/* Energias Ligadas (Canto Inferior Direito) */}
-         <div className="absolute bottom-1 right-1 flex flex-wrap-reverse gap-0.5 justify-end max-w-[60%] z-10">
-             {(card.attachedEnergy || []).map((energyType, idx) => {
-                 const EIcon = ENERGY_TYPES[energyType]?.icon || PlusCircle;
-                 const EColor = ENERGY_TYPES[energyType]?.color || 'bg-gray-400';
-                 return (
-                     <div key={idx} className={`w-3 h-3 ${EColor} rounded-full flex items-center justify-center text-white border border-white shadow-sm`}>
-                         <EIcon size={8} />
-                     </div>
-                 );
-             })}
-         </div>
-      </div>
-
-      {/* Barra de HP */}
-      <div className={`px-2 pb-0.5 ${small ? 'h-2' : 'h-3'}`}>
-          <HPBar current={currentHP} max={maxHP} />
-      </div>
-
-      {/* --- ATAQUES (SÓ SE NÃO FOR PEQUENO) --- */}
-      {!small && (
-        <div className="bg-white/90 flex-1 flex flex-col overflow-hidden text-gray-900 mx-1 mb-1 rounded-sm p-1 border border-black/5 shadow-sm">
-            <div className="flex-1 space-y-1 overflow-y-auto custom-scrollbar">
-                {(card.attacks || []).slice(0, 2).map((atk, i) => (
-                    <div key={i} className="flex flex-col border-b border-gray-200 last:border-0 pb-1 mb-0.5">
-                        <div className="flex justify-between items-start">
-                            <div className="flex gap-0.5 pt-0.5">
-                                {renderEnergyCost(atk.cost)}
-                            </div>
-                            <span className="font-black text-black text-[10px]">{atk.damage > 0 ? atk.damage : ''}</span>
-                        </div>
-                        <span className="text-gray-800 font-bold truncate leading-tight text-[8px] mt-0.5">{atk.name}</span>
+            {/* ============================================================
+                 CAMADA 2: OVERLAYS (As informações por cima da imagem)
+            ============================================================ */}
+            
+            {/* 1. BARRA DE VIDA (Topo Centralizado) */}
+            <div className="absolute top-2 left-3 right-3 z-20">
+                {/* Fundo escuro semi-transparente para ler o texto */}
+                <div className="relative h-5 bg-black/60 backdrop-blur-sm rounded-full border border-white/20 overflow-hidden shadow-sm">
+                    {/* A barra colorida que diminui */}
+                    <div 
+                        className={`h-full transition-all duration-500 ease-out ${getHealthColor(healthPercentage)}`}
+                        style={{ width: `${healthPercentage}%` }}
+                    ></div>
+                    {/* Texto do HP centralizado */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                         <span className="text-xs font-black text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] tracking-wider">
+                            {currentHP} / {maxHP} HP
+                        </span>
                     </div>
-                ))}
+                </div>
             </div>
+
+            {/* 2. FERRAMENTA LIGADA (Canto Superior Direito, abaixo do HP) */}
+            {hasTool && (
+                 <div className="absolute top-8 right-2 z-20 animate-in slide-in-from-right-2">
+                    <Badge variant="info" className="flex items-center gap-1 shadow-lg backdrop-blur-md bg-blue-900/80 text-blue-100 border-blue-400/50 pl-1 pr-2 py-0.5 text-[10px]">
+                        <Anchor size={12} />
+                        <span className="truncate max-w-[80px]">{card.attachedTool.name}</span>
+                    </Badge>
+                </div>
+            )}
+
+            {/* 3. ENERGIAS LIGADAS (Canto Inferior Esquerdo) */}
+            {energyCount > 0 && (
+                <div className="absolute bottom-3 left-3 z-20 max-w-[75%]">
+                     {/* Fundo escuro para as energias não sumirem na arte */}
+                    <div className="flex flex-wrap gap-1 p-1.5 bg-black/50 backdrop-blur-sm rounded-lg border border-white/10 shadow-md">
+                        {card.attachedEnergy.map((energyName, index) => {
+                            // Mapeamento simples de cores (idealmente seriam ícones no futuro)
+                            const colorMap = {
+                                'Fire': 'bg-red-500 border-red-300',
+                                'Water': 'bg-blue-500 border-blue-300',
+                                'Grass': 'bg-green-500 border-green-300',
+                                'Lightning': 'bg-yellow-400 border-yellow-200 text-yellow-900',
+                                'Psychic': 'bg-purple-500 border-purple-300',
+                                'Fighting': 'bg-orange-700 border-orange-400',
+                                'Darkness': 'bg-slate-800 border-slate-600',
+                                'Metal': 'bg-gray-400 border-gray-200 text-gray-800',
+                                'Colorless': 'bg-slate-200 border-slate-300 text-slate-700',
+                            };
+                            const style = colorMap[energyName] || 'bg-white text-black';
+
+                            return (
+                                <div key={index} className={`w-5 h-5 rounded-full ${style} border shadow-sm flex items-center justify-center text-[8px] font-bold uppercase`} title={energyName}>
+                                    {energyName.substring(0, 1)}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* 4. INDICADOR DE ESTÁGIO (Pequeno ícone no canto superior esquerdo) */}
+            {parseInt(card.stage) > 0 && (
+                 <div className="absolute top-8 left-2 z-20">
+                    <Badge variant="neutral" className="shadow-lg backdrop-blur-md bg-slate-900/80 text-slate-200 border-slate-600 py-0 px-1.5 text-[9px]">
+                        STAGE {card.stage}
+                    </Badge>
+                </div>
+            )}
+            
+             {/* Efeito de Brilho ao passar o mouse (Opcional) */}
+             <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none bg-gradient-to-tr from-transparent via-white to-transparent z-30"></div>
         </div>
-      )}
-
-      {/* --- FOOTER --- */}
-      <div className={`bg-gray-100 border-t border-gray-300 text-gray-600 flex justify-between items-center px-2 rounded-b-lg ${small ? 'h-5 py-0.5' : 'h-7 py-1'}`}>
-          
-          <div className="flex items-center gap-1" title="Fraqueza">
-              <span className="text-[6px] font-bold uppercase text-gray-400">F</span>
-              {renderWeakRes(card.weakness, 'Fraq')}
-          </div>
-
-          <div className="flex items-center gap-1" title="Resistência">
-              <span className="text-[6px] font-bold uppercase text-gray-400">R</span>
-              {renderWeakRes(card.resistance, 'Res')}
-          </div>
-          
-          <div className="flex items-center gap-0.5" title="Custo de Recuo">
-              <div className="flex gap-0.5">
-                  {[...Array(retreatCost)].map((_, i) => (
-                      <div key={i} className="w-2.5 h-2.5 rounded-full bg-gray-300 flex items-center justify-center border border-white">
-                          <Star size={6} className="text-white fill-white"/>
-                      </div>
-                  ))}
-                  {retreatCost === 0 && <span className="text-[8px] font-bold text-gray-400">-</span>}
-              </div>
-          </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default PokemonCard;
