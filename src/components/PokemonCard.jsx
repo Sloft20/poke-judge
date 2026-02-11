@@ -87,24 +87,30 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
                 </div>
             )}
 
-            {/* 3. ENERGIAS LIGADAS (AGORA REAIS!) */}
+            {/* 3. ENERGIAS LIGADAS (Sem fundo, reposicionadas e menores) */}
             {energyCount > 0 && (
-                <div className="absolute bottom-3 left-3 z-20 max-w-[85%]">
-                    <div className="flex flex-wrap gap-1 p-1.5 bg-black/40 backdrop-blur-sm rounded-xl border border-white/10 shadow-lg">
+                // Mudei de 'bottom-3' para 'top-[62%]' para ficar sobre a área do primeiro ataque.
+                // Mantive 'left-3' para alinhar à esquerda.
+                <div className="absolute top-[62%] left-3 z-20 max-w-[85%] pointer-events-none">
+                    {/* Removi todas as classes de fundo (bg-black, border, shadow, p-1.5) */}
+                    {/* Diminuí o gap de 'gap-1' para 'gap-0.5' */}
+                    <div className="flex flex-wrap gap-0.5">
                         {card.attachedEnergy.map((energyName, index) => {
                             const imgUrl = ENERGY_IMAGES[energyName] || ENERGY_IMAGES['Colorless'];
 
                             return (
                                 <div 
                                     key={index} 
-                                    className="w-6 h-6 rounded-full shadow-md transition-transform hover:scale-125 hover:z-50 relative" 
+                                    // Diminuí o tamanho de 'w-6 h-6' para 'w-5 h-5'
+                                    // Removi 'shadow-md' do container
+                                    className="w-5 h-5 rounded-full transition-transform hover:scale-125 hover:z-50 relative pointer-events-auto" 
                                     title={energyName}
                                 >
-                                    {/* Imagem da Energia com Drop Shadow para destacar */}
+                                    {/* Mantive um 'drop-shadow-sm' suave na imagem para ela não sumir na arte */}
                                     <img 
                                         src={imgUrl} 
                                         alt={energyName}
-                                        className="w-full h-full object-contain drop-shadow-md"
+                                        className="w-full h-full object-contain drop-shadow-sm"
                                     />
                                 </div>
                             );
