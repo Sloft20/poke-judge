@@ -148,7 +148,7 @@ const PlayerBoard = ({
                                                 isPoisoned: player.isPoisoned, 
                                                 isBurned: player.isBurned
                                             }} 
-                                            
+                                            location="active"
                                         />
                                     </div>
                                     
