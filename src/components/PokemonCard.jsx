@@ -54,18 +54,19 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
                  CAMADA 2: OVERLAYS (As informações por cima da imagem)
             ============================================================ */}
             
-            {/* 1. BARRA DE VIDA (Topo Centralizado) */}
-            <div className="absolute top-2 left-3 right-3 z-20">
-                {/* Fundo escuro semi-transparente para ler o texto */}
-                <div className="relative h-5 bg-black/60 backdrop-blur-sm rounded-full border border-white/20 overflow-hidden shadow-sm">
-                    {/* A barra colorida que diminui */}
+            {/* 1. BARRA DE VIDA (Reposicionada para a parte inferior) */}
+            {/* Mudamos de 'top-2' para 'bottom-[60px]' para ficar acima das energias */}
+            <div className="absolute bottom-[60px] left-3 right-3 z-20">
+                {/* Fundo escuro mais forte para garantir leitura sobre o texto da carta */}
+                <div className="relative h-5 bg-black/70 backdrop-blur-md rounded-full border border-white/30 overflow-hidden shadow-lg">
+                    {/* A barra colorida */}
                     <div 
                         className={`h-full transition-all duration-500 ease-out ${getHealthColor(healthPercentage)}`}
                         style={{ width: `${healthPercentage}%` }}
                     ></div>
-                    {/* Texto do HP centralizado */}
+                    {/* Texto do HP */}
                     <div className="absolute inset-0 flex items-center justify-center">
-                         <span className="text-xs font-black text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] tracking-wider">
+                         <span className="text-xs font-black text-white drop-shadow-[0_2px_2px_rgba(0,0,0,1)] tracking-wider">
                             {currentHP} / {maxHP} HP
                         </span>
                     </div>
