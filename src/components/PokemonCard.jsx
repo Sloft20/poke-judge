@@ -1,27 +1,21 @@
 import React from 'react';
 import { Badge } from './UI';
-// Adicionamos todos os ícones necessários aqui
-import { 
-    Swords, Shield, Footprints, Sparkles, Anchor, 
-    Flame, Droplets, Leaf, Zap, Eye, Dumbbell, Moon, 
-    Hexagon, Star, Circle, Ghost 
-} from 'lucide-react';
+import { Anchor } from 'lucide-react';
 
-// --- MAPA DE ÍCONES POR TIPO ---
-const TYPE_ICONS = {
-    'Fire': { icon: Flame, color: 'text-red-500', bg: 'bg-red-100' },
-    'Water': { icon: Droplets, color: 'text-blue-500', bg: 'bg-blue-100' },
-    'Grass': { icon: Leaf, color: 'text-green-500', bg: 'bg-green-100' },
-    'Lightning': { icon: Zap, color: 'text-yellow-500', bg: 'bg-yellow-100' },
-    'Psychic': { icon: Eye, color: 'text-purple-500', bg: 'bg-purple-100' },
-    'Fighting': { icon: Dumbbell, color: 'text-orange-600', bg: 'bg-orange-100' },
-    'Darkness': { icon: Moon, color: 'text-slate-700', bg: 'bg-slate-300' },
-    'Metal': { icon: Hexagon, color: 'text-gray-500', bg: 'bg-gray-200' },
-    'Dragon': { icon: Ghost, color: 'text-indigo-600', bg: 'bg-indigo-100' },
-    'Fairy': { icon: Sparkles, color: 'text-pink-500', bg: 'bg-pink-100' },
-    'Colorless': { icon: Star, color: 'text-slate-400', bg: 'bg-slate-100' },
-    // Fallback
-    'default': { icon: Circle, color: 'text-gray-400', bg: 'bg-gray-100' }
+// --- IMAGENS OFICIAIS DAS ENERGIAS (PNG Transparente) ---
+const ENERGY_IMAGES = {
+    'Grass': 'https://limitlesstcg.com/img/symbols/energy/grass.png',
+    'Fire': 'https://limitlesstcg.com/img/symbols/energy/fire.png',
+    'Water': 'https://limitlesstcg.com/img/symbols/energy/water.png',
+    'Lightning': 'https://limitlesstcg.com/img/symbols/energy/lightning.png',
+    'Psychic': 'https://limitlesstcg.com/img/symbols/energy/psychic.png',
+    'Fighting': 'https://limitlesstcg.com/img/symbols/energy/fighting.png',
+    'Darkness': 'https://limitlesstcg.com/img/symbols/energy/darkness.png',
+    'Metal': 'https://limitlesstcg.com/img/symbols/energy/metal.png',
+    'Dragon': 'https://limitlesstcg.com/img/symbols/energy/dragon.png',
+    'Fairy': 'https://limitlesstcg.com/img/symbols/energy/fairy.png',
+    'Colorless': 'https://limitlesstcg.com/img/symbols/energy/colorless.png',
+    'Ability': 'https://limitlesstcg.com/img/symbols/energy/ability.png' // Bônus: Ícone de Habilidade
 };
 
 const getHealthColor = (percentage) => {
@@ -68,7 +62,7 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
 
             {/* CAMADA 2: OVERLAYS */}
             
-            {/* 1. BARRA DE VIDA (Centralizada) */}
+            {/* 1. BARRA DE VIDA */}
             <div className="absolute top-[51%] left-4 right-4 z-20 -translate-y-1/2">
                 <div className="relative h-3.5 bg-gray-900/90 backdrop-blur-[2px] rounded-full border border-white/20 overflow-hidden shadow-md">
                     <div 
@@ -93,22 +87,25 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
                 </div>
             )}
 
-            {/* 3. ENERGIAS LIGADAS (AGORA COM ÍCONES VETORIAIS!) */}
+            {/* 3. ENERGIAS LIGADAS (AGORA REAIS!) */}
             {energyCount > 0 && (
                 <div className="absolute bottom-3 left-3 z-20 max-w-[85%]">
-                    <div className="flex flex-wrap gap-1 p-1.5 bg-black/60 backdrop-blur-md rounded-xl border border-white/10 shadow-lg">
+                    <div className="flex flex-wrap gap-1 p-1.5 bg-black/40 backdrop-blur-sm rounded-xl border border-white/10 shadow-lg">
                         {card.attachedEnergy.map((energyName, index) => {
-                            // Busca o ícone e cores no mapa, ou usa o default
-                            const typeData = TYPE_ICONS[energyName] || TYPE_ICONS['default'];
-                            const IconComponent = typeData.icon;
+                            const imgUrl = ENERGY_IMAGES[energyName] || ENERGY_IMAGES['Colorless'];
 
                             return (
                                 <div 
                                     key={index} 
-                                    className={`w-6 h-6 rounded-full ${typeData.bg} border border-white/20 shadow-sm flex items-center justify-center transition-transform hover:scale-125`} 
+                                    className="w-6 h-6 rounded-full shadow-md transition-transform hover:scale-125 hover:z-50 relative" 
                                     title={energyName}
                                 >
-                                    <IconComponent size={14} className={typeData.color} fill="currentColor" fillOpacity={0.2} />
+                                    {/* Imagem da Energia com Drop Shadow para destacar */}
+                                    <img 
+                                        src={imgUrl} 
+                                        alt={energyName}
+                                        className="w-full h-full object-contain drop-shadow-md"
+                                    />
                                 </div>
                             );
                         })}
@@ -116,7 +113,7 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
                 </div>
             )}
 
-            {/* 4. STAGE (Topo Direito) */}
+            {/* 4. STAGE */}
             {parseInt(card.stage) > 0 && (
                  <div className="absolute top-[32px] right-2 z-20">
                     <Badge variant="neutral" className="shadow-md backdrop-blur-sm bg-slate-900/80 text-slate-200 border border-slate-600/50 py-0 px-2 text-[9px] font-bold tracking-wider uppercase h-4 flex items-center">
