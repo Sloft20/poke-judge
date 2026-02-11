@@ -8,7 +8,7 @@ const ENERGY_IMAGES = {
     'Fire': 'https://archives.bulbagarden.net/media/upload/thumb/a/ad/Fire-attack.png/20px-Fire-attack.png',
     'Water': 'https://archives.bulbagarden.net/media/upload/thumb/1/11/Water-attack.png/20px-Water-attack.png',
     'Lightning': 'https://archives.bulbagarden.net/media/upload/thumb/0/04/Lightning-attack.png/20px-Lightning-attack.png',
-    'Psychic': 'https://limitlesstcg.com/img/symbols/energy/psychic.https://archives.bulbagarden.net/media/upload/thumb/e/ef/Psychic-attack.png/20px-Psychic-attack.png',
+    'Psychic': 'https://archives.bulbagarden.net/media/upload/thumb/e/ef/Psychic-attack.png/20px-Psychic-attack.png',
     'Fighting': 'https://archives.bulbagarden.net/media/upload/thumb/4/4c/Fighting-attack.png/20px-Fighting-attack.png',
     'Darkness': 'https://archives.bulbagarden.net/media/upload/thumb/8/8f/Darkness-attack.png/20px-Darkness-attack.png',
     'Metal': 'https://archives.bulbagarden.net/media/upload/thumb/f/f1/Metal-attack.png/20px-Metal-attack.png',
@@ -87,30 +87,26 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
                 </div>
             )}
 
-            {/* 3. ENERGIAS LIGADAS (Sem fundo, reposicionadas e menores) */}
+            {/* 3. ENERGIAS LIGADAS (Lado Direito, Acima da Barra de Vida) */}
             {energyCount > 0 && (
-                // Mudei de 'bottom-3' para 'top-[62%]' para ficar sobre a área do primeiro ataque.
-                // Mantive 'left-3' para alinhar à esquerda.
-                <div className="absolute top-[62%] left-3 z-20 max-w-[85%] pointer-events-none">
-                    {/* Removi todas as classes de fundo (bg-black, border, shadow, p-1.5) */}
-                    {/* Diminuí o gap de 'gap-1' para 'gap-0.5' */}
-                    <div className="flex flex-wrap gap-0.5">
+                // Mudei para 'right-3' (lado direito)
+                // Mudei para 'top-[44%]' (para ficar logo acima da barra de vida que está em 51%)
+                <div className="absolute top-[44%] right-3 z-20 max-w-[60%] pointer-events-none">
+                    {/* Adicionei 'justify-end' para as energias ficarem alinhadas à direita */}
+                    <div className="flex flex-wrap gap-0.5 justify-end">
                         {card.attachedEnergy.map((energyName, index) => {
                             const imgUrl = ENERGY_IMAGES[energyName] || ENERGY_IMAGES['Colorless'];
 
                             return (
                                 <div 
                                     key={index} 
-                                    // Diminuí o tamanho de 'w-6 h-6' para 'w-5 h-5'
-                                    // Removi 'shadow-md' do container
                                     className="w-5 h-5 rounded-full transition-transform hover:scale-125 hover:z-50 relative pointer-events-auto" 
                                     title={energyName}
                                 >
-                                    {/* Mantive um 'drop-shadow-sm' suave na imagem para ela não sumir na arte */}
                                     <img 
                                         src={imgUrl} 
                                         alt={energyName}
-                                        className="w-full h-full object-contain drop-shadow-sm"
+                                        className="w-full h-full object-contain drop-shadow-md"
                                     />
                                 </div>
                             );
