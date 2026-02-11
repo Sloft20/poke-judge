@@ -34,7 +34,7 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
     const energyCount = card.attachedEnergy ? card.attachedEnergy.length : 0;
 
     const cardSizeClasses = location === 'active' 
-        ? 'w-[300px] h-[410px] md:w-[400px] md:h-[518px]' 
+        ? 'w-[320px] h-[446px] md:w-[380px] md:h-[530px]'
         : 'w-[120px] h-[167px] md:w-[145px] md:h-[202px]';
 
     const hoverClasses = onClick ? 'cursor-pointer hover:scale-105 hover:shadow-xl hover:ring-2 hover:ring-blue-400 transition-all duration-300' : '';
