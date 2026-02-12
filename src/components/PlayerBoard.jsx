@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Layers, Shield, Skull, Flame, PlusCircle, Sword, Clock } from 'lucide-react';
+import { User, Layers, Shield, Skull, Flame, PlusCircle, Sword, Clock, Anchor } from 'lucide-react';
 import PokemonCard from './PokemonCard';
 import { Button } from './UI';
 import { CONDITIONS, PHASES } from '../data/constants';
@@ -32,9 +32,9 @@ const PlayerBoard = ({
         // Pokémons existentes
         player.benchPokemon.forEach((poke, idx) => {
             slots.push(
-                <div key={`bench-${idx}`} className="relative group transform hover:-translate-y-2 transition-transform duration-300 cursor-pointer">
+                <div key={`bench-${idx}`} className="relative group transform hover:-translate-y-2 transition-transform duration-300 cursor-pointer shrink-0">
                     <div onClick={() => onCardClick('BENCH', idx)}>
-                        <PokemonCard card={poke} small={true} className="w-36 h-48 shadow-md hover:shadow-xl transition-shadow" />
+                        <PokemonCard card={poke} location="bench" className="shadow-md hover:shadow-xl transition-shadow" />
                     </div>
                     {/* Sombra holográfica na base */}
                     <div className={`absolute -bottom-2 left-2 right-2 h-1.5 rounded-full blur-sm opacity-60 ${isP1 ? 'bg-blue-400' : 'bg-red-400'}`}></div>
@@ -49,8 +49,8 @@ const PlayerBoard = ({
                     key={`empty-${i}`} 
                     onClick={() => onAddPokemon('BENCH')}
                     className={`
-                        w-28 h-32 rounded-xl border-2 border-dashed ${borderColor} 
-                        flex flex-col items-center justify-center gap-2
+                        w-[120px] h-[167px] md:w-[145px] md:h-[202px] rounded-xl border-2 border-dashed ${borderColor} 
+                        flex flex-col items-center justify-center gap-2 shrink-0
                         bg-white/40 hover:bg-white transition-all cursor-pointer group
                     `}
                 >
@@ -125,22 +125,21 @@ const PlayerBoard = ({
                 {/* --- ÁREA DE JOGO --- */}
                 <div className="p-5 grid grid-cols-1 md:grid-cols-12 gap-5">
                     
-                    {/* COLUNA DO ATIVO */}
-                    <div className="md:col-span-3 flex flex-col items-center border-r border-slate-200/50 pr-4">
+                    {/* COLUNA DO ATIVO + HUD DO JUIZ */}
+                    <div className="md:col-span-5 lg:col-span-4 flex flex-col items-center border-r border-slate-200/50 pr-4">
                         <div className="w-full flex justify-between items-center mb-2 px-1">
                              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-widest flex items-center gap-1">
                                 <Shield size={12}/> Zona Ativa
                              </span>
                         </div>
 
-                        {/* Slot do Pokémon Ativo */}
-                        <div className="relative w-full flex flex-col items-center">
-                            {/* Base Decorativa */}
-                            <div className={`absolute top-56 w-32 h-6 rounded-[100%] blur-md opacity-30 ${isP1 ? 'bg-blue-400' : 'bg-red-400'}`}></div>
+                        {/* Area Flexível: Carta + Painel */}
+                        <div className="relative w-full flex flex-col sm:flex-row md:flex-col lg:flex-row items-center justify-center gap-4">
                             
                             {player.activePokemon ? (
                                 <>
-                                    <div onClick={() => onCardClick('ACTIVE')} className="relative z-10">
+                                    {/* 1. A CARTA */}
+                                    <div onClick={() => onCardClick('ACTIVE')} className="relative z-10 group cursor-pointer shrink-0">
                                         <PokemonCard 
                                             card={{
                                                 ...player.activePokemon, 
@@ -148,47 +147,107 @@ const PlayerBoard = ({
                                                 isPoisoned: player.isPoisoned, 
                                                 isBurned: player.isBurned
                                             }} 
-                                            location="active"
+                                            location="active" 
+                                            // Removido classes de tamanho fixo para usar as do componente
+                                            className="shadow-2xl hover:scale-[1.01] transition-transform duration-200"
                                         />
+                                        
+                                        {/* Botões de Status Rápidos (Abaixo da carta) */}
+                                        <div className="mt-2 flex gap-2 justify-center lg:hidden">
+                                             <button 
+                                                className={`p-1.5 rounded-full transition-all ${player.isPoisoned ? 'bg-purple-100 text-purple-600 ring-1 ring-purple-500' : 'bg-white border border-slate-200 text-slate-300'}`}
+                                                onClick={() => onUpdateStatus({ isPoisoned: !player.isPoisoned })}
+                                             >
+                                                <Skull size={14}/>
+                                             </button>
+                                             <button 
+                                                className={`p-1.5 rounded-full transition-all ${player.isBurned ? 'bg-red-100 text-red-600 ring-1 ring-red-500' : 'bg-white border border-slate-200 text-slate-300'}`}
+                                                onClick={() => onUpdateStatus({ isBurned: !player.isBurned })}
+                                             >
+                                                <Flame size={14}/>
+                                             </button>
+                                        </div>
                                     </div>
-                                    
-                                    {/* Botões de Status */}
-                                    <div className="mt-3 flex gap-2 bg-white/80 backdrop-blur-sm border border-slate-200 p-2 rounded-xl shadow-sm z-10 items-center justify-center w-auto whitespace-nowrap">
-                                         <button 
-                                            className={`p-1.5 rounded-full transition-all ${player.isPoisoned ? 'bg-purple-100 text-purple-600 ring-2 ring-purple-500 shadow-sm' : 'hover:bg-slate-100 text-slate-300'}`}
-                                            onClick={() => onUpdateStatus({ isPoisoned: !player.isPoisoned })}
-                                            title="Veneno"
-                                         >
-                                            <Skull size={16}/>
-                                         </button>
-                                         <button 
-                                            className={`p-1.5 rounded-full transition-all ${player.isBurned ? 'bg-red-100 text-red-600 ring-2 ring-red-500 shadow-sm' : 'hover:bg-slate-100 text-slate-300'}`}
-                                            onClick={() => onUpdateStatus({ isBurned: !player.isBurned })}
-                                            title="Queimadura"
-                                         >
-                                            <Flame size={16}/>
-                                         </button>
-                                         
-                                         <div className="h-6 w-px bg-slate-200 mx-1"></div>
 
-                                         <select 
-                                            className="text-[10px] font-bold uppercase bg-transparent outline-none text-slate-600 cursor-pointer w-auto min-w-[80px] pr-1 py-1"
-                                            value={player.activeCondition}
-                                            onChange={(e) => onUpdateStatus({ activeCondition: e.target.value })}
-                                         >
-                                            {Object.values(CONDITIONS).map(c => (
-                                                <option key={c} value={c}>
-                                                    {c === 'NONE' ? 'NORMAL' : c}
-                                                </option>
-                                            ))}
-                                         </select>
+                                    {/* 2. O PAINEL DO JUIZ (HUD) */}
+                                    <div className="w-full max-w-[200px] bg-slate-900/90 border border-slate-700 rounded-xl p-3 shadow-xl backdrop-blur-md flex flex-col gap-2 animate-in slide-in-from-left-2 shrink-0">
+                                        
+                                        <div className="border-b border-slate-700 pb-1 mb-1">
+                                            <span className="text-[9px] uppercase font-bold text-slate-500 tracking-widest">
+                                                Dados de Combate
+                                            </span>
+                                        </div>
+
+                                        {/* A. ENERGIAS */}
+                                        <div className="bg-black/40 rounded-lg p-2">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-[10px] text-slate-300 font-bold uppercase">Energias</span>
+                                                <span className="text-[10px] bg-slate-700 text-white px-1.5 rounded font-mono">
+                                                    {player.activePokemon.attachedEnergy?.length || 0}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-1">
+                                                 {(player.activePokemon.attachedEnergy || []).map((energy, idx) => (
+                                                     <div key={idx} title={energy} className="w-5 h-5 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-[9px] font-bold text-white uppercase">
+                                                         {energy.charAt(0)}
+                                                     </div>
+                                                 ))}
+                                                 {(!player.activePokemon.attachedEnergy || player.activePokemon.attachedEnergy.length === 0) && (
+                                                     <span className="text-[9px] text-slate-600 italic">Vazio</span>
+                                                 )}
+                                            </div>
+                                        </div>
+
+                                        {/* B. CONDIÇÃO ESPECIAL (Dropdown Integrado) */}
+                                        <div className={`
+                                            rounded-lg p-2 border text-center transition-colors duration-300 flex flex-col gap-1
+                                            ${player.activeCondition && player.activeCondition !== 'NONE' 
+                                                ? 'bg-red-900/20 border-red-500/30' 
+                                                : 'bg-slate-800/50 border-slate-700'}
+                                        `}>
+                                            <span className="text-[9px] uppercase text-slate-500 block">Status</span>
+                                            <select 
+                                                className={`
+                                                    bg-transparent text-center font-black uppercase text-xs outline-none cursor-pointer w-full
+                                                    ${player.activeCondition && player.activeCondition !== 'NONE' ? 'text-red-400' : 'text-slate-400'}
+                                                `}
+                                                value={player.activeCondition}
+                                                onChange={(e) => onUpdateStatus({ activeCondition: e.target.value })}
+                                            >
+                                                 {Object.values(CONDITIONS).map(c => (
+                                                    <option key={c} value={c} className="bg-slate-900 text-slate-300">
+                                                        {c === 'NONE' ? 'NORMAL' : c}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* C. FERRAMENTA */}
+                                        {player.activePokemon.attachedTool && (
+                                            <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-2 flex items-center gap-2">
+                                                <Anchor size={12} className="text-blue-400"/>
+                                                <div className="overflow-hidden">
+                                                    <span className="text-[10px] font-bold text-blue-100 truncate block">
+                                                        {player.activePokemon.attachedTool.name}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        
+                                         {/* D. DANO TOTAL */}
+                                         <div className="flex justify-between items-center px-1 mt-1 border-t border-white/5 pt-2">
+                                            <span className="text-[10px] text-slate-500 font-bold uppercase">Dano Total</span>
+                                            <span className="text-base font-black text-red-500">
+                                                {player.activePokemon.damage || 0}
+                                            </span>
+                                        </div>
                                     </div>
                                 </>
                             ) : (
                                 <div 
                                     onClick={() => onAddPokemon('ACTIVE')}
                                     className={`
-                                        w-44 h-60 rounded-2xl border-2 border-dashed ${borderColor} bg-white/50 
+                                        w-[160px] h-[222px] md:w-[200px] md:h-[278px] rounded-2xl border-2 border-dashed ${borderColor} bg-white/50 
                                         flex flex-col items-center justify-center gap-3 cursor-pointer 
                                         hover:bg-white hover:border-${themeColor}-400 transition-all shadow-sm z-10
                                     `}
@@ -203,14 +262,9 @@ const PlayerBoard = ({
                     </div>
 
                     {/* COLUNA DO BANCO E AÇÕES */}
-                    <div className="md:col-span-9 flex flex-col justify-between gap-4 pl-2">
+                    <div className="md:col-span-7 lg:col-span-8 flex flex-col justify-between gap-4 pl-2">
                         
-                        {/* AQUI ESTÁ A MUDANÇA:
-                           1. Usei 'flex-1' para o container crescer e ocupar o espaço.
-                           2. Adicionei 'flex items-center' no interior para centralizar verticalmente.
-                           3. Aumentei 'min-h' para garantir altura.
-                           4. Mudei 'gap-3' para 'gap-6' (mais espaço entre cartas).
-                        */}
+                        {/* Container do Banco */}
                         <div className="bg-white/60 rounded-2xl border border-slate-100 p-3 shadow-inner flex flex-col flex-1 min-h-[180px]">
                             <div className="mb-1 pl-1 flex justify-between items-center shrink-0">
                                 <span className="text-[10px] font-bold uppercase text-slate-400 tracking-widest flex items-center gap-1">
@@ -218,8 +272,7 @@ const PlayerBoard = ({
                                 </span>
                             </div>
                             
-                            {/* Container das Cartas - Centralizado Verticalmente e com mais espaço */}
-                            <div className="flex-1 flex items-center gap-6 overflow-x-auto custom-scrollbar justify-start lg:justify-center px-4 py-2">
+                            <div className="flex-1 flex items-center gap-4 overflow-x-auto custom-scrollbar justify-start px-2 py-2">
                                 {renderBenchSlots()}
                             </div>
                         </div>
