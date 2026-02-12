@@ -4,7 +4,7 @@ import PokemonCard from './PokemonCard';
 import { Button } from './UI';
 import { CONDITIONS, PHASES } from '../data/constants';
 
-// --- IMAGENS OFICIAIS DAS ENERGIAS (Mesmas do PokemonCard) ---
+// --- IMAGENS OFICIAIS DAS ENERGIAS ---
 const ENERGY_IMAGES = {
     'Grass': 'https://archives.bulbagarden.net/media/upload/thumb/2/2e/Grass-attack.png/20px-Grass-attack.png',
     'Fire': 'https://archives.bulbagarden.net/media/upload/thumb/a/ad/Fire-attack.png/20px-Fire-attack.png',
@@ -41,6 +41,31 @@ const PlayerBoard = ({
         ? 'bg-gradient-to-br from-slate-50 to-blue-50/30' 
         : 'bg-gradient-to-br from-slate-50 to-red-50/30';
 
+    // --- NOVA FUNÇÃO: CALCULA O HP REAL (COM BUFFS) ---
+    const calculateMaxHP = (pokemon) => {
+        if (!pokemon) return 0;
+        
+        // 1. Pega o HP Base da carta
+        let totalHP = parseInt(pokemon.hp);
+
+        // 2. Verifica se tem ferramenta acoplada e aplica efeitos
+        if (pokemon.attachedTool) {
+            // Garante que pegamos o nome correto (seja objeto ou string)
+            const toolName = typeof pokemon.attachedTool === 'object' 
+                ? pokemon.attachedTool.name 
+                : pokemon.attachedTool;
+
+            // Lógica do Pingente da Bravura (Bravery Charm): +50 HP
+            if (toolName === 'Pingente da Bravura' || toolName === 'Bravery Charm') {
+                totalHP += 50;
+            }
+            
+            // Adicione aqui outros itens que aumentam HP no futuro (ex: Capa de Gigante)
+        }
+
+        return totalHP;
+    };
+
     // Renderiza os slots do banco
     const renderBenchSlots = () => {
         const slots = [];
@@ -50,7 +75,12 @@ const PlayerBoard = ({
             slots.push(
                 <div key={`bench-${idx}`} className="relative group transform hover:-translate-y-2 transition-transform duration-300 cursor-pointer shrink-0">
                     <div onClick={() => onCardClick('BENCH', idx)}>
-                        <PokemonCard card={poke} location="bench" className="shadow-md hover:shadow-xl transition-shadow" />
+                        <PokemonCard 
+                            card={poke} 
+                            location="bench" 
+                            getMaxHP={calculateMaxHP} // Passando a calculadora para o banco
+                            className="shadow-md hover:shadow-xl transition-shadow" 
+                        />
                     </div>
                     {/* Sombra holográfica na base */}
                     <div className={`absolute -bottom-2 left-2 right-2 h-1.5 rounded-full blur-sm opacity-60 ${isP1 ? 'bg-blue-400' : 'bg-red-400'}`}></div>
@@ -164,6 +194,7 @@ const PlayerBoard = ({
                                                 isBurned: player.isBurned
                                             }} 
                                             location="active" 
+                                            getMaxHP={calculateMaxHP} // Passando a calculadora para o Ativo
                                             className="shadow-2xl hover:scale-[1.01] transition-transform duration-200"
                                         />
                                         
@@ -184,7 +215,7 @@ const PlayerBoard = ({
                                         </div>
                                     </div>
 
-                                    {/* 2. O PAINEL DO JUIZ (HUD) - COMPACTO & COM IMAGENS REAIS */}
+                                    {/* 2. O PAINEL DO JUIZ (HUD) */}
                                     <div className="w-full max-w-[160px] bg-slate-900/90 border border-slate-700 rounded-xl p-2 shadow-xl backdrop-blur-md flex flex-col gap-2 animate-in slide-in-from-left-2 shrink-0">
                                         
                                         <div className="border-b border-slate-700 pb-0.5 mb-0.5">
@@ -244,13 +275,20 @@ const PlayerBoard = ({
                                             </select>
                                         </div>
 
-                                        {/* C. FERRAMENTA */}
+                                        {/* C. FERRAMENTA (ATUALIZADO: Visual Destacado) */}
                                         {player.activePokemon.attachedTool && (
-                                            <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-1.5 flex items-center gap-1.5">
-                                                <Anchor size={10} className="text-blue-400 shrink-0"/>
-                                                <div className="overflow-hidden">
-                                                    <span className="text-[9px] font-bold text-blue-100 truncate block leading-tight">
-                                                        {player.activePokemon.attachedTool.name}
+                                            <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-1.5 flex items-center gap-1.5 mt-1 animate-in fade-in slide-in-from-left-2">
+                                                <div className="bg-blue-500/20 p-1 rounded-full">
+                                                    <Anchor size={10} className="text-blue-400 shrink-0 animate-pulse"/>
+                                                </div>
+                                                <div className="overflow-hidden flex flex-col">
+                                                    <span className="text-[7px] font-bold text-blue-300 uppercase tracking-wider leading-none">
+                                                        Ferramenta
+                                                    </span>
+                                                    <span className="text-[9px] font-black text-white truncate block leading-tight shadow-black drop-shadow-md">
+                                                        {typeof player.activePokemon.attachedTool === 'object' 
+                                                            ? player.activePokemon.attachedTool.name 
+                                                            : player.activePokemon.attachedTool}
                                                     </span>
                                                 </div>
                                             </div>
