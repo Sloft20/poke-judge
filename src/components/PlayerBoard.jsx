@@ -4,6 +4,22 @@ import PokemonCard from './PokemonCard';
 import { Button } from './UI';
 import { CONDITIONS, PHASES } from '../data/constants';
 
+// --- IMAGENS OFICIAIS DAS ENERGIAS (Mesmas do PokemonCard) ---
+const ENERGY_IMAGES = {
+    'Grass': 'https://archives.bulbagarden.net/media/upload/thumb/2/2e/Grass-attack.png/20px-Grass-attack.png',
+    'Fire': 'https://archives.bulbagarden.net/media/upload/thumb/a/ad/Fire-attack.png/20px-Fire-attack.png',
+    'Water': 'https://archives.bulbagarden.net/media/upload/thumb/1/11/Water-attack.png/20px-Water-attack.png',
+    'Lightning': 'https://archives.bulbagarden.net/media/upload/thumb/0/04/Lightning-attack.png/20px-Lightning-attack.png',
+    'Psychic': 'https://archives.bulbagarden.net/media/upload/thumb/e/ef/Psychic-attack.png/20px-Psychic-attack.png',
+    'Fighting': 'https://archives.bulbagarden.net/media/upload/thumb/4/4c/Fighting-attack.png/20px-Fighting-attack.png',
+    'Darkness': 'https://archives.bulbagarden.net/media/upload/thumb/8/8f/Darkness-attack.png/20px-Darkness-attack.png',
+    'Metal': 'https://archives.bulbagarden.net/media/upload/thumb/f/f1/Metal-attack.png/20px-Metal-attack.png',
+    'Dragon': 'https://archives.bulbagarden.net/media/upload/thumb/d/d7/Dragon-attack.png/20px-Dragon-attack.png',
+    'Fairy': 'https://archives.bulbagarden.net/media/upload/thumb/c/c3/Fairy-attack.png/20px-Fairy-attack.png',
+    'Colorless': 'https://archives.bulbagarden.net/media/upload/thumb/1/1d/Colorless-attack.png/20px-Colorless-attack.png',
+    'Ability': 'https://limitlesstcg.com/img/symbols/energy/ability.png'
+};
+
 const PlayerBoard = ({ 
     player, 
     index, 
@@ -148,11 +164,10 @@ const PlayerBoard = ({
                                                 isBurned: player.isBurned
                                             }} 
                                             location="active" 
-                                            // Removido classes de tamanho fixo para usar as do componente
                                             className="shadow-2xl hover:scale-[1.01] transition-transform duration-200"
                                         />
                                         
-                                        {/* Botões de Status Rápidos (Abaixo da carta) */}
+                                        {/* Botões de Status Rápidos (Mobile) */}
                                         <div className="mt-2 flex gap-2 justify-center lg:hidden">
                                              <button 
                                                 className={`p-1.5 rounded-full transition-all ${player.isPoisoned ? 'bg-purple-100 text-purple-600 ring-1 ring-purple-500' : 'bg-white border border-slate-200 text-slate-300'}`}
@@ -169,46 +184,53 @@ const PlayerBoard = ({
                                         </div>
                                     </div>
 
-                                    {/* 2. O PAINEL DO JUIZ (HUD) */}
-                                    <div className="w-full max-w-[200px] bg-slate-900/90 border border-slate-700 rounded-xl p-3 shadow-xl backdrop-blur-md flex flex-col gap-2 animate-in slide-in-from-left-2 shrink-0">
+                                    {/* 2. O PAINEL DO JUIZ (HUD) - COMPACTO & COM IMAGENS REAIS */}
+                                    <div className="w-full max-w-[160px] bg-slate-900/90 border border-slate-700 rounded-xl p-2 shadow-xl backdrop-blur-md flex flex-col gap-2 animate-in slide-in-from-left-2 shrink-0">
                                         
-                                        <div className="border-b border-slate-700 pb-1 mb-1">
-                                            <span className="text-[9px] uppercase font-bold text-slate-500 tracking-widest">
+                                        <div className="border-b border-slate-700 pb-0.5 mb-0.5">
+                                            <span className="text-[8px] uppercase font-bold text-slate-500 tracking-widest">
                                                 Dados de Combate
                                             </span>
                                         </div>
 
-                                        {/* A. ENERGIAS */}
-                                        <div className="bg-black/40 rounded-lg p-2">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <span className="text-[10px] text-slate-300 font-bold uppercase">Energias</span>
-                                                <span className="text-[10px] bg-slate-700 text-white px-1.5 rounded font-mono">
+                                        {/* A. ENERGIAS (Com Imagens Oficiais) */}
+                                        <div className="bg-black/40 rounded-lg p-1.5">
+                                            <div className="flex justify-between items-center mb-1.5">
+                                                <span className="text-[9px] text-slate-300 font-bold uppercase">Energias</span>
+                                                <span className="text-[9px] bg-slate-700 text-white px-1.5 rounded font-mono leading-none">
                                                     {player.activePokemon.attachedEnergy?.length || 0}
                                                 </span>
                                             </div>
                                             <div className="flex flex-wrap gap-1">
-                                                 {(player.activePokemon.attachedEnergy || []).map((energy, idx) => (
-                                                     <div key={idx} title={energy} className="w-5 h-5 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-[9px] font-bold text-white uppercase">
-                                                         {energy.charAt(0)}
-                                                     </div>
-                                                 ))}
+                                                 {(player.activePokemon.attachedEnergy || []).map((energy, idx) => {
+                                                     const imgUrl = ENERGY_IMAGES[energy] || ENERGY_IMAGES['Colorless'];
+                                                     return (
+                                                        <div key={idx} title={energy} className="w-5 h-5 transition-transform hover:scale-110 relative">
+                                                            <img 
+                                                                src={imgUrl} 
+                                                                alt={energy}
+                                                                className="w-full h-full object-contain drop-shadow-sm"
+                                                            />
+                                                        </div>
+                                                     );
+                                                 })}
                                                  {(!player.activePokemon.attachedEnergy || player.activePokemon.attachedEnergy.length === 0) && (
-                                                     <span className="text-[9px] text-slate-600 italic">Vazio</span>
+                                                     <span className="text-[8px] text-slate-600 italic">Vazio</span>
                                                  )}
                                             </div>
                                         </div>
 
-                                        {/* B. CONDIÇÃO ESPECIAL (Dropdown Integrado) */}
+                                        {/* B. CONDIÇÃO ESPECIAL */}
                                         <div className={`
-                                            rounded-lg p-2 border text-center transition-colors duration-300 flex flex-col gap-1
+                                            rounded-lg p-1.5 border text-center transition-colors duration-300 flex flex-col gap-0.5
                                             ${player.activeCondition && player.activeCondition !== 'NONE' 
                                                 ? 'bg-red-900/20 border-red-500/30' 
                                                 : 'bg-slate-800/50 border-slate-700'}
                                         `}>
-                                            <span className="text-[9px] uppercase text-slate-500 block">Status</span>
+                                            <span className="text-[8px] uppercase text-slate-500 block">Status</span>
                                             <select 
                                                 className={`
-                                                    bg-transparent text-center font-black uppercase text-xs outline-none cursor-pointer w-full
+                                                    bg-transparent text-center font-black uppercase text-[10px] outline-none cursor-pointer w-full leading-tight
                                                     ${player.activeCondition && player.activeCondition !== 'NONE' ? 'text-red-400' : 'text-slate-400'}
                                                 `}
                                                 value={player.activeCondition}
@@ -224,10 +246,10 @@ const PlayerBoard = ({
 
                                         {/* C. FERRAMENTA */}
                                         {player.activePokemon.attachedTool && (
-                                            <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-2 flex items-center gap-2">
-                                                <Anchor size={12} className="text-blue-400"/>
+                                            <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-1.5 flex items-center gap-1.5">
+                                                <Anchor size={10} className="text-blue-400 shrink-0"/>
                                                 <div className="overflow-hidden">
-                                                    <span className="text-[10px] font-bold text-blue-100 truncate block">
+                                                    <span className="text-[9px] font-bold text-blue-100 truncate block leading-tight">
                                                         {player.activePokemon.attachedTool.name}
                                                     </span>
                                                 </div>
@@ -235,9 +257,9 @@ const PlayerBoard = ({
                                         )}
                                         
                                          {/* D. DANO TOTAL */}
-                                         <div className="flex justify-between items-center px-1 mt-1 border-t border-white/5 pt-2">
-                                            <span className="text-[10px] text-slate-500 font-bold uppercase">Dano Total</span>
-                                            <span className="text-base font-black text-red-500">
+                                         <div className="flex justify-between items-center px-0.5 mt-0.5 border-t border-white/5 pt-1.5">
+                                            <span className="text-[8px] text-slate-500 font-bold uppercase">Dano Total</span>
+                                            <span className="text-sm font-black text-red-500 leading-none">
                                                 {player.activePokemon.damage || 0}
                                             </span>
                                         </div>
