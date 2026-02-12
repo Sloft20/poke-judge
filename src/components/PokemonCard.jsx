@@ -123,6 +123,24 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
                     </Badge>
                 </div>
             )}
+            {/* 6. CONTADOR DE DANO (Estilo Dado Acrílico) */}
+            {(card.damage || 0) > 0 && (
+                // Centralizado na área da ilustração
+                <div className="absolute top-[30%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-25 pointer-events-none animate-in zoom-in bounce-in duration-500">
+                    <div className="relative group">
+                        {/* O Corpo do Dado: Vermelho translúcido com borda brilhante */}
+                        <div className="w-10 h-10 bg-red-600/60 backdrop-blur-md rounded-lg border border-red-300 shadow-[0_4px_15px_rgba(220,38,38,0.6)] rotate-6 flex items-center justify-center">
+                            {/* O Número: Branco, grosso e com sombra */}
+                            <span className="text-sm font-black text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] -rotate-6">
+                                {card.damage}
+                            </span>
+                        </div>
+                        
+                        {/* Brilho extra (reflexo no dado) */}
+                        <div className="absolute top-1 left-1 w-3 h-1 bg-white/40 rounded-full rotate-6"></div>
+                    </div>
+                </div>
+            )}
             
              <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none bg-gradient-to-tr from-transparent via-white/10 to-transparent z-30"></div>
         </div>
