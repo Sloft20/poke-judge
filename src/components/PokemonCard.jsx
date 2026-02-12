@@ -1,22 +1,5 @@
 import React from 'react';
-import { Badge } from './UI';
-import { Anchor } from 'lucide-react';
-
-// --- IMAGENS OFICIAIS DAS ENERGIAS (PNG Transparente) ---
-const ENERGY_IMAGES = {
-    'Grass': 'https://archives.bulbagarden.net/media/upload/thumb/2/2e/Grass-attack.png/20px-Grass-attack.png',
-    'Fire': 'https://archives.bulbagarden.net/media/upload/thumb/a/ad/Fire-attack.png/20px-Fire-attack.png',
-    'Water': 'https://archives.bulbagarden.net/media/upload/thumb/1/11/Water-attack.png/20px-Water-attack.png',
-    'Lightning': 'https://archives.bulbagarden.net/media/upload/thumb/0/04/Lightning-attack.png/20px-Lightning-attack.png',
-    'Psychic': 'https://archives.bulbagarden.net/media/upload/thumb/e/ef/Psychic-attack.png/20px-Psychic-attack.png',
-    'Fighting': 'https://archives.bulbagarden.net/media/upload/thumb/4/4c/Fighting-attack.png/20px-Fighting-attack.png',
-    'Darkness': 'https://archives.bulbagarden.net/media/upload/thumb/8/8f/Darkness-attack.png/20px-Darkness-attack.png',
-    'Metal': 'https://archives.bulbagarden.net/media/upload/thumb/f/f1/Metal-attack.png/20px-Metal-attack.png',
-    'Dragon': 'https://archives.bulbagarden.net/media/upload/thumb/d/d7/Dragon-attack.png/20px-Dragon-attack.png',
-    'Fairy': 'https://archives.bulbagarden.net/media/upload/thumb/c/c3/Fairy-attack.png/20px-Fairy-attack.png',
-    'Colorless': 'https://archives.bulbagarden.net/media/upload/thumb/1/1d/Colorless-attack.png/20px-Colorless-attack.png',
-    'Ability': 'https://limitlesstcg.com/img/symbols/energy/ability.png'
-};
+import { Badge } from './UI'; // Certifique-se que o caminho está correto
 
 const getHealthColor = (percentage) => {
     if (percentage > 60) return 'bg-green-500';
@@ -30,9 +13,8 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
     const maxHP = getMaxHP ? getMaxHP(card) : parseInt(card.hp);
     const currentHP = Math.max(0, maxHP - (card.damage || 0));
     const healthPercentage = Math.min(100, (currentHP / maxHP) * 100);
-    const hasTool = !!card.attachedTool;
-    const energyCount = card.attachedEnergy ? card.attachedEnergy.length : 0;
 
+    // Ajuste de Tamanhos (Mantido sua configuração preferida)
     const cardSizeClasses = location === 'active' 
         ? 'w-[160px] h-[222px] md:w-[200px] md:h-[278px]' 
         : 'w-[120px] h-[167px] md:w-[145px] md:h-[202px]';
@@ -43,7 +25,7 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
     return (
         <div className={`relative rounded-xl overflow-hidden shadow-lg group ${cardSizeClasses} ${hoverClasses} ${activeRing}`} onClick={onClick}>
             
-            {/* CAMADA 1: IMAGEM */}
+            {/* CAMADA 1: IMAGEM DA CARTA */}
             {card.image ? (
                 <img 
                     src={card.image} 
@@ -60,7 +42,7 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
                 </div>
             )}
 
-            {/* CAMADA 2: OVERLAYS */}
+            {/* CAMADA 2: OVERLAYS (Apenas os essenciais) */}
             
             {/* 1. BARRA DE VIDA */}
             <div className="absolute top-[51%] left-4 right-4 z-20 -translate-y-1/2">
@@ -77,41 +59,7 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
                 </div>
             </div>
 
-            {/* 2. FERRAMENTA */}
-            {hasTool && (
-                 <div className="absolute top-8 right-2 z-20 animate-in slide-in-from-right-2">
-                    <Badge variant="info" className="flex items-center gap-1 shadow-lg backdrop-blur-md bg-blue-900/80 text-blue-100 border-blue-400/50 pl-1 pr-2 py-0.5 text-[10px]">
-                        <Anchor size={12} />
-                        <span className="truncate max-w-[80px]">{card.attachedTool.name}</span>
-                    </Badge>
-                </div>
-            )}
-
-            {/* 3. ENERGIAS LIGADAS */}
-            {energyCount > 0 && (
-                <div className="absolute top-[41%] right-3 z-20 max-w-[60%] pointer-events-none">
-                    <div className="flex flex-wrap gap-0.5 justify-end">
-                        {card.attachedEnergy.map((energyName, index) => {
-                            const imgUrl = ENERGY_IMAGES[energyName] || ENERGY_IMAGES['Colorless'];
-                            return (
-                                <div 
-                                    key={index} 
-                                    className="w-5 h-5 rounded-full transition-transform hover:scale-125 hover:z-50 relative pointer-events-auto" 
-                                    title={energyName}
-                                >
-                                    <img 
-                                        src={imgUrl} 
-                                        alt={energyName}
-                                        className="w-full h-full object-contain drop-shadow-md"
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
-
-            {/* 4. STAGE */}
+            {/* 2. STAGE (Indicador de Evolução) */}
             {parseInt(card.stage) > 0 && (
                  <div className="absolute top-[32px] right-2 z-20">
                     <Badge variant="neutral" className="shadow-md backdrop-blur-sm bg-slate-900/80 text-slate-200 border border-slate-600/50 py-0 px-2 text-[9px] font-bold tracking-wider uppercase h-4 flex items-center">
@@ -120,40 +68,23 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
                 </div>
             )}
 
-            {/* 5. INDICADOR DE CONDIÇÃO ESPECIAL (REINSERIDO) */}
-            {card.activeCondition && card.activeCondition !== 'NONE' && (
-                <div className="absolute top-[38%] left-3 z-30 animate-in fade-in zoom-in duration-300">
-                    <div className={`
-                        flex items-center justify-center px-1.5 h-3.5 rounded-sm border border-white/20 shadow-md
-                        ${card.activeCondition === 'SLEEP' ? 'bg-purple-600' : 
-                        card.activeCondition === 'POISON' ? 'bg-green-500' : 
-                        card.activeCondition === 'BURN' ? 'bg-red-500' : 
-                        card.activeCondition === 'CONFUSED' ? 'bg-yellow-500 text-yellow-950' : 'bg-slate-700'}
-                    `}>
-                        <span className="text-[8px] font-bold text-white uppercase tracking-tighter drop-shadow-sm leading-none">
-                            {card.activeCondition === 'SLEEP' ? 'SONO' :
-                            card.activeCondition === 'POISON' ? 'VENENO' :
-                            card.activeCondition === 'BURN' ? 'QUEIMA' :
-                            card.activeCondition === 'CONFUSED' ? 'CONFUSÃO' : card.activeCondition}
-                        </span>
-                    </div>
-                </div>
-            )}
-
-            {/* 6. CONTADOR DE DANO (DADO) */}
+            {/* 3. CONTADOR DE DANO (Dado 3D) */}
             {(card.damage || 0) > 0 && (
                 <div className="absolute top-[30%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-25 pointer-events-none animate-in zoom-in bounce-in duration-500">
                     <div className="relative group">
+                        {/* Corpo do Dado */}
                         <div className="w-10 h-10 bg-red-600/60 backdrop-blur-md rounded-lg border border-red-300 shadow-[0_4px_15px_rgba(220,38,38,0.6)] rotate-6 flex items-center justify-center">
                             <span className="text-sm font-black text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] -rotate-6">
                                 {card.damage}
                             </span>
                         </div>
+                        {/* Reflexo */}
                         <div className="absolute top-1 left-1 w-3 h-1 bg-white/40 rounded-full rotate-6"></div>
                     </div>
                 </div>
             )}
             
+            {/* Efeito de Brilho ao passar o mouse */}
              <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none bg-gradient-to-tr from-transparent via-white/10 to-transparent z-30"></div>
         </div>
     );
