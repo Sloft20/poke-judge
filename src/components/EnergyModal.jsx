@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Zap } from 'lucide-react';
 
-// --- IMAGENS OFICIAIS (Mesmas do restante do App) ---
+// --- IMAGENS OFICIAIS ---
 const ENERGY_IMAGES_LARGE = {
     'Fire': { src: 'https://archives.bulbagarden.net/media/upload/thumb/a/ad/Fire-attack.png/60px-Fire-attack.png', label: 'Fogo', color: 'text-red-600', bg: 'hover:bg-red-50 hover:border-red-200' },
     'Water': { src: 'https://archives.bulbagarden.net/media/upload/thumb/1/11/Water-attack.png/60px-Water-attack.png', label: 'Água', color: 'text-blue-600', bg: 'hover:bg-blue-50 hover:border-blue-200' },
@@ -21,68 +21,49 @@ const EnergyModal = ({ onClose, onConfirm, pokemonName, currentEnergyCount }) =>
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
       <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col relative">
         
-        {/* Cabeçalho Clean */}
+        {/* Cabeçalho */}
         <div className="p-6 border-b border-slate-100 flex justify-between items-start">
           <div>
             <h2 className="text-xl font-black text-slate-800 italic uppercase tracking-tighter flex items-center gap-2">
               <Zap size={20} className="text-yellow-500 fill-current" />
-              Ligar Energia
+              Ligar Energias
             </h2>
             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">
               Alvo: <span className="text-blue-500">{pokemonName || 'Pokémon'}</span>
             </p>
           </div>
-          <button 
-            onClick={onClose}
-            className="text-slate-300 hover:text-slate-500 p-2 rounded-full hover:bg-slate-50 transition-colors"
-          >
+          <button onClick={onClose} className="text-slate-300 hover:text-slate-500 p-2 rounded-full hover:bg-slate-50 transition-colors">
             <X size={24} />
           </button>
         </div>
 
-        {/* Corpo Clean */}
+        {/* Corpo */}
         <div className="p-6 bg-white">
             
-            {/* Indicador de Energias Atuais (Barra Sutil) */}
-            <div className="mb-6 flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Atual</span>
-                <div className="flex gap-1">
-                    {currentEnergyCount > 0 ? (
-                        Array.from({ length: Math.min(10, currentEnergyCount) }).map((_, i) => (
-                            <div key={i} className="w-2.5 h-2.5 rounded-full bg-blue-400 shadow-sm"></div>
-                        ))
-                    ) : (
-                        <span className="text-[10px] text-slate-400 italic">Vazio</span>
-                    )}
+            {/* CONTADOR NUMÉRICO (Substituiu as bolinhas) */}
+            <div className="mb-6 flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total de Energias</span>
+                    <span className="text-[9px] text-slate-300 font-mono mt-0.5">Ligadas a este Pokémon</span>
+                </div>
+                <div className="bg-white border border-slate-200 px-5 py-2 rounded-xl shadow-sm">
+                    <span className={`text-3xl font-black font-mono ${currentEnergyCount > 0 ? 'text-blue-600' : 'text-slate-300'}`}>
+                        {currentEnergyCount.toString().padStart(2, '0')}
+                    </span>
                 </div>
             </div>
 
-            {/* GRID CLEAN & COMPACTO */}
-            <div className="grid grid-cols-4 sm:grid-cols-4 gap-3">
+            {/* Grid de Seleção */}
+            <div className="grid grid-cols-4 gap-3">
                 {Object.entries(ENERGY_IMAGES_LARGE).map(([key, data]) => (
                     <button
                         key={key}
-                        onClick={() => {
-                            // Envia o objeto com a propriedade 'name' que seu sistema espera
-                            onConfirm({ name: data.label, type: key });
-                            onClose(); // Fecha após selecionar (opcional, mas comum em design clean)
-                        }}
-                        className={`
-                            group flex flex-col items-center justify-center p-3 rounded-xl border border-transparent transition-all duration-200
-                            bg-white hover:shadow-md hover:-translate-y-0.5 border-slate-50
-                            ${data.bg}
-                        `}
+                        onClick={() => onConfirm({ name: data.label, type: key })}
+                        className={`group flex flex-col items-center justify-center p-3 rounded-xl border border-transparent transition-all duration-100 bg-white hover:shadow-md hover:-translate-y-0.5 active:scale-95 border-slate-50 ${data.bg}`}
                     >
-                        {/* Imagem da Energia */}
                         <div className="relative w-8 h-8 mb-2 transition-transform group-hover:scale-110 duration-300">
-                             <img 
-                                src={data.src} 
-                                alt={data.label} 
-                                className="w-full h-full object-contain drop-shadow-sm"
-                             />
+                             <img src={data.src} alt={data.label} className="w-full h-full object-contain drop-shadow-sm" />
                         </div>
-                        
-                        {/* Nome da Energia */}
                         <span className={`text-[9px] font-black uppercase tracking-wider ${data.color}`}>
                             {data.label}
                         </span>
@@ -91,11 +72,17 @@ const EnergyModal = ({ onClose, onConfirm, pokemonName, currentEnergyCount }) =>
             </div>
         </div>
         
-        {/* Footer Minimalista */}
-        <div className="bg-slate-50 p-3 border-t border-slate-100 text-center">
-            <span className="text-[9px] text-slate-400 uppercase font-bold tracking-widest">
-                Selecione uma esfera
-            </span>
+        {/* Footer */}
+        <div className="bg-slate-50 p-4 border-t border-slate-100 flex justify-between items-center">
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">
+                Clique para adicionar várias
+            </p>
+            <button 
+                onClick={onClose}
+                className="bg-slate-900 text-white px-8 py-2.5 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-slate-800 transition-all shadow-lg active:scale-95"
+            >
+                Concluir
+            </button>
         </div>
       </div>
     </div>
