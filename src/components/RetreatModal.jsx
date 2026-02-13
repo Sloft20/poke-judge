@@ -4,6 +4,10 @@ import { supabase } from '../supabaseClient';
 import { ENERGY_TYPES } from '../data/constants';
 
 // --- IMAGENS OFICIAIS DAS ENERGIAS (Mesmas do restante do App) ---
+
+
+// Componente Visual para Escolher Energias (ATUALIZADO)
+// --- IMAGENS OFICIAIS (Garanta que isso esteja no topo do arquivo DeckManager.jsx) ---
 const ENERGY_IMAGES_SRC = {
     'Fire': 'https://archives.bulbagarden.net/media/upload/thumb/a/ad/Fire-attack.png/60px-Fire-attack.png',
     'Water': 'https://archives.bulbagarden.net/media/upload/thumb/1/11/Water-attack.png/60px-Water-attack.png',
@@ -18,9 +22,8 @@ const ENERGY_IMAGES_SRC = {
     'Colorless': 'https://archives.bulbagarden.net/media/upload/thumb/1/1d/Colorless-attack.png/60px-Colorless-attack.png'
 };
 
-// Componente Visual para Escolher Energias (ATUALIZADO)
 const EnergyCostBuilder = ({ label, cost, onChange, disabled }) => {
-    if (disabled) return null; // Esconde se for Habilidade
+    if (disabled) return null;
 
     const addEnergy = (type) => onChange([...cost, type]);
     const removeEnergy = (index) => {
@@ -33,41 +36,43 @@ const EnergyCostBuilder = ({ label, cost, onChange, disabled }) => {
         <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 mb-3 shadow-sm">
             <label className="text-[10px] font-bold text-slate-400 uppercase block mb-2">{label}</label>
             
-            {/* ÁREA DE VISUALIZAÇÃO DO CUSTO (LINHA DE ESFERAS) */}
-            <div className="flex flex-wrap gap-1 mb-3 min-h-[32px] bg-white p-2 rounded-md border border-slate-200 shadow-inner items-center">
+            {/* VISUALIZADOR DE CUSTO (O QUE JÁ FOI ADICIONADO) */}
+            <div className="flex flex-wrap gap-1 mb-3 min-h-[40px] bg-white p-2 rounded-md border border-slate-200 shadow-inner items-center">
                 {cost.length === 0 && <span className="text-[10px] text-slate-300 italic pl-1">Sem custo (Grátis)</span>}
-                {cost.map((type, idx) => {
-                    const imgUrl = ENERGY_IMAGES_SRC[type] || ENERGY_IMAGES_SRC['Colorless'];
-                    return (
-                        <button 
-                            key={idx} 
-                            onClick={() => removeEnergy(idx)} 
-                            className="group relative w-6 h-6 transition-transform hover:scale-110" 
-                            title="Clique para remover"
-                        >
-                            <img src={imgUrl} alt={type} className="w-full h-full object-contain drop-shadow-sm"/>
-                            {/* Xzinho ao passar o mouse */}
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 rounded-full transition-opacity">
-                                <X size={12} className="text-white"/>
-                            </div>
-                        </button>
-                    );
-                })}
+                {cost.map((type, idx) => (
+                    <button 
+                        key={idx} 
+                        onClick={() => removeEnergy(idx)} 
+                        className="relative w-8 h-8 transition-transform hover:scale-110 flex-shrink-0 group"
+                        title="Clique para remover"
+                    >
+                        {/* Imagem Real da Energia */}
+                        <img 
+                            src={ENERGY_IMAGES_SRC[type] || ENERGY_IMAGES_SRC['Colorless']} 
+                            alt={type} 
+                            className="w-full h-full object-contain drop-shadow-md"
+                        />
+                        {/* Overlay de Remover (X Vermelho) */}
+                        <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <X size={16} className="text-white font-bold"/>
+                        </div>
+                    </button>
+                ))}
             </div>
 
-            {/* SELETOR DE ENERGIAS (PALETA) */}
-            <div className="flex flex-wrap gap-2 justify-center bg-white p-2 rounded-lg border border-slate-100">
+            {/* SELETOR DE ENERGIAS (BOTÕES PARA ADICIONAR) */}
+            <div className="grid grid-cols-6 gap-2 bg-white p-3 rounded-lg border border-slate-100 justify-items-center">
                 {Object.keys(ENERGY_IMAGES_SRC).map((key) => (
                     <button 
                         key={key} 
                         onClick={() => addEnergy(key)} 
-                        className="w-6 h-6 hover:scale-125 transition-transform duration-200 hover:drop-shadow-[0_0_5px_rgba(0,0,0,0.3)]" 
+                        className="w-8 h-8 hover:scale-125 transition-transform duration-200 hover:drop-shadow-lg active:scale-95" 
                         title={`Adicionar ${key}`}
                     >
                         <img 
                             src={ENERGY_IMAGES_SRC[key]} 
                             alt={key} 
-                            className="w-full h-full object-contain"
+                            className="w-full h-full object-contain filter drop-shadow-sm"
                         />
                     </button>
                 ))}
@@ -412,5 +417,6 @@ const DeckManager = ({ onClose, onUpdate }) => {
         </div>
     );
 };
+
 
 export default DeckManager;
