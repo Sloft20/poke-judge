@@ -1040,7 +1040,7 @@ const handleStartGameFromLobby = () => {
       });
 
       // 2. LOG DETALHADO (Nome da Energia + Nome do Pokémon Ativo)
-      addLog(`⚡ Ligou ${energyType.name} em ${p.activePokemon.name} (Ativo).`, 'INFO', pIndex);
+      addLog(`⚡ Ligou Energia de ${energyType.name} em ${p.activePokemon.name} (Ativo).`, 'INFO', pIndex);
 
     } else {
       // 1. Atualiza o estado do Banco
@@ -1058,7 +1058,7 @@ const handleStartGameFromLobby = () => {
 
       // 2. LOG DETALHADO (Nome da Energia + Nome do Pokémon do Banco)
       // Usamos newBench[index].name para garantir que pegamos o nome correto do alvo
-      addLog(`⚡ Ligou ${energyType.name} em ${newBench[index].name} (Banco).`, 'INFO', pIndex);
+      addLog(`⚡ Ligou Energia de ${energyType.name} em ${newBench[index].name} (Banco).`, 'INFO', pIndex);
     }
   };
   const handleRemoveEnergy = (energyIndex) => {
