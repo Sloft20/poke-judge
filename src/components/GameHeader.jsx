@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Clock, Play, Pause, Coins, BarChart2, BookOpen, Edit3, Zap, Activity } from 'lucide-react';
+import { Shield, Clock, Play, Pause, Coins, BarChart2, BookOpen, Edit3, Zap, Activity, FileText } from 'lucide-react';
 import { PHASES } from '../data/constants';
 
 const GameHeader = ({ 
@@ -10,7 +10,9 @@ const GameHeader = ({
     onCoinFlip, 
     onOpenDeckManager, 
     onOpenRanking, 
-    onOpenRules 
+    onOpenRules,
+    showSidebar,       // Nova prop
+    onToggleSidebar    // Nova prop
 }) => {
     
     // Formata o tempo (MM:SS)
@@ -91,6 +93,8 @@ const GameHeader = ({
 
                 {/* --- BLOCO 3: FERRAMENTAS (DIREITA) --- */}
                 <div className="flex items-center gap-2">
+                    
+                    {/* Botão de Moeda */}
                     <button 
                         onClick={onCoinFlip}
                         className="group relative px-4 py-2 bg-slate-900 hover:bg-yellow-950/30 border border-slate-700 hover:border-yellow-500/50 rounded-lg text-slate-300 hover:text-yellow-400 transition-all duration-300 overflow-hidden"
@@ -99,10 +103,10 @@ const GameHeader = ({
                             <Coins size={16} className="group-hover:rotate-12 transition-transform"/>
                             <span className="text-xs font-bold uppercase">Moeda</span>
                         </div>
-                        {/* Glow effect */}
                         <div className="absolute inset-0 bg-yellow-500/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 blur-md"></div>
                     </button>
 
+                    {/* Botão de Ranking */}
                     <button 
                         onClick={onOpenRanking}
                         className="group relative px-4 py-2 bg-slate-900 hover:bg-purple-950/30 border border-slate-700 hover:border-purple-500/50 rounded-lg text-slate-300 hover:text-purple-400 transition-all duration-300"
@@ -113,6 +117,7 @@ const GameHeader = ({
                         </div>
                     </button>
 
+                    {/* Botão de Regras */}
                     <button 
                         onClick={onOpenRules}
                         className="group relative px-4 py-2 bg-slate-900 hover:bg-blue-950/30 border border-slate-700 hover:border-blue-500/50 rounded-lg text-slate-300 hover:text-blue-400 transition-all duration-300"
@@ -122,7 +127,26 @@ const GameHeader = ({
                             <span className="text-xs font-bold uppercase">Regras</span>
                         </div>
                     </button>
+
+                    {/* NOVO: Botão de Log (Sidebar Toggle) */}
+                    <button 
+                        onClick={onToggleSidebar}
+                        className={`
+                            group relative px-4 py-2 rounded-lg text-slate-300 transition-all duration-300 border
+                            ${showSidebar 
+                                ? 'bg-slate-800 text-white border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.2)]' 
+                                : 'bg-slate-900 border-slate-700 hover:bg-emerald-950/30 hover:border-emerald-500/50 hover:text-emerald-400'}
+                        `}
+                    >
+                         <div className="flex items-center gap-2 relative z-10">
+                            <FileText size={16} />
+                            <span className="text-xs font-bold uppercase">
+                                {showSidebar ? 'Ocultar Log' : 'Ver Log'}
+                            </span>
+                        </div>
+                    </button>
                 </div>
+                                
             </div>
         </header>
     );
