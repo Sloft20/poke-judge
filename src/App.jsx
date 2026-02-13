@@ -1017,11 +1017,49 @@ const handleStartGameFromLobby = () => {
   };
   const confirmAttachEnergy = (energyType) => {
     saveGameHistory();
-    if (!showEnergyModal) return; const { pIndex, location, index } = showEnergyModal; const p = players[pIndex];
-    let eKey = 'Colorless'; Object.entries(ENERGY_TYPES).forEach(([key, val]) => { if(val.name === energyType.name) eKey = key; });
-    if (location === 'ACTIVE') { updatePlayer(pIndex, { activePokemon: { ...p.activePokemon, attachedEnergy: [...(p.activePokemon.attachedEnergy || []), eKey] }, energyAttachedThisTurn: true, handCount: Math.max(0, p.handCount - 1) }); addLog(`Ligou Energia ao Ativo.`, 'INFO', pIndex); } 
-    else { const newBench = [...p.benchPokemon]; newBench[index] = { ...newBench[index], attachedEnergy: [...(newBench[index].attachedEnergy || []), eKey] }; updatePlayer(pIndex, { benchPokemon: newBench, energyAttachedThisTurn: true, handCount: Math.max(0, p.handCount - 1) }); addLog(`Ligou Energia ao Banco.`, 'INFO', pIndex); }
-    
+    if (!showEnergyModal) return;
+
+    const { pIndex, location, index } = showEnergyModal;
+    const p = players[pIndex];
+
+    // Identifica a chave da energia (ex: 'Fire', 'Water') baseada no nome
+    let eKey = 'Colorless';
+    Object.entries(ENERGY_TYPES).forEach(([key, val]) => {
+      if (val.name === energyType.name) eKey = key;
+    });
+
+    if (location === 'ACTIVE') {
+      // 1. Atualiza o estado do Ativo
+      updatePlayer(pIndex, {
+        activePokemon: {
+          ...p.activePokemon,
+          attachedEnergy: [...(p.activePokemon.attachedEnergy || []), eKey]
+        },
+        energyAttachedThisTurn: true,
+        handCount: Math.max(0, p.handCount - 1)
+      });
+
+      // 2. LOG DETALHADO (Nome da Energia + Nome do Pokémon Ativo)
+      addLog(`⚡ Ligou ${energyType.name} em ${p.activePokemon.name} (Ativo).`, 'INFO', pIndex);
+
+    } else {
+      // 1. Atualiza o estado do Banco
+      const newBench = [...p.benchPokemon];
+      newBench[index] = {
+        ...newBench[index],
+        attachedEnergy: [...(newBench[index].attachedEnergy || []), eKey]
+      };
+
+      updatePlayer(pIndex, {
+        benchPokemon: newBench,
+        energyAttachedThisTurn: true,
+        handCount: Math.max(0, p.handCount - 1)
+      });
+
+      // 2. LOG DETALHADO (Nome da Energia + Nome do Pokémon do Banco)
+      // Usamos newBench[index].name para garantir que pegamos o nome correto do alvo
+      addLog(`⚡ Ligou ${energyType.name} em ${newBench[index].name} (Banco).`, 'INFO', pIndex);
+    }
   };
   const handleRemoveEnergy = (energyIndex) => {
      // Remove energy logic inside selectedCardAction context
