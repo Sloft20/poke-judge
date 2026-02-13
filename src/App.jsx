@@ -1823,41 +1823,83 @@ const handleStartGameFromLobby = () => {
         </div>
     )}
 
-    {/* MODAL DE AÇÕES (DASHBOARD) */}
+    {/* MODAL DE AÇÕES (DASHBOARD CORRIGIDO) */}
     {selectedCardAction && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-            {/* ... (MANTENHA O CONTEÚDO DO SEU MODAL DE AÇÕES AQUI) ... */}
-            {/* Vou simplificar aqui para não estourar o limite, mas mantenha o código do seu modal Card Action */}
              <div className="bg-white dark:bg-gray-900 w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col md:flex-row overflow-hidden border border-gray-200 dark:border-gray-800">
-                 {/* ... Copie o conteúdo interno do modal selectedCardAction que você já tinha ... */}
-                 {/* COLUNA ESQUERDA */}
+                 
+                 {/* COLUNA ESQUERDA: CARTA */}
                  <div className="bg-slate-100 dark:bg-slate-950 p-8 flex flex-col items-center justify-center md:w-1/3 border-r border-gray-200 relative group">
-                    <PokemonCard card={selectedCardAction.card} />
-                    <button onClick={() => setSelectedCardAction(null)} className="absolute top-4 left-4 md:hidden p-2 bg-white rounded-full"><X size={20}/></button>
-                 </div>
-                 {/* COLUNA DIREITA */}
-                 <div className="flex-1 flex flex-col h-full bg-white overflow-y-auto">
-                    <div className="p-6 border-b border-gray-100 flex justify-between">
-                         <h3 className="text-2xl font-black italic uppercase">{selectedCardAction.card.name}</h3>
-                         <button onClick={() => setSelectedCardAction(null)}><X size={24}/></button>
+                    <div className="transform transition-transform hover:scale-105 duration-300 shadow-2xl rounded-xl">
+                        <PokemonCard card={selectedCardAction.card} />
                     </div>
-                    {/* ... Resto dos controles de dano, energia, botões ... */}
-                    <div className="p-6 space-y-6">
-                         {/* CONTADOR DE DANO */}
+                    <button onClick={() => setSelectedCardAction(null)} className="absolute top-4 left-4 md:hidden p-2 bg-white rounded-full text-gray-500 shadow-lg"><X size={20}/></button>
+                 </div>
+
+                 {/* COLUNA DIREITA: CONTROLES */}
+                 <div className="flex-1 flex flex-col h-full bg-white overflow-y-auto">
+                    
+                    {/* Header */}
+                    <div className="p-6 border-b border-gray-100 flex justify-between items-start">
+                         <div>
+                             <h3 className="text-2xl font-black italic uppercase text-gray-800">{selectedCardAction.card.name}</h3>
+                             <div className="flex items-center gap-2 text-xs font-bold font-mono uppercase tracking-widest text-gray-400 mt-1">
+                                <span className={`w-2 h-2 rounded-full ${selectedCardAction.location === 'ACTIVE' ? 'bg-green-500 animate-pulse' : 'bg-blue-400'}`}></span>
+                                {selectedCardAction.location === 'ACTIVE' ? 'Posição: Ativo' : `Posição: Banco ${selectedCardAction.index + 1}`}
+                             </div>
+                         </div>
+                         <button onClick={() => setSelectedCardAction(null)} className="p-2 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors text-gray-300"><X size={24}/></button>
+                    </div>
+
+                    <div className="p-6 space-y-6 flex-1">
+                         
+                         {/* 1. CONTADOR DE DANO */}
                          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                            <div className="flex justify-between items-center mb-2"><h4 className="text-xs font-bold text-slate-400 uppercase">Dano</h4></div>
-                            <div className="flex items-center justify-between gap-4">
-                                <button onClick={() => handleManualDamage(-10)} className="p-3 bg-slate-200 rounded-lg"><Minus/></button>
-                                <span className="text-3xl font-black text-red-500">{selectedCardAction.card.damage||0}</span>
-                                <button onClick={() => handleManualDamage(10)} className="p-3 bg-red-100 text-red-500 rounded-lg"><Plus/></button>
+                            <div className="flex justify-between items-center mb-2">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2"><Shield size={14}/> Dano</h4>
+                                <span className="text-[10px] text-slate-400 font-mono">HP: {selectedCardAction.card.hp}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4 bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+                                <button onClick={() => handleManualDamage(-10)} className="w-12 h-12 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"><Minus/></button>
+                                <span className={`text-4xl font-black ${selectedCardAction.card.damage > 0 ? 'text-red-500' : 'text-slate-300'}`}>{selectedCardAction.card.damage||0}</span>
+                                <button onClick={() => handleManualDamage(10)} className="w-12 h-12 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 transition-colors"><Plus/></button>
                             </div>
                          </div>
-                         {/* BOTÕES DE AÇÃO */}
-                         <div className="grid grid-cols-1 gap-2">
-                             <Button variant="ghost" className="justify-start border" onClick={() => requestEnergyAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}><Zap className="mr-2" size={16}/> Ligar Energia</Button>
-                             <Button variant="ghost" className="justify-start border" onClick={() => requestToolAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}><Briefcase className="mr-2" size={16}/> Ligar Ferramenta</Button>
-                             <Button variant="ghost" className="justify-start border" onClick={() => requestEvolution(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}><GitMerge className="mr-2" size={16}/> Evoluir</Button>
-                             <Button variant="ghost" className="justify-start border text-red-500 bg-red-50" onClick={handleManualDiscard}><Trash2 className="mr-2" size={16}/> Descartar/Nocaute</Button>
+
+                         {/* 2. AÇÕES DE JOGO */}
+                         <div className="space-y-3">
+                             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><PlayCircle size={14}/> Ações</h4>
+                             
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                 {/* Botões Básicos */}
+                                 <Button variant="ghost" className="justify-start border h-12" onClick={() => requestEnergyAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>
+                                     <Zap className="mr-2 text-yellow-500" size={18}/> Ligar Energia
+                                 </Button>
+                                 <Button variant="ghost" className="justify-start border h-12" onClick={() => requestToolAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>
+                                     <Briefcase className="mr-2 text-purple-500" size={18}/> Ferramenta
+                                 </Button>
+                                 <Button variant="ghost" className="justify-start border h-12" onClick={() => requestEvolution(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>
+                                     <GitMerge className="mr-2 text-green-500" size={18}/> Evoluir
+                                 </Button>
+                                 
+                                 {/* Botão de Descarte (Vermelho) */}
+                                 <Button variant="ghost" className="justify-start border border-red-100 bg-red-50 text-red-600 hover:bg-red-100 h-12" onClick={handleManualDiscard}>
+                                     <Trash2 className="mr-2" size={18}/> Descartar
+                                 </Button>
+
+                                 {/* --- O BOTÃO QUE FALTAVA: PROMOVER PARA ATIVO --- */}
+                                 {/* Lógica: Só mostra se estiver no BANCO e o espaço ATIVO estiver vazio (ou se quiser permitir troca forçada, remove a checagem de activePokemon) */}
+                                 {selectedCardAction.location === 'BENCH' && (
+                                     <Button 
+                                        variant="success" 
+                                        className="col-span-1 md:col-span-2 h-14 mt-2 shadow-lg shadow-green-100 border border-green-200"
+                                        onClick={() => promoteFromBench(selectedCardAction.index, selectedCardAction.pIndex)}
+                                     >
+                                         <ChevronsUp className="mr-2 animate-bounce" size={20}/> 
+                                         PROMOVER PARA ATIVO
+                                     </Button>
+                                 )}
+                             </div>
                          </div>
                     </div>
                  </div>
