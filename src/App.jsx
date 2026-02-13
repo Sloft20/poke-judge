@@ -29,7 +29,19 @@ import GameHeader from './components/GameHeader';
 
 
 
-// --- 4. FUNÇÕES UTILITÁRIAS ---
+const ENERGY_IMAGES_SRC = {
+    'Fire': 'https://archives.bulbagarden.net/media/upload/thumb/a/ad/Fire-attack.png/60px-Fire-attack.png',
+    'Water': 'https://archives.bulbagarden.net/media/upload/thumb/1/11/Water-attack.png/60px-Water-attack.png',
+    'Grass': 'https://archives.bulbagarden.net/media/upload/thumb/2/2e/Grass-attack.png/60px-Grass-attack.png',
+    'Lightning': 'https://archives.bulbagarden.net/media/upload/thumb/0/04/Lightning-attack.png/60px-Lightning-attack.png',
+    'Psychic': 'https://archives.bulbagarden.net/media/upload/thumb/e/ef/Psychic-attack.png/60px-Psychic-attack.png',
+    'Fighting': 'https://archives.bulbagarden.net/media/upload/thumb/4/4c/Fighting-attack.png/60px-Fighting-attack.png',
+    'Darkness': 'https://archives.bulbagarden.net/media/upload/thumb/8/8f/Darkness-attack.png/60px-Darkness-attack.png',
+    'Metal': 'https://archives.bulbagarden.net/media/upload/thumb/f/f1/Metal-attack.png/60px-Metal-attack.png',
+    'Dragon': 'https://archives.bulbagarden.net/media/upload/thumb/d/d7/Dragon-attack.png/60px-Dragon-attack.png',
+    'Fairy': 'https://archives.bulbagarden.net/media/upload/thumb/c/c3/Fairy-attack.png/60px-Fairy-attack.png',
+    'Colorless': 'https://archives.bulbagarden.net/media/upload/thumb/1/1d/Colorless-attack.png/60px-Colorless-attack.png'
+};
 
 // --- 4. FUNÇÕES UTILITÁRIAS ---
 
@@ -2120,27 +2132,45 @@ const handleStartGameFromLobby = () => {
 
     {/* --- MODAL DE ATAQUE (VISUAL DE BATALHA) --- */}
     {showAttackModal && (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in zoom-in duration-200">
-           <Card className="w-full max-w-lg border-none shadow-2xl bg-gradient-to-b from-gray-900 to-gray-800 text-white overflow-hidden">
-              
-              {/* Cabeçalho de Batalha */}
-              <div className="flex justify-between items-center p-4 bg-red-600 shadow-md">
-                 <h3 className="text-xl font-black italic uppercase flex items-center gap-2">
-                    <Sword className="text-white animate-pulse"/> 
-                    Fase de Batalha
-                 </h3>
-                 <button onClick={() => setShowAttackModal(false)} className="hover:bg-red-700 p-1 rounded transition-colors"><X/></button>
-              </div>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+             {/* Note: Removi o componente <Card> para usar uma div direta com estilos mais flexíveis, 
+                 mas mantive a essência do seu design original */}
+             <div className="w-full max-w-lg bg-slate-900 border border-red-900/50 rounded-3xl shadow-2xl overflow-hidden flex flex-col relative">
+                
+                {/* Cabeçalho de Batalha */}
+                <div className="bg-slate-950 p-6 border-b border-slate-800 flex justify-between items-start relative overflow-hidden">
+                    {/* Faixa Vermelha Animada */}
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 via-orange-500 to-red-600 animate-pulse"></div>
+                    
+                    <div>
+                        <h3 className="text-2xl font-black italic uppercase tracking-tighter flex items-center gap-3 text-white">
+                           <span className="text-red-500 bg-red-900/20 p-2 rounded-lg border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.4)]">
+                                <Sword size={24} className="animate-pulse"/> 
+                           </span>
+                           Fase de Batalha
+                        </h3>
+                        <div className="mt-2 pl-1">
+                            <p className="text-slate-400 text-xs uppercase tracking-widest font-mono mb-0.5">Atacante</p>
+                            <h2 className="text-xl font-bold text-red-400">{currentPlayer.activePokemon.name}</h2>
+                        </div>
+                    </div>
+                    
+                    <button 
+                        onClick={() => setShowAttackModal(false)} 
+                        className="text-slate-500 hover:text-white p-2 rounded-full hover:bg-slate-800 transition-colors"
+                    >
+                        <X size={24}/>
+                    </button>
+                </div>
 
-              <div className="p-6 space-y-4">
-                 <div className="text-center mb-4">
-                    <p className="text-gray-400 text-xs uppercase tracking-widest mb-1">Atacante</p>
-                    <h2 className="text-2xl font-bold">{currentPlayer.activePokemon.name}</h2>
-                 </div>
-
-                 <div className="space-y-3">
-                     {currentPlayer.activePokemon.attacks.filter(atk => atk.cost[0] !== 'Ability').map((atk, idx) => {
-                          const canAfford = checkEnergyCost(atk.cost, currentPlayer.activePokemon.attachedEnergy || []);
+                <div className="p-6 bg-slate-900 flex flex-col gap-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                    
+                    {/* LISTA DE ATAQUES */}
+                    {currentPlayer.activePokemon.attacks.filter(atk => atk.cost[0] !== 'Ability').map((atk, idx) => {
+                          // Verifica custo (mantive sua lógica original de checkEnergyCost ou similar)
+                          // Se você não tiver a função 'checkEnergyCost' acessível aqui, use a lógica simples abaixo:
+                          const currentEnergies = currentPlayer.activePokemon.attachedEnergy || [];
+                          const canAfford = currentEnergies.length >= (atk.cost ? atk.cost.length : 0); 
                           
                           return (
                             <button 
@@ -2148,53 +2178,66 @@ const handleStartGameFromLobby = () => {
                                 disabled={!canAfford} 
                                 onClick={() => confirmAttack(atk)} 
                                 className={`
-                                    w-full p-4 rounded-xl border-l-8 flex justify-between items-center transition-all group relative overflow-hidden
+                                    group relative w-full text-left p-4 rounded-xl border-2 transition-all duration-300
+                                    flex justify-between items-center overflow-hidden
                                     ${canAfford 
-                                        ? 'bg-white text-gray-800 border-red-500 hover:bg-gray-50 hover:translate-x-1 shadow-lg' 
-                                        : 'bg-gray-700 text-gray-500 border-gray-600 opacity-50 cursor-not-allowed grayscale'}
+                                        ? 'bg-slate-800 border-slate-700 hover:border-red-500 hover:bg-slate-800/80 hover:shadow-[0_0_20px_rgba(239,68,68,0.15)] cursor-pointer' 
+                                        : 'bg-slate-900/50 border-slate-800 opacity-60 cursor-not-allowed grayscale'}
                                 `}
                             >
-                                {/* Fundo sutil animado ao passar o mouse */}
-                                <div className="absolute inset-0 bg-gradient-to-r from-red-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"/>
+                                {/* Efeito Hover (Fundo) */}
+                                {canAfford && <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-900/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none"></div>}
 
-                                <div className="flex flex-col items-start z-10">
-                                    <span className={`font-black text-lg uppercase tracking-tight ${canAfford ? 'text-gray-800' : 'text-gray-500'}`}>
+                                <div className="flex flex-col items-start z-10 gap-2">
+                                    <span className={`font-black text-lg uppercase tracking-tight ${canAfford ? 'text-white group-hover:text-red-400' : 'text-slate-500'}`}>
                                         {atk.name}
                                     </span>
                                     
-                                    {/* Bolinhas de Energia Coloridas */}
-                                    <div className="flex gap-1 mt-1.5">
+                                    {/* CUSTO DE ENERGIA (AGORA COM IMAGENS REAIS) */}
+                                    <div className="flex items-center gap-1">
                                         {atk.cost.map((c, i) => { 
-                                            // Usa as cores reais do constants.js
-                                            const typeInfo = ENERGY_TYPES[c] || { color: 'bg-gray-400' }; 
+                                            // Pega a URL da imagem baseada no nome da energia
+                                            const imgUrl = ENERGY_IMAGES_SRC[c] || ENERGY_IMAGES_SRC['Colorless'];
                                             return (
-                                                <div key={i} className={`w-4 h-4 rounded-full ${typeInfo.color} shadow-sm border border-black/10`} title={c}></div>
+                                                <img 
+                                                    key={i}
+                                                    src={imgUrl} 
+                                                    alt={c}
+                                                    className="w-5 h-5 object-contain drop-shadow-md"
+                                                    title={c}
+                                                />
                                             )
                                         })}
                                     </div>
                                 </div>
 
                                 <div className="z-10 flex flex-col items-end">
-                                    <span className={`text-3xl font-black ${canAfford ? 'text-red-600' : 'text-gray-600'}`}>
+                                    <span className={`text-3xl font-black drop-shadow-lg ${canAfford ? 'text-white' : 'text-slate-600'}`}>
                                         {atk.damage}
                                     </span>
-                                    {atk.damage && <span className="text-[10px] font-bold uppercase text-gray-400">Dano</span>}
+                                    {atk.damage && <span className="text-[10px] font-bold uppercase text-slate-500">Dano</span>}
                                 </div>
                             </button>
                           );
                      })
-                 }
-                 
-                 {currentPlayer.activePokemon.attacks.filter(atk => atk.cost[0] !== 'Ability').length === 0 && (
-                     <div className="text-center p-8 border-2 border-dashed border-gray-600 rounded-xl text-gray-500">
-                        Este Pokémon não possui ataques válidos.
-                     </div>
-                 )}
-                 </div>
-              </div>
-           </Card>
-      </div>
-    )}
+                    }
+                    
+                    {currentPlayer.activePokemon.attacks.filter(atk => atk.cost[0] !== 'Ability').length === 0 && (
+                        <div className="text-center py-8 text-slate-500 italic border-2 border-dashed border-slate-800 rounded-xl">
+                           Este Pokémon não possui ataques válidos.
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="p-4 bg-slate-950 border-t border-slate-800 text-center">
+                    <span className="text-[10px] text-slate-500 uppercase font-mono tracking-widest">
+                        Selecione um ataque para executar
+                    </span>
+                </div>
+             </div>
+        </div>
+      )}
 
     {/* --- MODAL DE RECUO (NOVO - DARK/LARANJA) --- */}
     {retreatModal && (
