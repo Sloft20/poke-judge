@@ -1,9 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, Plus, Save, X, Loader2, Edit2, RotateCcw, Circle, Sparkles, Zap } from 'lucide-react';
+import { Trash2, Plus, Save, X, Loader2, Edit2, RotateCcw } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { ENERGY_TYPES } from '../data/constants';
 
-// Componente Visual para Escolher Energias
+// --- IMAGENS OFICIAIS DAS ENERGIAS (Mesmas do restante do App) ---
+const ENERGY_IMAGES_SRC = {
+    'Fire': 'https://archives.bulbagarden.net/media/upload/thumb/a/ad/Fire-attack.png/60px-Fire-attack.png',
+    'Water': 'https://archives.bulbagarden.net/media/upload/thumb/1/11/Water-attack.png/60px-Water-attack.png',
+    'Grass': 'https://archives.bulbagarden.net/media/upload/thumb/2/2e/Grass-attack.png/60px-Grass-attack.png',
+    'Lightning': 'https://archives.bulbagarden.net/media/upload/thumb/0/04/Lightning-attack.png/60px-Lightning-attack.png',
+    'Psychic': 'https://archives.bulbagarden.net/media/upload/thumb/e/ef/Psychic-attack.png/60px-Psychic-attack.png',
+    'Fighting': 'https://archives.bulbagarden.net/media/upload/thumb/4/4c/Fighting-attack.png/60px-Fighting-attack.png',
+    'Darkness': 'https://archives.bulbagarden.net/media/upload/thumb/8/8f/Darkness-attack.png/60px-Darkness-attack.png',
+    'Metal': 'https://archives.bulbagarden.net/media/upload/thumb/f/f1/Metal-attack.png/60px-Metal-attack.png',
+    'Dragon': 'https://archives.bulbagarden.net/media/upload/thumb/d/d7/Dragon-attack.png/60px-Dragon-attack.png',
+    'Fairy': 'https://archives.bulbagarden.net/media/upload/thumb/c/c3/Fairy-attack.png/60px-Fairy-attack.png',
+    'Colorless': 'https://archives.bulbagarden.net/media/upload/thumb/1/1d/Colorless-attack.png/60px-Colorless-attack.png'
+};
+
+// Componente Visual para Escolher Energias (ATUALIZADO)
 const EnergyCostBuilder = ({ label, cost, onChange, disabled }) => {
     if (disabled) return null; // Esconde se for Habilidade
 
@@ -15,23 +30,46 @@ const EnergyCostBuilder = ({ label, cost, onChange, disabled }) => {
     };
 
     return (
-        <div className="bg-gray-50 p-2 rounded border border-gray-200 mb-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">{label}</label>
-            <div className="flex flex-wrap gap-1 mb-2 min-h-[24px] bg-white p-1 rounded border border-gray-100 shadow-inner">
-                {cost.length === 0 && <span className="text-[10px] text-gray-300 italic p-1">Sem custo (Grátis)</span>}
+        <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 mb-3 shadow-sm">
+            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-2">{label}</label>
+            
+            {/* ÁREA DE VISUALIZAÇÃO DO CUSTO (LINHA DE ESFERAS) */}
+            <div className="flex flex-wrap gap-1 mb-3 min-h-[32px] bg-white p-2 rounded-md border border-slate-200 shadow-inner items-center">
+                {cost.length === 0 && <span className="text-[10px] text-slate-300 italic pl-1">Sem custo (Grátis)</span>}
                 {cost.map((type, idx) => {
-                    const EIcon = ENERGY_TYPES[type]?.icon || Circle;
-                    const color = ENERGY_TYPES[type]?.color || 'bg-gray-400';
+                    const imgUrl = ENERGY_IMAGES_SRC[type] || ENERGY_IMAGES_SRC['Colorless'];
                     return (
-                        <button key={idx} onClick={() => removeEnergy(idx)} className={`w-5 h-5 rounded-full ${color} text-white flex items-center justify-center hover:scale-110 transition-transform`} title="Remover">
-                            <EIcon size={10} />
+                        <button 
+                            key={idx} 
+                            onClick={() => removeEnergy(idx)} 
+                            className="group relative w-6 h-6 transition-transform hover:scale-110" 
+                            title="Clique para remover"
+                        >
+                            <img src={imgUrl} alt={type} className="w-full h-full object-contain drop-shadow-sm"/>
+                            {/* Xzinho ao passar o mouse */}
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 rounded-full transition-opacity">
+                                <X size={12} className="text-white"/>
+                            </div>
                         </button>
                     );
                 })}
             </div>
-            <div className="flex flex-wrap gap-1">
-                {Object.entries(ENERGY_TYPES).map(([key, val]) => (
-                    <button key={key} onClick={() => addEnergy(key)} className={`w-4 h-4 rounded-full ${val.color} text-white flex items-center justify-center hover:ring-2 ring-gray-300 opacity-80 hover:opacity-100 transition-all`} title={val.name}></button>
+
+            {/* SELETOR DE ENERGIAS (PALETA) */}
+            <div className="flex flex-wrap gap-2 justify-center bg-white p-2 rounded-lg border border-slate-100">
+                {Object.keys(ENERGY_IMAGES_SRC).map((key) => (
+                    <button 
+                        key={key} 
+                        onClick={() => addEnergy(key)} 
+                        className="w-6 h-6 hover:scale-125 transition-transform duration-200 hover:drop-shadow-[0_0_5px_rgba(0,0,0,0.3)]" 
+                        title={`Adicionar ${key}`}
+                    >
+                        <img 
+                            src={ENERGY_IMAGES_SRC[key]} 
+                            alt={key} 
+                            className="w-full h-full object-contain"
+                        />
+                    </button>
                 ))}
             </div>
         </div>
@@ -88,13 +126,13 @@ const DeckManager = ({ onClose, onUpdate }) => {
         attack1_name: '', 
         attack1_cost: ['Colorless'], 
         attack1_damage: 10,
-        attack1_isAbility: false, // NOVO: Flag de Habilidade
+        attack1_isAbility: false,
 
         // Ataque 2
         attack2_name: '', 
         attack2_cost: ['Colorless', 'Colorless'], 
         attack2_damage: 30,
-        attack2_isAbility: false // NOVO: Flag de Habilidade
+        attack2_isAbility: false
     };
     
     const [formData, setFormData] = useState(INITIAL_FORM);
@@ -123,7 +161,7 @@ const DeckManager = ({ onClose, onUpdate }) => {
         await refreshData(); onUpdate(); if (selectedDeckId === id) setSelectedDeckId(null); setLoading(false);
     };
 
-    // --- SALVAR CARTA (A MÁGICA ACONTECE AQUI) ---
+    // --- SALVAR CARTA ---
     const handleSaveCard = async () => {
         if (!selectedDeckId) return;
 
@@ -134,7 +172,6 @@ const DeckManager = ({ onClose, onUpdate }) => {
             attacks.push({
                 name: formData.attack1_name,
                 damage: formData.attack1_isAbility ? 0 : parseInt(formData.attack1_damage || 0),
-                // Se for Habilidade, o custo é ['Ability']. Se não, é o array de energias.
                 cost: formData.attack1_isAbility ? ['Ability'] : formData.attack1_cost 
             });
         }
@@ -154,12 +191,12 @@ const DeckManager = ({ onClose, onUpdate }) => {
             hp: parseInt(formData.hp),
             type: formData.type,
             stage: parseInt(formData.stage),
-            evolves_from: formData.evolves_from, // <--- ADICIONE ESTA LINHA AQUI
+            evolves_from: formData.evolves_from,
             image: formData.image,
             retreat: parseInt(formData.retreat),
             weakness: formData.weakness,
             resistance: formData.resistance,
-            attacks: attacks // Salva o JSON pronto
+            attacks: attacks
         };
 
         setLoading(true);
@@ -169,8 +206,8 @@ const DeckManager = ({ onClose, onUpdate }) => {
             await supabase.from('cards').insert([cardPayload]);
         }
 
-        await refreshData(); // Recarrega local
-        onUpdate(); // Recarrega App
+        await refreshData();
+        onUpdate();
         setFormData(INITIAL_FORM);
         setLoading(false);
     };
@@ -180,7 +217,6 @@ const DeckManager = ({ onClose, onUpdate }) => {
         const atk1 = card.attacks?.[0] || {};
         const atk2 = card.attacks?.[1] || {};
         
-        // Verifica se é habilidade (se o custo começa com 'Ability')
         const isAbility1 = atk1.cost && atk1.cost[0] === 'Ability';
         const isAbility2 = atk2.cost && atk2.cost[0] === 'Ability';
 
@@ -190,7 +226,7 @@ const DeckManager = ({ onClose, onUpdate }) => {
             hp: card.hp,
             type: card.type,
             stage: card.stage,
-            evolves_from: card.evolves_from || '', // <--- ADICIONE ESTA LINHA AQUI
+            evolves_from: card.evolves_from || '',
             image: card.image || '',
             weakness: card.weakness || '',
             resistance: card.resistance || '',
@@ -256,8 +292,16 @@ const DeckManager = ({ onClose, onUpdate }) => {
                             <div className="flex-1 overflow-y-auto p-4 grid grid-cols-3 xl:grid-cols-4 gap-3 content-start">
                                 {(localDecks[selectedDeckId].cards || []).map((card) => (
                                     <div key={card.id} onClick={() => handleEditCard(card)} className={`bg-white p-2 rounded border relative group hover:shadow-md cursor-pointer ${formData.id === card.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}>
-                                        <div className="aspect-[2/3] bg-gray-200 rounded overflow-hidden mb-2 relative">
-                                            {card.image ? <img src={card.image} className="w-full h-full object-cover"/> : <div className={`w-full h-full flex items-center justify-center ${ENERGY_TYPES[card.type]?.color || 'bg-gray-400'}`}><span className="text-white font-bold text-xs">{card.type}</span></div>}
+                                        <div className="aspect-[2/3] bg-gray-200 rounded overflow-hidden mb-2 relative flex items-center justify-center">
+                                            {card.image ? (
+                                                <img src={card.image} className="w-full h-full object-cover"/>
+                                            ) : (
+                                                /* Visual Placeholder se não tiver imagem: mostra o tipo */
+                                                <div className="flex flex-col items-center gap-2">
+                                                    {ENERGY_IMAGES_SRC[card.type] && <img src={ENERGY_IMAGES_SRC[card.type]} className="w-12 h-12 opacity-50"/>}
+                                                    <span className="text-gray-400 font-bold text-xs">{card.type}</span>
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="text-xs font-bold truncate">{card.name}</div>
                                         <button onClick={(e) => { e.stopPropagation(); handleDeleteCard(card.id); }} className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100"><Trash2 size={10}/></button>
@@ -313,12 +357,12 @@ const DeckManager = ({ onClose, onUpdate }) => {
                             </div>
                         </div>
 
-                        {/* --- ATAQUES E HABILIDADES --- */}
+                        {/* --- ATAQUES E HABILIDADES (COM O NOVO SELETOR) --- */}
                         <div className="space-y-3 pt-2 border-t">
                             <label className="text-xs font-bold text-gray-400 uppercase">Ataques / Habilidades</label>
                             
                             {/* Slot 1 */}
-                            <div className={`p-2 rounded border transition-colors ${formData.attack1_isAbility ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
+                            <div className={`p-2 rounded border transition-colors ${formData.attack1_isAbility ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200 shadow-sm'}`}>
                                 <div className="flex justify-between items-center mb-1">
                                     <span className="text-[10px] font-bold text-gray-500">SLOT 1</span>
                                     <label className="flex items-center gap-1 cursor-pointer">
@@ -326,16 +370,16 @@ const DeckManager = ({ onClose, onUpdate }) => {
                                         <span className={`text-[10px] font-bold ${formData.attack1_isAbility ? 'text-red-600' : 'text-gray-400'}`}>É Habilidade?</span>
                                     </label>
                                 </div>
-                                <input className="w-full text-xs font-bold bg-white mb-2 outline-none border p-1 rounded" placeholder={formData.attack1_isAbility ? "Nome da Habilidade" : "Nome do Ataque"} value={formData.attack1_name} onChange={e => updateField('attack1_name', e.target.value)} />
+                                <input className="w-full text-xs font-bold bg-white mb-2 outline-none border p-2 rounded" placeholder={formData.attack1_isAbility ? "Nome da Habilidade" : "Nome do Ataque"} value={formData.attack1_name} onChange={e => updateField('attack1_name', e.target.value)} />
                                 
                                 <EnergyCostBuilder label="Custo" cost={formData.attack1_cost} onChange={(nc) => updateField('attack1_cost', nc)} disabled={formData.attack1_isAbility} />
                                 {!formData.attack1_isAbility && (
-                                    <div className="mt-1"><input type="number" className="w-1/2 border p-1 rounded text-xs" placeholder="Dano" value={formData.attack1_damage} onChange={e => updateField('attack1_damage', e.target.value)} /></div>
+                                    <div className="mt-1"><input type="number" className="w-1/2 border p-2 rounded text-xs" placeholder="Dano" value={formData.attack1_damage} onChange={e => updateField('attack1_damage', e.target.value)} /></div>
                                 )}
                             </div>
 
                             {/* Slot 2 */}
-                            <div className={`p-2 rounded border transition-colors ${formData.attack2_isAbility ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
+                            <div className={`p-2 rounded border transition-colors ${formData.attack2_isAbility ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200 shadow-sm'}`}>
                                 <div className="flex justify-between items-center mb-1">
                                     <span className="text-[10px] font-bold text-gray-500">SLOT 2</span>
                                     <label className="flex items-center gap-1 cursor-pointer">
@@ -343,11 +387,11 @@ const DeckManager = ({ onClose, onUpdate }) => {
                                         <span className={`text-[10px] font-bold ${formData.attack2_isAbility ? 'text-red-600' : 'text-gray-400'}`}>É Habilidade?</span>
                                     </label>
                                 </div>
-                                <input className="w-full text-xs font-bold bg-white mb-2 outline-none border p-1 rounded" placeholder={formData.attack2_isAbility ? "Nome da Habilidade" : "Nome do Ataque"} value={formData.attack2_name} onChange={e => updateField('attack2_name', e.target.value)} />
+                                <input className="w-full text-xs font-bold bg-white mb-2 outline-none border p-2 rounded" placeholder={formData.attack2_isAbility ? "Nome da Habilidade" : "Nome do Ataque"} value={formData.attack2_name} onChange={e => updateField('attack2_name', e.target.value)} />
                                 
                                 <EnergyCostBuilder label="Custo" cost={formData.attack2_cost} onChange={(nc) => updateField('attack2_cost', nc)} disabled={formData.attack2_isAbility} />
                                 {!formData.attack2_isAbility && (
-                                    <div className="mt-1"><input type="number" className="w-1/2 border p-1 rounded text-xs" placeholder="Dano" value={formData.attack2_damage} onChange={e => updateField('attack2_damage', e.target.value)} /></div>
+                                    <div className="mt-1"><input type="number" className="w-1/2 border p-2 rounded text-xs" placeholder="Dano" value={formData.attack2_damage} onChange={e => updateField('attack2_damage', e.target.value)} /></div>
                                 )}
                             </div>
                         </div>
