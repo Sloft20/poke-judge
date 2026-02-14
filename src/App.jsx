@@ -787,6 +787,7 @@ const handleStartGameFromLobby = () => {
 
   // --- FUNÇÃO PARA DECLARAR VENCEDOR (Coloque junto das outras funções do App) ---
   // --- FUNÇÃO DE VITÓRIA COMPLETA (VISUAL + LOG + RANKING) ---
+  // --- FUNÇÃO DE VITÓRIA COMPLETA (VISUAL + HISTÓRICO + RANKING) ---
   const declareWinner = async (winnerIndex) => {
       const winner = players[winnerIndex];
       const loser = players[winnerIndex === 0 ? 1 : 0];
@@ -801,7 +802,12 @@ const handleStartGameFromLobby = () => {
       // 2. Adiciona o Log Final da Partida
       addLog(`🏆 FIM DE JOGO! O vencedor é ${winner.name}!`, 'SUCCESS', winnerIndex);
 
-      // 3. Atualiza o Ranking no Supabase (Assíncrono)
+      // --- [CORREÇÃO] 3. SALVA O HISTÓRICO DA PARTIDA (TABELA MATCHES) ---
+      // Isso é o que estava faltando para aparecer na aba "Histórico"
+      await saveMatchResult(winnerIndex); 
+      // -------------------------------------------------------------------
+
+      // 4. Atualiza o Ranking no Supabase (Wins/Points na tabela RANKINGS)
       try {
           // --- ATUALIZA O VENCEDOR ---
           const { data: winnerData } = await supabase
@@ -811,7 +817,6 @@ const handleStartGameFromLobby = () => {
               .single();
 
           if (winnerData) {
-              // Se já existe, soma +1 vitória e +3 pontos (exemplo)
               await supabase
                   .from('rankings')
                   .update({ 
@@ -820,13 +825,12 @@ const handleStartGameFromLobby = () => {
                   })
                   .eq('id', winnerData.id);
           } else {
-              // Se não existe, cria novo registro
               await supabase
                   .from('rankings')
                   .insert([{ name: winner.name, wins: 1, losses: 0, points: 3 }]);
           }
 
-          // --- ATUALIZA O PERDEDOR (Opcional, mas bom para estatísticas) ---
+          // --- ATUALIZA O PERDEDOR ---
           const { data: loserData } = await supabase
               .from('rankings')
               .select('*')
@@ -838,7 +842,6 @@ const handleStartGameFromLobby = () => {
                   .from('rankings')
                   .update({ 
                       losses: (loserData.losses || 0) + 1 
-                      // Perdedor geralmente ganha 0 ou 1 ponto por participação
                   })
                   .eq('id', loserData.id);
           } else {
@@ -847,12 +850,12 @@ const handleStartGameFromLobby = () => {
                   .insert([{ name: loser.name, wins: 0, losses: 1, points: 0 }]);
           }
 
-          console.log("Ranking atualizado com sucesso!");
-          addLog("Ranking atualizado no servidor.", 'SYSTEM');
+          console.log("Ranking e Histórico atualizados com sucesso!");
+          addLog("Dados salvos no servidor.", 'SYSTEM');
 
       } catch (error) {
           console.error("Erro ao atualizar ranking:", error);
-          addLog("Erro ao salvar dados no Ranking. Verifique a conexão.", 'ERROR');
+          addLog("Erro ao salvar dados. Verifique a conexão.", 'ERROR');
       }
   };
 
