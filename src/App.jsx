@@ -45,44 +45,47 @@ const ENERGY_IMAGES_SRC = {
 
 // --- 4. FUNÇÕES UTILITÁRIAS ---
 
-const checkEnergyCost = (cost, attachedEnergies) => {
+// --- FUNÇÃO AVANÇADA DE VERIFICAÇÃO DE ENERGIA ---
+  const checkEnergyCost = (cost, attachedEnergies) => {
     // 1. Se não tiver custo ou for array vazio, é GRÁTIS -> Pode atacar
     if (!cost || cost.length === 0) return true;
     
-    // 2. Habilidades também são grátis de energia
+    // 2. Habilidades são grátis de energia (ou tratadas separadamente)
     if (cost[0] === 'Ability') return true;
 
-    const available = [...attachedEnergies];
+    // Segurança: Garante que é um array, mesmo que venha nulo
+    const available = [...(attachedEnergies || [])];
 
     // 3. O PULO DO GATO: Ordenar o custo! 
-    // Colocamos energias específicas (Fogo, Água...) no começo e Incolores no fim.
-    // Isso impede que uma energia Incolor "coma" uma energia de Fogo que seria necessária depois.
+    // Colocamos energias específicas no começo e Incolores no fim.
     const sortedCost = [...cost].sort((a, b) => {
         if (a === 'Colorless') return 1; // Joga Incolor pro final
         if (b === 'Colorless') return -1;
-        return 0;
+        return 0; // Mantém a ordem entre tipos específicos
     });
     
-    for (let c of sortedCost) {
-        if (c === 'Colorless') {
-            // Para incolor, qualquer uma serve. Removemos a última disponível.
+    for (const reqType of sortedCost) {
+        if (reqType === 'Colorless') {
+            // Para incolor, qualquer uma serve.
             if (available.length > 0) {
+                // Removemos a última disponível (tanto faz qual, pois as específicas já foram pagas)
                 available.pop(); 
             } else {
-                return false; // Não tem energia nenhuma sobrando
+                return false; // Falta energia
             }
         } else {
             // Para tipos específicos, precisamos achar a energia exata
-            const index = available.indexOf(c);
+            const index = available.indexOf(reqType);
             if (index !== -1) {
-                available.splice(index, 1);
+                available.splice(index, 1); // Remove a energia específica usada
             } else {
-                return false; // Não tem a energia específica necessária
+                return false; // Não tem a energia específica necessária (ex: Fogo)
             }
         }
     }
-    return true;
-};
+    
+    return true; // Passou por todos os custos e pagou tudo!
+  };
 
 const calculateDamageModifiers = (attackerType, defenderWeakness, defenderResistance) => {
     let multiplier = 1;
