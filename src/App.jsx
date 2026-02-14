@@ -1964,15 +1964,49 @@ const handleStartGameFromLobby = () => {
         </div>
     )}
 
-    {/* OUTROS MODAIS (CONFIRMAÇÃO, DISTRIBUIÇÃO, ETC) */}
+    {/* MODAL DE CONFIRMAÇÃO DE DANO (COM AJUSTE MANUAL) */}
     {damageConfirmation && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-             <Card className="w-full max-w-sm border-2 border-red-500 shadow-2xl text-center p-6">
-                 <h3 className="text-lg font-bold">Confirmar Dano</h3>
-                 <div className="text-4xl font-black text-red-600 my-4">{damageConfirmation.actualDamage}</div>
-                 <div className="flex gap-2 justify-center">
-                    <Button variant="secondary" onClick={() => setDamageConfirmation(null)}>Cancelar</Button>
-                    <Button variant="danger" onClick={finalizeAttack}>Confirmar</Button>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+             <Card className="w-full max-w-sm border-2 border-red-500 shadow-2xl bg-white p-0 overflow-hidden">
+                 <div className="p-6 text-center">
+                     {/* Título */}
+                     <h3 className="text-xl font-bold text-gray-800 mb-1">Confirmar Dano</h3>
+                     <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-6">
+                        {damageConfirmation.attackName || 'Ataque'}
+                     </p>
+                     
+                     {/* CONTROLE DE DANO (BOTÕES GRANDES) */}
+                     <div className="flex items-center justify-center gap-6 mb-8">
+                        <button 
+                            onClick={() => setDamageConfirmation(prev => ({...prev, actualDamage: Math.max(0, prev.actualDamage - 10)}))}
+                            className="w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors shadow-sm active:scale-95"
+                        >
+                            <Minus size={24} strokeWidth={3}/>
+                        </button>
+                        
+                        <div className="w-24 flex justify-center">
+                            <span className="text-5xl font-black text-red-600 tracking-tighter drop-shadow-sm">
+                                {damageConfirmation.actualDamage}
+                            </span>
+                        </div>
+
+                        <button 
+                            onClick={() => setDamageConfirmation(prev => ({...prev, actualDamage: prev.actualDamage + 10}))}
+                            className="w-12 h-12 rounded-full bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors shadow-sm active:scale-95"
+                        >
+                            <Plus size={24} strokeWidth={3}/>
+                        </button>
+                     </div>
+
+                     {/* BOTÕES DE AÇÃO */}
+                     <div className="grid grid-cols-2 gap-3 border-t pt-4 mt-2">
+                        <Button variant="secondary" onClick={() => setDamageConfirmation(null)} className="font-bold">
+                            Cancelar
+                        </Button>
+                        <Button variant="danger" onClick={finalizeAttack} className="font-black tracking-wider shadow-red-200 shadow-lg">
+                            CONFIRMAR
+                        </Button>
+                     </div>
                  </div>
              </Card>
         </div>
