@@ -1823,7 +1823,7 @@ const handleStartGameFromLobby = () => {
         </div>
     )}
 
-    {/* MODAL DE AÇÕES (DASHBOARD CORRIGIDO) */}
+    {/* MODAL DE AÇÕES (DASHBOARD) */}
     {selectedCardAction && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
              <div className="bg-white dark:bg-gray-900 w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col md:flex-row overflow-hidden border border-gray-200 dark:border-gray-800">
@@ -1833,11 +1833,12 @@ const handleStartGameFromLobby = () => {
                     <div className="transform transition-transform hover:scale-105 duration-300 shadow-2xl rounded-xl">
                         <PokemonCard card={selectedCardAction.card} />
                     </div>
+                    {/* Botão Fechar Mobile */}
                     <button onClick={() => setSelectedCardAction(null)} className="absolute top-4 left-4 md:hidden p-2 bg-white rounded-full text-gray-500 shadow-lg"><X size={20}/></button>
                  </div>
 
                  {/* COLUNA DIREITA: CONTROLES */}
-                 <div className="flex-1 flex flex-col h-full bg-white overflow-y-auto">
+                 <div className="flex-1 flex flex-col h-full bg-white overflow-y-auto custom-scrollbar">
                     
                     {/* Header */}
                     <div className="p-6 border-b border-gray-100 flex justify-between items-start">
@@ -1848,7 +1849,7 @@ const handleStartGameFromLobby = () => {
                                 {selectedCardAction.location === 'ACTIVE' ? 'Posição: Ativo' : `Posição: Banco ${selectedCardAction.index + 1}`}
                              </div>
                          </div>
-                         <button onClick={() => setSelectedCardAction(null)} className="p-2 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors text-gray-300"><X size={24}/></button>
+                         <button onClick={() => setSelectedCardAction(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-300 hover:text-slate-500"><X size={24}/></button>
                     </div>
 
                     <div className="p-6 space-y-6 flex-1">
@@ -1866,33 +1867,68 @@ const handleStartGameFromLobby = () => {
                             </div>
                          </div>
 
-                         {/* 2. AÇÕES DE JOGO */}
-                         <div className="space-y-3">
+                         {/* 2. SEÇÃO DE ENERGIAS LIGADAS (A PARTE QUE FALTAVA) */}
+                         <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                             <h4 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
+                                <Zap size={14}/> Energias Ligadas
+                             </h4>
+                             
+                             {selectedCardAction.card.attachedEnergy && selectedCardAction.card.attachedEnergy.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {selectedCardAction.card.attachedEnergy.map((energyName, idx) => (
+                                        <div key={idx} className="relative group w-10 h-10 bg-white rounded-lg border border-slate-200 shadow-sm flex items-center justify-center transition-transform hover:scale-105">
+                                            {/* Imagem da Energia */}
+                                            <img 
+                                                src={ENERGY_IMAGES_SRC[energyName] || ENERGY_IMAGES_SRC['Colorless']} 
+                                                alt={energyName} 
+                                                className="w-8 h-8 object-contain drop-shadow-sm"
+                                                title={energyName}
+                                            />
+                                            
+                                            {/* Botão de Remover (Aparece no Hover) */}
+                                            <button 
+                                                onClick={() => handleRemoveEnergy(idx)} 
+                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600 cursor-pointer"
+                                                title="Remover Energia"
+                                            >
+                                                <X size={12} strokeWidth={3} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                             ) : (
+                                <div className="text-center py-3 border-2 border-dashed border-slate-200 rounded-lg bg-white/50">
+                                    <span className="text-[10px] text-slate-400 italic">Nenhuma energia ligada</span>
+                                </div>
+                             )}
+                         </div>
+
+                         {/* 3. AÇÕES DE JOGO */}
+                         <div className="space-y-3 pt-4 border-t border-slate-100">
                              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><PlayCircle size={14}/> Ações</h4>
                              
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                 {/* Botões Básicos */}
-                                 <Button variant="ghost" className="justify-start border h-12" onClick={() => requestEnergyAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>
-                                     <Zap className="mr-2 text-yellow-500" size={18}/> Ligar Energia
+                                 {/* Botões de Ação */}
+                                 <Button variant="ghost" className="justify-start border h-12 bg-white hover:border-yellow-300 hover:text-yellow-600 group" onClick={() => requestEnergyAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>
+                                     <Zap className="mr-2 text-yellow-500 group-hover:scale-110 transition-transform" size={18}/> Ligar Energia
                                  </Button>
-                                 <Button variant="ghost" className="justify-start border h-12" onClick={() => requestToolAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>
-                                     <Briefcase className="mr-2 text-purple-500" size={18}/> Ferramenta
+                                 <Button variant="ghost" className="justify-start border h-12 bg-white hover:border-purple-300 hover:text-purple-600 group" onClick={() => requestToolAttachment(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>
+                                     <Briefcase className="mr-2 text-purple-500 group-hover:scale-110 transition-transform" size={18}/> Ferramenta
                                  </Button>
-                                 <Button variant="ghost" className="justify-start border h-12" onClick={() => requestEvolution(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>
-                                     <GitMerge className="mr-2 text-green-500" size={18}/> Evoluir
+                                 <Button variant="ghost" className="justify-start border h-12 bg-white hover:border-green-300 hover:text-green-600 group" onClick={() => requestEvolution(selectedCardAction.pIndex, selectedCardAction.location, selectedCardAction.index)}>
+                                     <GitMerge className="mr-2 text-green-500 group-hover:scale-110 transition-transform" size={18}/> Evoluir
                                  </Button>
                                  
-                                 {/* Botão de Descarte (Vermelho) */}
+                                 {/* Botão de Descarte */}
                                  <Button variant="ghost" className="justify-start border border-red-100 bg-red-50 text-red-600 hover:bg-red-100 h-12" onClick={handleManualDiscard}>
                                      <Trash2 className="mr-2" size={18}/> Descartar
                                  </Button>
 
-                                 {/* --- O BOTÃO QUE FALTAVA: PROMOVER PARA ATIVO --- */}
-                                 {/* Lógica: Só mostra se estiver no BANCO e o espaço ATIVO estiver vazio (ou se quiser permitir troca forçada, remove a checagem de activePokemon) */}
+                                 {/* Botão de Promover (Só aparece se estiver no Banco) */}
                                  {selectedCardAction.location === 'BENCH' && (
                                      <Button 
                                         variant="success" 
-                                        className="col-span-1 md:col-span-2 h-14 mt-2 shadow-lg shadow-green-100 border border-green-200"
+                                        className="col-span-1 md:col-span-2 h-14 mt-2 shadow-lg shadow-green-100 border border-green-200 font-bold tracking-wider"
                                         onClick={() => promoteFromBench(selectedCardAction.index, selectedCardAction.pIndex)}
                                      >
                                          <ChevronsUp className="mr-2 animate-bounce" size={20}/> 
