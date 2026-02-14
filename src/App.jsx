@@ -786,18 +786,74 @@ const handleStartGameFromLobby = () => {
   };
 
   // --- FUNÇÃO PARA DECLARAR VENCEDOR (Coloque junto das outras funções do App) ---
-  const declareWinner = (winnerIndex) => {
-      const winnerName = players[winnerIndex].name;
+  // --- FUNÇÃO DE VITÓRIA COMPLETA (VISUAL + LOG + RANKING) ---
+  const declareWinner = async (winnerIndex) => {
+      const winner = players[winnerIndex];
+      const loser = players[winnerIndex === 0 ? 1 : 0];
       
-      // Atualiza o estado para travar o jogo e mostrar o modal
+      // 1. Atualiza o Estado Visual (Para aparecer o Modal de Troféu)
       setGameState(prev => ({
           ...prev,
-          phase: PHASES.GAME_OVER, // <--- O PULO DO GATO: Muda a fase para ativar o modal
-          winner: winnerName
+          phase: PHASES.GAME_OVER,
+          winner: winner.name
       }));
 
-      // (Opcional) Toca um som ou efeito aqui
-      console.log(`VENCEDOR DECLARADO: ${winnerName}`);
+      // 2. Adiciona o Log Final da Partida
+      addLog(`🏆 FIM DE JOGO! O vencedor é ${winner.name}!`, 'SUCCESS', winnerIndex);
+
+      // 3. Atualiza o Ranking no Supabase (Assíncrono)
+      try {
+          // --- ATUALIZA O VENCEDOR ---
+          const { data: winnerData } = await supabase
+              .from('rankings')
+              .select('*')
+              .eq('name', winner.name)
+              .single();
+
+          if (winnerData) {
+              // Se já existe, soma +1 vitória e +3 pontos (exemplo)
+              await supabase
+                  .from('rankings')
+                  .update({ 
+                      wins: (winnerData.wins || 0) + 1, 
+                      points: (winnerData.points || 0) + 3 
+                  })
+                  .eq('id', winnerData.id);
+          } else {
+              // Se não existe, cria novo registro
+              await supabase
+                  .from('rankings')
+                  .insert([{ name: winner.name, wins: 1, losses: 0, points: 3 }]);
+          }
+
+          // --- ATUALIZA O PERDEDOR (Opcional, mas bom para estatísticas) ---
+          const { data: loserData } = await supabase
+              .from('rankings')
+              .select('*')
+              .eq('name', loser.name)
+              .single();
+
+          if (loserData) {
+              await supabase
+                  .from('rankings')
+                  .update({ 
+                      losses: (loserData.losses || 0) + 1 
+                      // Perdedor geralmente ganha 0 ou 1 ponto por participação
+                  })
+                  .eq('id', loserData.id);
+          } else {
+              await supabase
+                  .from('rankings')
+                  .insert([{ name: loser.name, wins: 0, losses: 1, points: 0 }]);
+          }
+
+          console.log("Ranking atualizado com sucesso!");
+          addLog("Ranking atualizado no servidor.", 'SYSTEM');
+
+      } catch (error) {
+          console.error("Erro ao atualizar ranking:", error);
+          addLog("Erro ao salvar dados no Ranking. Verifique a conexão.", 'ERROR');
+      }
   };
 
   const resetGame = () => {
