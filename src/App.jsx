@@ -785,14 +785,19 @@ const handleStartGameFromLobby = () => {
     }
   };
 
+  // --- FUNÇÃO PARA DECLARAR VENCEDOR (Coloque junto das outras funções do App) ---
   const declareWinner = (winnerIndex) => {
       const winnerName = players[winnerIndex].name;
-      setGameState(prev => ({ 
-          ...prev, 
-          phase: PHASES.GAME_OVER, 
-          winner: winnerName 
+      
+      // Atualiza o estado para travar o jogo e mostrar o modal
+      setGameState(prev => ({
+          ...prev,
+          phase: PHASES.GAME_OVER, // <--- O PULO DO GATO: Muda a fase para ativar o modal
+          winner: winnerName
       }));
-      saveMatchResult(winnerIndex);
+
+      // (Opcional) Toca um som ou efeito aqui
+      console.log(`VENCEDOR DECLARADO: ${winnerName}`);
   };
 
   const resetGame = () => {
@@ -2137,6 +2142,38 @@ const handleStartGameFromLobby = () => {
                      </div>
                  </div>
              </Card>
+        </div>
+    )}
+    {/* TELA DE FIM DE JOGO (GAME OVER) */}
+    {gameState.phase === PHASES.GAME_OVER && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[110] animate-in zoom-in duration-500">
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl text-center max-w-md w-full shadow-2xl border-4 border-yellow-400 relative overflow-hidden">
+                {/* Efeito de Fundo */}
+                <div className="absolute inset-0 bg-gradient-to-b from-yellow-100/20 to-transparent pointer-events-none"></div>
+
+                <div className="flex justify-center mb-6">
+                    <Trophy size={80} className="text-yellow-500 drop-shadow-lg animate-bounce" />
+                </div>
+                
+                <h2 className="text-5xl font-black text-slate-800 uppercase tracking-tighter mb-2">
+                    Fim de Jogo!
+                </h2>
+                
+                <div className="bg-slate-100 p-4 rounded-xl border border-slate-200 mb-8 mt-4">
+                    <p className="text-sm text-slate-500 font-bold uppercase tracking-widest mb-1">Vencedor</p>
+                    <p className="text-3xl font-black text-blue-600">
+                        {gameState.winner}
+                    </p>
+                </div>
+                
+                <Button 
+                    variant="primary" 
+                    onClick={resetGame} 
+                    className="w-full py-4 text-lg shadow-xl shadow-blue-200 hover:scale-105 transition-transform"
+                >
+                    <RotateCcw className="mr-2" /> Nova Partida
+                </Button>
+            </div>
         </div>
     )}
 
