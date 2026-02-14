@@ -1998,28 +1998,74 @@ const handleStartGameFromLobby = () => {
     {/* MODAL DE FERRAMENTAS */}
     {showToolModal && <ToolsModal onSelect={confirmAttachTool} onClose={() => setShowToolModal(null)} />}
 
-    {/* MODAL DE ATAQUE (SEU MODAL NOVO) */}
+    {/* MODAL DE ATAQUE (CORRIGIDO E SEGURO) */}
     {showAttackModal && (
-         /* ... Coloque aqui o código do AttackModal novo que fizemos antes ... */
-         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
              <div className="w-full max-w-lg bg-slate-900 border border-red-900/50 rounded-3xl shadow-2xl overflow-hidden flex flex-col relative">
+                 
+                 {/* Header */}
                  <div className="bg-slate-950 p-6 border-b border-slate-800 flex justify-between items-start relative">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 via-orange-500 to-red-600 animate-pulse"></div>
-                    <div><h3 className="text-2xl font-black italic uppercase text-white">Fase de Batalha</h3></div>
+                    <div>
+                        <h3 className="text-2xl font-black italic uppercase text-white">Fase de Batalha</h3>
+                        <p className="text-slate-500 text-xs mt-1">Atacante: <span className="text-red-400 font-bold">{currentPlayer.activePokemon.name}</span></p>
+                    </div>
                     <button onClick={() => setShowAttackModal(false)} className="text-slate-500 hover:text-white"><X size={24}/></button>
                  </div>
-                 <div className="p-6 bg-slate-900 flex flex-col gap-4 max-h-[60vh] overflow-y-auto">
-                      {currentPlayer.activePokemon.attacks.filter(atk => atk.cost[0] !== 'Ability').map((atk, idx) => (
-                           <button key={idx} onClick={() => confirmAttack(atk)} className="group relative w-full text-left p-4 rounded-xl border-2 bg-slate-800 border-slate-700 hover:border-red-500">
-                                <span className="font-black text-lg uppercase text-white">{atk.name}</span>
-                                <div className="flex gap-1 mt-1">
-                                     {atk.cost.map((c, i) => (
-                                         <img key={i} src={ENERGY_IMAGES_SRC[c] || ENERGY_IMAGES_SRC['Colorless']} alt={c} className="w-5 h-5 object-contain"/>
-                                     ))}
-                                </div>
-                                <span className="absolute right-4 top-4 text-3xl font-black text-white">{atk.damage}</span>
-                           </button>
-                      ))}
+
+                 {/* Lista de Ataques */}
+                 <div className="p-6 bg-slate-900 flex flex-col gap-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                      {currentPlayer.activePokemon.attacks.filter(atk => atk.cost[0] !== 'Ability').map((atk, idx) => {
+                           
+                           // --- AQUI ESTÁ A CORREÇÃO: VERIFICA SE PODE PAGAR ---
+                           const canAfford = checkEnergyCost(atk.cost, currentPlayer.activePokemon.attachedEnergy);
+
+                           return (
+                               <button 
+                                    key={idx} 
+                                    disabled={!canAfford} // <--- TRAVA O CLIQUE SE NÃO TIVER ENERGIA
+                                    onClick={() => confirmAttack(atk)} 
+                                    className={`
+                                        group relative w-full text-left p-4 rounded-xl border-2 transition-all duration-300
+                                        ${canAfford 
+                                            ? 'bg-slate-800 border-slate-700 hover:border-red-500 cursor-pointer hover:bg-slate-800/80' 
+                                            : 'bg-slate-900/50 border-slate-800 opacity-40 grayscale cursor-not-allowed' // <--- VISUAL DESATIVADO
+                                        }
+                                    `}
+                               >
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <span className={`font-black text-lg uppercase ${canAfford ? 'text-white' : 'text-slate-500'}`}>{atk.name}</span>
+                                            
+                                            {/* Custo de Energia */}
+                                            <div className="flex gap-1 mt-2">
+                                                 {atk.cost.map((c, i) => (
+                                                     <img 
+                                                        key={i} 
+                                                        src={ENERGY_IMAGES_SRC[c] || ENERGY_IMAGES_SRC['Colorless']} 
+                                                        alt={c} 
+                                                        className="w-5 h-5 object-contain drop-shadow-md"
+                                                        title={c}
+                                                     />
+                                                 ))}
+                                            </div>
+                                        </div>
+                                        <span className={`text-3xl font-black ${canAfford ? 'text-white' : 'text-slate-600'}`}>{atk.damage}</span>
+                                    </div>
+
+                                    {/* Aviso se faltar energia */}
+                                    {!canAfford && (
+                                        <div className="absolute top-2 right-2 text-[10px] font-bold text-red-500 bg-red-950/50 px-2 py-1 rounded border border-red-900/50 uppercase tracking-wider">
+                                            Energia Insuficiente
+                                        </div>
+                                    )}
+                               </button>
+                           );
+                      })}
+
+                      {currentPlayer.activePokemon.attacks.filter(atk => atk.cost[0] !== 'Ability').length === 0 && (
+                          <div className="text-center text-slate-500 italic py-4">Sem ataques disponíveis.</div>
+                      )}
                  </div>
              </div>
          </div>
