@@ -1,7 +1,42 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Shield, Trophy, Play, Edit3, Layers } from 'lucide-react';
-import PokemonCard from './PokemonCard'; // Verifique se o caminho está certo
+import PokemonCard from './PokemonCard';
 import { DECKS } from '../data/decks'; 
+
+// --- COMPONENTE DE INPUT OTIMIZADO (Resolve o bug do foco) ---
+const PlayerNameInput = ({ value, onCommit, className, placeholder }) => {
+    const [localValue, setLocalValue] = useState(value);
+
+    // Sincroniza se o valor mudar externamente (ex: reset do jogo)
+    useEffect(() => {
+        setLocalValue(value);
+    }, [value]);
+
+    const handleBlur = () => {
+        // Só atualiza o pai se o valor for diferente
+        if (localValue !== value) {
+            onCommit(localValue);
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.target.blur(); // Força o onBlur para salvar
+        }
+    };
+
+    return (
+        <input
+            type="text"
+            value={localValue}
+            onChange={(e) => setLocalValue(e.target.value)}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            className={className}
+            placeholder={placeholder}
+        />
+    );
+};
 
 const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking, availableDecks, onManageDecks }) => {
     
@@ -40,13 +75,12 @@ const GameLobby = ({ players, onUpdatePlayer, onStartGame, onShowRanking, availa
                     </div>
                 </div>
 
-                {/* Input de Nome */}
+                {/* Input de Nome (AGORA CORRIGIDO) */}
                 <div className="space-y-1">
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Nickname</label>
-                    <input 
-                        type="text" 
+                    <PlayerNameInput 
                         value={player.name}
-                        onChange={(e) => onUpdatePlayer(index, { name: e.target.value })}
+                        onCommit={(newName) => onUpdatePlayer(index, { name: newName })}
                         className={`w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm font-bold rounded-lg p-3 outline-none focus:ring-2 ${ringColor} transition-all`}
                         placeholder={`Nome do Jogador ${index + 1}`}
                     />
