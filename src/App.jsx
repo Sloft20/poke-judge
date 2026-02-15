@@ -1593,10 +1593,57 @@ const handleStartGameFromLobby = () => {
     addLog(`Atenção: ${victim.name} deve promover um Pokémon do Banco.`, 'WARN', victimIndex); 
   };
   const applyCondition = (pIndex, condition) => { updatePlayer(pIndex, { activeCondition: condition }); addLog(`Condição Especial aplicada: ${condition}`, 'WARN', pIndex); };
+  // --- FUNÇÃO ATUALIZADA: LOGS INTELIGENTES ---
   const updateStatus = (pIndex, updates) => {
-      // updates can be { activeCondition: ... } or { isPoisoned: ... } etc
       updatePlayer(pIndex, updates);
-      addLog(`Status atualizado para ${players[pIndex].name}`, 'WARN', pIndex);
+
+      // Mapeamento para traduzir os códigos técnicos para português
+      const conditionNames = {
+          'NONE': 'Normal',
+          'ASLEEP': 'Adormecido',
+          'PARALYZED': 'Paralisado',
+          'CONFUSED': 'Confuso',
+          'POISONED': 'Envenenado', // Caso use no activeCondition antigo
+          'BURNED': 'Queimado'      // Caso use no activeCondition antigo
+      };
+
+      // Gera logs específicos para cada mudança
+      Object.entries(updates).forEach(([key, value]) => {
+          const playerName = players[pIndex].name;
+
+          switch (key) {
+              case 'activeCondition':
+                  if (value === 'NONE') {
+                      addLog(`${playerName} recuperou-se de todas as condições.`, 'SUCCESS', pIndex);
+                  } else {
+                      addLog(`${playerName} agora está ${conditionNames[value] || value}.`, 'WARN', pIndex);
+                  }
+                  break;
+
+              case 'isPoisoned':
+                  if (value === true) addLog(`${playerName} foi Envenenado!`, 'WARN', pIndex);
+                  else addLog(`${playerName} curou-se do Veneno.`, 'SUCCESS', pIndex);
+                  break;
+
+              case 'isBurned':
+                  if (value === true) addLog(`${playerName} foi Queimado!`, 'WARN', pIndex);
+                  else addLog(`${playerName} curou-se da Queimadura.`, 'SUCCESS', pIndex);
+                  break;
+
+              case 'allowUnlimitedEnergy':
+                  if (value === true) addLog(`${playerName} pode ligar energias ilimitadas neste turno.`, 'INFO', pIndex);
+                  break;
+              
+              case 'allowRareCandy':
+                  if (value === true) addLog(`${playerName} habilitou uso de Rare Candy.`, 'INFO', pIndex);
+                  break;
+
+              default:
+                  // Fallback para outras atualizações menos comuns
+                  // addLog(`Status ${key} atualizado para ${value}`, 'INFO', pIndex); 
+                  break;
+          }
+      });
   };
   const handleExistingCardClick = (pIndex, location, index = null) => { if (gameState.phase === PHASES.SETUP) return; const p = players[pIndex]; const card = location === 'ACTIVE' ? p.activePokemon : p.benchPokemon[index]; setSelectedCardAction({ pIndex, location, index, card }); };
   const downloadLog = () => { if (logs.length === 0) { alert("Não há logs para exportar."); return; } const content = logs.map(l => `[${l.time}] [${l.level}] ${l.text}`).join('\n'); const blob = new Blob([content], { type: 'text/plain' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `pokejudge-log-${new Date().toISOString().slice(0,10)}.txt`; a.click(); URL.revokeObjectURL(url); };
