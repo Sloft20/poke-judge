@@ -21,17 +21,13 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
     const isPoisoned = card.isPoisoned === true;
     const isBurned = card.isBurned === true;
 
-    // --- 1. LÓGICA DE ROTAÇÃO (COM TRAVA DE SEGURANÇA) ---
-    // Padrão é rotate-0 para garantir que fique em pé
-    let rotateClass = "rotate-0"; 
-    let filterClass = "";
+    // --- 1. LÓGICA DE ROTAÇÃO ---
+    let rotateClass = ""; 
 
     if (condition === 'ASLEEP') {
         rotateClass = "-rotate-90"; 
-        filterClass = "grayscale opacity-80";
     } else if (condition === 'PARALYZED') {
         rotateClass = "rotate-90"; 
-        filterClass = "contrast-125";
     } else if (condition === 'CONFUSED') {
         rotateClass = "rotate-180"; 
     }
