@@ -1,4 +1,4 @@
-mport React from 'react';
+import React from 'react';
 
 import { Badge } from './UI'; // Certifique-se que o caminho está correto
 
