@@ -1593,54 +1593,55 @@ const handleStartGameFromLobby = () => {
     addLog(`Atenção: ${victim.name} deve promover um Pokémon do Banco.`, 'WARN', victimIndex); 
   };
   const applyCondition = (pIndex, condition) => { updatePlayer(pIndex, { activeCondition: condition }); addLog(`Condição Especial aplicada: ${condition}`, 'WARN', pIndex); };
-  // --- FUNÇÃO ATUALIZADA: LOGS INTELIGENTES ---
+  // --- FUNÇÃO ATUALIZADA: LOGS DETALHADOS DE STATUS (COM NOME DO POKÉMON) ---
   const updateStatus = (pIndex, updates) => {
+      // 1. Aplica a atualização no estado
       updatePlayer(pIndex, updates);
 
-      // Mapeamento para traduzir os códigos técnicos para português
+      // 2. Tradução dos códigos
       const conditionNames = {
           'NONE': 'Normal',
           'ASLEEP': 'Adormecido',
           'PARALYZED': 'Paralisado',
-          'CONFUSED': 'Confuso',
-          'POISONED': 'Envenenado', // Caso use no activeCondition antigo
-          'BURNED': 'Queimado'      // Caso use no activeCondition antigo
+          'CONFUSED': 'Confuso'
       };
 
-      // Gera logs específicos para cada mudança
+      // 3. Gera logs narrativos baseados no que mudou
       Object.entries(updates).forEach(([key, value]) => {
-          const playerName = players[pIndex].name;
+          // Pega o nome do Pokémon Ativo para usar no log (muito melhor que nome do jogador)
+          const activePoke = players[pIndex].activePokemon;
+          const targetName = activePoke ? activePoke.name : 'Pokémon Ativo';
+          const playerName = players[pIndex].name; // Para regras gerais
 
           switch (key) {
               case 'activeCondition':
                   if (value === 'NONE') {
-                      addLog(`${playerName} recuperou-se de todas as condições.`, 'SUCCESS', pIndex);
+                      addLog(`${targetName} recuperou-se das condições especiais.`, 'SUCCESS', pIndex);
                   } else {
-                      addLog(`${playerName} agora está ${conditionNames[value] || value}.`, 'WARN', pIndex);
+                      addLog(`${targetName} agora está ${conditionNames[value] || value}.`, 'WARN', pIndex);
                   }
                   break;
 
               case 'isPoisoned':
-                  if (value === true) addLog(`${playerName} foi Envenenado!`, 'WARN', pIndex);
-                  else addLog(`${playerName} curou-se do Veneno.`, 'SUCCESS', pIndex);
+                  if (value === true) addLog(`${targetName} foi Envenenado!`, 'WARN', pIndex);
+                  else addLog(`${targetName} curou-se do Veneno.`, 'SUCCESS', pIndex);
                   break;
 
               case 'isBurned':
-                  if (value === true) addLog(`${playerName} foi Queimado!`, 'WARN', pIndex);
-                  else addLog(`${playerName} curou-se da Queimadura.`, 'SUCCESS', pIndex);
+                  if (value === true) addLog(`${targetName} foi Queimado!`, 'WARN', pIndex);
+                  else addLog(`${targetName} curou-se da Queimadura.`, 'SUCCESS', pIndex);
                   break;
 
               case 'allowUnlimitedEnergy':
-                  if (value === true) addLog(`${playerName} pode ligar energias ilimitadas neste turno.`, 'INFO', pIndex);
+                  if (value === true) addLog(`Efeito ativado: Energia ilimitada para ${playerName} neste turno.`, 'INFO', pIndex);
                   break;
               
               case 'allowRareCandy':
-                  if (value === true) addLog(`${playerName} habilitou uso de Rare Candy.`, 'INFO', pIndex);
+                  if (value === true) addLog(`Condição atendida: ${playerName} pode usar Rare Candy.`, 'INFO', pIndex);
                   break;
 
               default:
-                  // Fallback para outras atualizações menos comuns
-                  // addLog(`Status ${key} atualizado para ${value}`, 'INFO', pIndex); 
+                  // Ignora logs técnicos
                   break;
           }
       });
