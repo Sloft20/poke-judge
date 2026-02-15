@@ -21,38 +21,20 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
     const isPoisoned = card.isPoisoned === true;
     const isBurned = card.isBurned === true;
 
-    // --- 1. LÓGICA DE ROTAÇÃO (APLICADA EM CLASSE ESPECÍFICA) ---
-    // Usamos classes diretas do Tailwind para evitar conflito de 'transform'
-    let rotateClass = ""; 
+    // --- 1. LÓGICA DE ROTAÇÃO (COM TRAVA DE SEGURANÇA) ---
+    // Padrão é rotate-0 para garantir que fique em pé
+    let rotateClass = "rotate-0"; 
     let filterClass = "";
 
     if (condition === 'ASLEEP') {
-        rotateClass = "-rotate-90"; // Esquerda
+        rotateClass = "-rotate-90"; 
         filterClass = "grayscale opacity-80";
     } else if (condition === 'PARALYZED') {
-        rotateClass = "rotate-90"; // Direita
+        rotateClass = "rotate-90"; 
         filterClass = "contrast-125";
     } else if (condition === 'CONFUSED') {
-        rotateClass = "rotate-180"; // Cabeça para baixo
+        rotateClass = "rotate-180"; 
     }
-
-    // --- 2. BORDAS (Status e Ativo) ---
-    let borderClass = "border border-slate-700"; // Borda padrão discreta
-    let ringClass = "";
-
-    if (isActive) {
-        ringClass = "ring-4 ring-yellow-400 shadow-xl z-10 scale-105"; // Destaque Ativo
-    }
-
-    // Se tiver status, a borda muda de cor (sobrepõe o amarelo do ativo se necessário, ou soma)
-    if (isPoisoned && isBurned) {
-        borderClass = "border-4 border-purple-600 ring-2 ring-red-500"; 
-    } else if (isPoisoned) {
-        borderClass = "border-4 border-purple-600";
-    } else if (isBurned) {
-        borderClass = "border-4 border-red-600";
-    }
-
     // --- 3. TAMANHOS ---
     const sizeClass = location === 'active' 
         ? 'w-[160px] h-[222px] md:w-[200px] md:h-[278px]' 
