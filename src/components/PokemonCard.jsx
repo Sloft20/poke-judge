@@ -1,5 +1,6 @@
 import React from 'react';
-import { Badge } from './UI'; // Certifique-se que o caminho está correto
+import { Badge } from './UI';
+import { Zap, Skull, Flame } from 'lucide-react'; // Adicionei os ícones necessários
 
 const getHealthColor = (percentage) => {
     if (percentage > 60) return 'bg-green-500';
@@ -14,7 +15,30 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
     const currentHP = Math.max(0, maxHP - (card.damage || 0));
     const healthPercentage = Math.min(100, (currentHP / maxHP) * 100);
 
-    // Ajuste de Tamanhos (Mantido sua configuração preferida)
+    // --- NOVA LÓGICA VISUAL (STATUS) ---
+    let statusClasses = "transition-all duration-500 ease-in-out transform origin-center";
+    
+    // 1. ROTAÇÃO
+    if (card.activeCondition === 'ASLEEP') {
+        statusClasses += " -rotate-90 grayscale-[0.3]"; // Dormindo
+    } else if (card.activeCondition === 'PARALYZED') {
+        statusClasses += " rotate-90 contrast-125"; // Paralisado
+    } else if (card.activeCondition === 'CONFUSED') {
+        statusClasses += " rotate-180"; // Confuso
+    }
+
+    // 2. BRILHOS (Veneno/Queimadura)
+    let glowStyle = "";
+    if (card.isPoisoned && card.isBurned) {
+        glowStyle = "drop-shadow-[0_0_15px_rgba(168,85,247,0.8)] ring-2 ring-red-500 ring-offset-2 ring-offset-slate-900";
+    } else if (card.isPoisoned) {
+        glowStyle = "drop-shadow-[0_0_10px_rgba(168,85,247,0.9)]"; // Roxo
+    } else if (card.isBurned) {
+        glowStyle = "drop-shadow-[0_0_10px_rgba(239,68,68,0.9)] sepia-[.50]"; // Vermelho
+    }
+    // -----------------------------------
+
+    // Ajuste de Tamanhos (Mantido)
     const cardSizeClasses = location === 'active' 
         ? 'w-[160px] h-[222px] md:w-[200px] md:h-[278px]' 
         : 'w-[120px] h-[167px] md:w-[145px] md:h-[202px]';
@@ -23,7 +47,14 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
     const activeRing = isActive ? 'ring-4 ring-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.6)] scale-105 z-10' : '';
 
     return (
-        <div className={`relative rounded-xl overflow-hidden shadow-lg group ${cardSizeClasses} ${hoverClasses} ${activeRing}`} onClick={onClick}>
+        <div 
+            className={`
+                relative rounded-xl overflow-hidden shadow-lg group 
+                ${cardSizeClasses} ${hoverClasses} ${activeRing}
+                ${statusClasses} ${glowStyle}
+            `} 
+            onClick={onClick}
+        >
             
             {/* CAMADA 1: IMAGEM DA CARTA */}
             {card.image ? (
@@ -83,6 +114,20 @@ const PokemonCard = ({ card, location = 'bench', onClick, isActive = false, getM
                     </div>
                 </div>
             )}
+
+            {/* 4. NOVOS ÍCONES DE STATUS (Canto Superior Esquerdo) */}
+            <div className="absolute top-2 left-2 flex flex-col gap-1 z-20">
+                {card.isPoisoned && (
+                    <div className="bg-purple-600 w-5 h-5 rounded-full flex items-center justify-center shadow-lg border border-white animate-pulse">
+                        <Skull size={10} className="text-white"/>
+                    </div>
+                )}
+                {card.isBurned && (
+                    <div className="bg-red-600 w-5 h-5 rounded-full flex items-center justify-center shadow-lg border border-white animate-pulse">
+                        <Flame size={10} className="text-white"/>
+                    </div>
+                )}
+            </div>
             
             {/* Efeito de Brilho ao passar o mouse */}
              <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none bg-gradient-to-tr from-transparent via-white/10 to-transparent z-30"></div>
